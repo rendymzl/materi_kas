@@ -1,0 +1,29 @@
+{
+  "invoice_id": "001",
+  "buyer": {
+    "nama": "awdwa",
+    "phone": "081122132423",
+    "address": "jl. awdawd"
+  },
+  "products": {
+    "cart_list": {
+      "product": {
+        "id": "001",
+        "featured": false,
+        "product_name": "kuasaa",
+        "sell_price": 3500,
+        "price": 3000,
+        "sold": 12,
+        "stock": 212
+      },
+      "quantity": 1,
+      "individual_discount": 2000,
+      "bundle_discount": 20000
+    }
+  },
+  "bill": 3500,
+  "pay": 3000,
+  "change": 12,
+  "paid": true,
+  "owner_id": "dsawd"
+}
