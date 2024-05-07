@@ -96,7 +96,6 @@ class ProductListCard extends StatelessWidget {
                   () => Column(
                     children: [
                       Expanded(
-                        flex: 7,
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 4),
                           child: ListView.builder(
@@ -134,10 +133,16 @@ class ProductListCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Divider(color: Colors.grey),
-                      Expanded(
-                        flex: 2,
-                        child: CustomerData(controller: controller),
+                      // const Divider(color: Colors.grey),
+                      Container(
+                        color: Colors.white,
+                        height: 170,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            CustomerData(controller: controller),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -170,6 +175,7 @@ class CustomerData extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
+              flex: 3,
               child: Column(
                 children: [
                   Row(
@@ -248,6 +254,7 @@ class CustomerData extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(
+              flex: 2,
               child: TextField(
                 controller: controller.customerAddressController,
                 minLines: 3,
@@ -291,6 +298,7 @@ Widget dropdownMenu(HomeController controller, BuildContext context) {
         controller.customerNameController.text = selectedCustomer!.name!;
         controller.customerPhoneController.text = selectedCustomer.phone!;
         controller.customerAddressController.text = selectedCustomer.address!;
+        controller.displayName.value = selectedCustomer.name!;
       },
       items: controller.customers.map((customer) {
         return DropdownMenuItem<Customer>(
@@ -320,7 +328,6 @@ class SelectedProductCard extends StatelessWidget {
       child: Column(
         children: [
           Expanded(
-            flex: 7,
             child: Card(
               child: Obx(
                 () {
@@ -333,13 +340,13 @@ class SelectedProductCard extends StatelessWidget {
                   return Column(
                     children: [
                       Container(
-                        height: 8,
+                        height: 12,
                         color: Colors.white,
                         margin: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                       controller.cartList.isNotEmpty
                           ? Expanded(
-                              flex: 5,
+                              flex: 8,
                               child: Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8),
@@ -347,7 +354,7 @@ class SelectedProductCard extends StatelessWidget {
                                     cartList: cartList,
                                     formatter: formatter,
                                     controller: controller),
-                              ), //* 1.0 SelectedProductList
+                              ),
                             )
                           : const Padding(
                               padding: EdgeInsets.symmetric(vertical: 32),
@@ -360,7 +367,7 @@ class SelectedProductCard extends StatelessWidget {
                             ),
                       controller.cartList.isNotEmpty
                           ? Expanded(
-                              flex: 3,
+                              flex: 7,
                               child: Obx(
                                 () => Container(
                                   color: Colors.white,
@@ -447,84 +454,81 @@ class SelectedProductList extends StatelessWidget {
         );
 
         return SizedBox(
-          child: SizedBox(
-            child: ListTile(
-              tileColor: index.isEven ? Colors.white : Colors.grey[100],
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(7)),
-              title: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
+          child: ListTile(
+            tileColor: index.isEven ? Colors.white : Colors.grey[100],
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+            title: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    child: Text(
+                      '${index + 1}. ${productCart.product!.productName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  height: 28,
+                  width: 28,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: const BorderRadius.all(Radius.circular(5))),
+                  child: IconButton(
+                    onPressed: () => controller.removeFromCart(productCart),
+                    icon: const Icon(
+                      Symbols.close,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            subtitle: Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: SizedBox(
+                    child: Text(
+                      'Rp. ${formatter.format(productCart.product!.sellPrice)}',
+                      style: context.textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: QuantityTextField(
+                              qty: qty,
+                              controller: controller,
+                              productCart:
+                                  productCart), //* 1.1 QuantityTextField
+                        ),
+                        // const Text(' = ')
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 7,
+                  child: SizedBox(
+                    child: Align(
+                      alignment: Alignment.centerRight,
                       child: Text(
-                        '${index + 1}. ${productCart.product!.productName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'Rp. ${formatter.format(productCart.product!.sellPrice! * productCart.quantity!)}',
                         style: context.textTheme.titleMedium,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    height: 28,
-                    width: 28,
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(5))),
-                    child: IconButton(
-                      onPressed: () => controller.removeFromCart(productCart),
-                      icon: const Icon(
-                        Symbols.close,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              subtitle: Row(
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: SizedBox(
-                      child: Text(
-                        'Rp. ${formatter.format(productCart.product!.sellPrice)}',
-                        style: context.textTheme.bodyMedium,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: QuantityTextField(
-                                qty: qty,
-                                controller: controller,
-                                productCart:
-                                    productCart), //* 1.1 QuantityTextField
-                          ),
-                          // const Text(' = ')
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 7,
-                    child: SizedBox(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Rp. ${formatter.format(productCart.product!.sellPrice! * productCart.quantity!)}',
-                          style: context.textTheme.titleMedium,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
