@@ -21,8 +21,11 @@ class SideMenuController extends GetxController {
       case 2:
         Get.offNamed(Routes.CUSTOMER);
         break;
-      default:
+      case 3:
         Get.offNamed(Routes.PRODUCT);
+        break;
+      default:
+        Get.offNamed(Routes.PROFILE);
         break;
     }
   }

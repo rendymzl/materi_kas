@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
+import 'package:materi_kas/app/modules/invoice/controllers/invoice_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../main.dart';
@@ -19,6 +20,7 @@ import '../../product/controllers/product_controller.dart';
 class HomeController extends GetxController {
   ProductController productController = Get.put(ProductController());
   CustomerController customerController = Get.put(CustomerController());
+  InvoiceController invoiceController = Get.put(InvoiceController());
 
   late final String uuid;
   late final productList = productController.productList;
@@ -54,6 +56,7 @@ class HomeController extends GetxController {
   ScrollController scrollController = ScrollController();
 
   void addToCart(Product product) {
+    invoiceId.value = generateInvoice(selectedCustomer.value);
     int index = cartList
         .indexWhere((selectItem) => selectItem.product?.id == product.id);
 
@@ -143,23 +146,82 @@ class HomeController extends GetxController {
   }
 
   final customerNameController = TextEditingController();
+  final displayName = ''.obs;
   final customerPhoneController = TextEditingController();
   final customerAddressController = TextEditingController();
 
-  void handleCustomer(String value) {}
+  void handleCustomer(String value) {
+    isRegisteredCustomer.value = false;
+    selectedCustomer.value = null;
+  }
+
+  void handleCheckBox(bool? value) {
+    isRegisteredCustomer.value = !isRegisteredCustomer.value;
+
+    customerNameController.text = '';
+    customerPhoneController.text = '';
+    customerAddressController.text = '';
+    selectedCustomer.value = null;
+  }
+
+  final invoiceId = ''.obs;
+
+  String getLastSerialNumber(Invoice invoice) {
+    String? invoiceNumber = invoice.invoiceId;
+    DateTime? invoiceDate = invoice.createdAt;
+
+    if (invoiceNumber != null && invoiceDate != null) {
+      List<String> parts = invoiceNumber.split('/');
+
+      DateTime today = DateTime.now();
+
+      if (parts.length == 2 &&
+          invoiceDate.year == today.year &&
+          invoiceDate.month == today.month &&
+          invoiceDate.day == today.day) {
+        String serialPart = parts[0].replaceAll('INV', '');
+        serialPart = serialPart.replaceFirst(RegExp('^0+'), '');
+        return serialPart;
+      }
+    }
+
+    return '000';
+  }
+
+  String generateInvoice(Customer? customer) {
+    Invoice inv = invoiceController.invoiceList.lastWhere(
+      (inv) => inv.invoiceId!.contains('INV'),
+      orElse: () => Invoice(),
+    );
+
+    int lastSerialNumber = int.parse(getLastSerialNumber(inv));
+
+    lastSerialNumber++;
+
+    String serialNumber = lastSerialNumber.toString().padLeft(3, '0');
+
+    String clientCode =
+        (customer != null) ? customer.customerId!.toUpperCase() : 'G';
+
+    DateTime date = DateTime.now();
+    String month = date.month.toString().padLeft(2, '0');
+    String day = date.day.toString().padLeft(2, '0');
+
+    String invoiceNumber = 'INV$serialNumber/$clientCode$month$day';
+
+    return invoiceNumber;
+  }
 
   Future saveInvoice() async {
     final payment =
         pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
-    const invoiceId = '';
     final change = moneyChange.value - totalPrice.value;
     final invoice = Invoice(
-      invoiceId: invoiceId,
+      invoiceId: invoiceId.value,
       customer: Customer(
-          name: 'dummyName',
-          phone: '082212212121',
-          address:
-              'Kp. Munjul RT 01 RW 06 Kelurahan Kayumanis Kec tanahsareal Bogor',
+          name: customerNameController.text,
+          phone: customerPhoneController.text,
+          address: customerAddressController.text,
           uuid: uuid),
       productsCart: ProductsCart(cartList: cartList),
       bill: totalPrice.value,
@@ -187,28 +249,39 @@ class HomeController extends GetxController {
       );
     }
 
+    Future validate(String validateCode) async {
+      Get.defaultDialog(
+        title: 'Ups',
+        middleText: validateCode == 'debt'
+            ? 'Total tagihan belum terpenuhi. lanjutkan?'
+            : 'Data Customer tidak lengkap. lanjutkan?',
+        confirm: TextButton(
+          onPressed: () async {
+            await success();
+            Get.back();
+          },
+          child: const Text('Simpan'),
+        ),
+        cancel: TextButton(
+          onPressed: () {
+            Get.back();
+          },
+          child: Text(
+            'Batal',
+            style: TextStyle(color: Colors.black.withOpacity(0.5)),
+          ),
+        ),
+      );
+    }
+
     try {
-      change <= 0
-          ? Get.defaultDialog(
-              title: 'Ups',
-              middleText: 'Total tagihan belum terpenuhi.',
-              confirm: TextButton(
-                onPressed: () async {
-                  await success();
-                  Get.back();
-                },
-                child: const Text('Simpan'),
-              ),
-              cancel: TextButton(
-                onPressed: () {
-                  Get.back();
-                },
-                child: Text(
-                  'Batal',
-                  style: TextStyle(color: Colors.black.withOpacity(0.5)),
-                ),
-              ))
-          : success();
+      (customerNameController.text == '' ||
+              customerPhoneController.text == '' ||
+              customerAddressController.text == '')
+          ? validate('Customer')
+          : change <= 0
+              ? validate('debt')
+              : success();
     } on PostgrestException catch (e) {
       Get.defaultDialog(
         title: 'Error',

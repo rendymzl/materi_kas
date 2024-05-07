@@ -163,54 +163,111 @@ class CustomerData extends StatelessWidget {
   Widget build(BuildContext context) {
     OutlineInputBorder outlineRed =
         const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
-    return Column(
-      children: [
-        Row(
+    return Obx(
+      () => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              onTap: () => controller.isRegisteredCustomer.value =
-                  !controller.isRegisteredCustomer.value,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  children: [
-                    Checkbox(
-                        value: controller.isRegisteredCustomer.value,
-                        onChanged: (value) {
-                          controller.isRegisteredCustomer.value = value!;
-                        }),
-                    const Text('Customer terdaftar  '),
-                  ],
-                ),
+            Expanded(
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                            controller: controller.customerNameController,
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              labelText: 'Nama',
+                              labelStyle: const TextStyle(color: Colors.grey),
+                              floatingLabelStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary),
+                              focusedErrorBorder: outlineRed,
+                              errorBorder: outlineRed,
+                            ),
+                            onChanged: (value) {
+                              controller.handleCustomer(value);
+                              controller.displayName.value = value;
+                            }),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: controller.customerPhoneController,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: 'No. Telp',
+                            labelStyle: const TextStyle(color: Colors.grey),
+                            floatingLabelStyle: TextStyle(
+                                color: Theme.of(context).colorScheme.primary),
+                            focusedErrorBorder: outlineRed,
+                            errorBorder: outlineRed,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+                          ],
+                          onChanged: (value) =>
+                              controller.handleCustomer(value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => controller.handleCheckBox(null),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                  value: controller.isRegisteredCustomer.value,
+                                  onChanged: (value) =>
+                                      controller.handleCheckBox(value)),
+                              Text(
+                                'Customer terdaftar  ',
+                                style: context.textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (controller.isRegisteredCustomer.value)
+                        dropdownMenu(controller, context),
+                    ],
+                  ),
+                ],
               ),
             ),
-            if (controller.isRegisteredCustomer.value)
-              dropdownMenu(controller, context),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextField(
+                controller: controller.customerAddressController,
+                minLines: 3,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: 'Alamat',
+                  alignLabelWithHint: true,
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  floatingLabelStyle:
+                      TextStyle(color: Theme.of(context).colorScheme.primary),
+                  focusedErrorBorder: outlineRed,
+                  errorBorder: outlineRed,
+                ),
+                onChanged: (value) => controller.handleCustomer(value),
+              ),
+            ),
           ],
         ),
-        Row(
-          children: [
-            Form(
-                child: ListView(
-              children: [
-                TextFormField(
-                  controller: controller.customerNameController,
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    labelText: 'Kode',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    floatingLabelStyle:
-                        TextStyle(color: Theme.of(context).colorScheme.primary),
-                    focusedErrorBorder: outlineRed,
-                    errorBorder: outlineRed,
-                  ),
-                  onFieldSubmitted: (value) => controller.handleCustomer(value),
-                ),
-              ],
-            ))
-          ],
-        )
-      ],
+      ),
     );
   }
 }
@@ -223,11 +280,17 @@ Widget dropdownMenu(HomeController controller, BuildContext context) {
     ),
     child: DropdownButton<Customer>(
       icon: const Icon(Icons.arrow_drop_down),
-      hint: const Text('Pilih Customer'),
+      hint: Text(
+        'Pilih Customer',
+        style: context.textTheme.bodySmall,
+      ),
       dropdownColor: Colors.white,
       value: controller.selectedCustomer.value,
       onChanged: (Customer? selectedCustomer) {
         controller.selectedCustomer.value = selectedCustomer;
+        controller.customerNameController.text = selectedCustomer!.name!;
+        controller.customerPhoneController.text = selectedCustomer.phone!;
+        controller.customerAddressController.text = selectedCustomer.address!;
       },
       items: controller.customers.map((customer) {
         return DropdownMenuItem<Customer>(
@@ -298,13 +361,49 @@ class SelectedProductCard extends StatelessWidget {
                       controller.cartList.isNotEmpty
                           ? Expanded(
                               flex: 3,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10))),
-                                child: CalculatePrice(
-                                    formatter: formatter,
-                                    controller: controller),
+                              child: Obx(
+                                () => Container(
+                                  color: Colors.white,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              controller.displayName.value
+                                                  .toUpperCase(),
+                                              style: context
+                                                  .textTheme.bodySmall!
+                                                  .copyWith(
+                                                      fontStyle:
+                                                          FontStyle.italic),
+                                            ),
+                                            Text(
+                                              controller.invoiceId.value,
+                                              style: context
+                                                  .textTheme.bodySmall!
+                                                  .copyWith(
+                                                      fontStyle:
+                                                          FontStyle.italic),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        decoration: const BoxDecoration(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(10))),
+                                        child: CalculatePrice(
+                                            formatter: formatter,
+                                            controller: controller),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ) //* 2.0 CalculatePrice
                           : const SizedBox(),

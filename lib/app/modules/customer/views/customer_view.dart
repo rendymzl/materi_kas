@@ -20,6 +20,7 @@ class CustomerView extends GetView<CustomerController> {
         scrolledUnderElevation: 0,
         title: const Text('Customers'),
         centerTitle: true,
+        backgroundColor: const Color(0xFFF5F8FF),
       ),
       body: SizedBox(
         child: Padding(
