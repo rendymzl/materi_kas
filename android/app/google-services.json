@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "216892861390",
+    "project_id": "materikas-129f7",
+    "storage_bucket": "materikas-129f7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216892861390:android:1b5f6ceff51d90b5b0199f",
+        "android_client_info": {
+          "package_name": "com.materikas.materi_kas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0PsVECwrWdptZVTd0nolK29WSoL91FdU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
