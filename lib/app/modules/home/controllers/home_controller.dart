@@ -162,6 +162,7 @@ class HomeController extends GetxController {
     customerPhoneController.text = '';
     customerAddressController.text = '';
     selectedCustomer.value = null;
+    displayName.value = '';
   }
 
   final invoiceId = ''.obs;
