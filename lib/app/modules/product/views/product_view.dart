@@ -49,7 +49,7 @@ class ProductView extends GetView<ProductController> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Obx(() => Text(
-                                  'Total barang: ${controller.productList.length.toString()}',
+                                  'Total barang: ${controller.totalProduct.value.toString()}',
                                   style: context.textTheme.bodySmall,
                                 )),
                             Row(

@@ -24,6 +24,9 @@ class SideMenuController extends GetxController {
       case 3:
         Get.offNamed(Routes.PRODUCT);
         break;
+      case 4:
+        Get.offNamed(Routes.STATISTIC);
+        break;
       default:
         Get.offNamed(Routes.PROFILE);
         break;

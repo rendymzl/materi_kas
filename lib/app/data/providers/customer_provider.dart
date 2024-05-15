@@ -11,32 +11,32 @@ class CustomerProvider extends GetConnect {
   //! Read
   static Future<List<Customer>> fetchData(String uuid) async {
     GetStorage cacheUuid = GetStorage(uuid);
-    var cacheCustomers = await cacheUuid.read('cacheCustomers');
-    bool isCacheExist = await cacheCustomers == null ? false : true;
+    // var cacheCustomers = await cacheUuid.read('cacheCustomers');
+    // bool isCacheExist = await cacheCustomers == null ? false : true;
 
-    if (!isCacheExist) {
-      debugPrint('hit cust supabase');
+    // if (!isCacheExist) {
+    debugPrint('hit cust supabase');
 
-      List<Map<String, dynamic>> response =
-          await supabase.from('customers').select().eq('owner_id', uuid);
+    List<Map<String, dynamic>> response =
+        await supabase.from('customers').select().eq('owner_id', uuid);
 
-      await cacheUuid.write('cacheCustomers', jsonEncode(response));
+    await cacheUuid.write('cacheCustomers', jsonEncode(response));
 
-      return response.map((customer) => Customer.fromJson(customer)).toList();
-    } else {
-      debugPrint('hit cache');
+    return response.map((customer) => Customer.fromJson(customer)).toList();
+    // } else {
+    //   debugPrint('hit cache');
 
-      List<Customer> response = [];
-      dynamic decodedCache = await json.decode(cacheCustomers);
+    //   List<Customer> response = [];
+    //   dynamic decodedCache = await json.decode(cacheCustomers);
 
-      if (decodedCache is List<dynamic>) {
-        response = decodedCache.map((customer) {
-          return Customer.fromJson(customer);
-        }).toList();
-      }
+    //   if (decodedCache is List<dynamic>) {
+    //     response = decodedCache.map((customer) {
+    //       return Customer.fromJson(customer);
+    //     }).toList();
+    //   }
 
-      return response;
-    }
+    //   return response;
+    // }
   }
 
   //! create

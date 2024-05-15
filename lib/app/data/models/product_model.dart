@@ -41,7 +41,7 @@ class Product {
     final data = <String, dynamic>{};
     data['id'] = id;
     data['product_id'] = productId;
-    data['created_at'] = createdAt;
+    data['created_at'] = createdAt!.toIso8601String();
     data['featured'] = featured;
     data['product_name'] = productName;
     data['sell_price'] = sellPrice;

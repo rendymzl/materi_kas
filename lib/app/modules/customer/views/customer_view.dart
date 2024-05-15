@@ -48,7 +48,7 @@ class CustomerView extends GetView<CustomerController> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Obx(() => Text(
-                                  'Total Customer: ${controller.customerList.length.toString()}',
+                                  'Total Pelanggan: ${controller.customerList.length.toString()}',
                                   style: context.textTheme.bodySmall,
                                 )),
                             Row(
@@ -64,9 +64,9 @@ class CustomerView extends GetView<CustomerController> {
                                       ),
                                     );
                                     addEditDialog(context, controller, null,
-                                        'Tambah Customer');
+                                        'Tambah Pelanggan');
                                   },
-                                  child: const Text('Tambah Customer'),
+                                  child: const Text('Tambah Pelanggan'),
                                 ),
                               ],
                             ),
@@ -107,7 +107,7 @@ class CustomerListCard extends StatelessWidget {
           children: [
             TextField(
               decoration: const InputDecoration(
-                labelText: "Cari Customer",
+                labelText: "Cari Pelanggan",
                 labelStyle: TextStyle(color: Colors.grey),
                 suffixIcon: Icon(Symbols.search),
               ),
@@ -160,7 +160,7 @@ class TableHeader extends StatelessWidget {
             flex: 8,
             child: SizedBox(
               child: Text(
-                'Nama Customer',
+                'Nama Pelanggan',
                 style: context.textTheme.headlineSmall,
               ),
             ),

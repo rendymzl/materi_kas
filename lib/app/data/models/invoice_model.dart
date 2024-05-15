@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 import 'cart_model.dart';
 import 'customer_model.dart';
 import 'package:powersync/sqlite3.dart' as sqlite;
@@ -31,17 +33,29 @@ class Invoice {
   Invoice.fromJson(Map<String, dynamic> jsonb) {
     Map<String, dynamic> customerjson = {};
 
-    dynamic decodedCustomer = json.decode(jsonb['customer']);
-    if (decodedCustomer is Map<String, dynamic>) {
-      customerjson = decodedCustomer;
+    // dynamic decodedCustomer = json.decode(jsonb['customer']);
+    if (jsonb['customer'] is Map<String, dynamic>) {
+      customerjson = jsonb['customer'];
+    } else {
+      customerjson = json.decode(jsonb['customer']);
     }
+
+    debugPrint(jsonb['products_cart'].toString());
 
     List<Cart> cartList = [];
 
-    List<dynamic> decodedProductsCart = jsonb['products_cart'];
-    cartList = decodedProductsCart.map((cart) {
-      return Cart.fromJson(cart);
-    }).toList();
+    if (jsonb['products_cart'] is List<dynamic>) {
+      List<dynamic> decodedProductsCart = jsonb['products_cart'];
+      cartList = decodedProductsCart.map((cart) {
+        return Cart.fromJson(cart);
+      }).toList();
+    } else {
+      Map<String, dynamic> decodedProductsCart = jsonb['products_cart'];
+      List<dynamic> listDynamic = decodedProductsCart['cart_list'];
+      cartList = listDynamic.map((cart) {
+        return Cart.fromJson(cart);
+      }).toList();
+    }
 
     id = jsonb['id'];
     invoiceId = jsonb['invoice_id'];

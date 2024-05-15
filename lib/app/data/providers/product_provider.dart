@@ -1,42 +1,63 @@
-import 'dart:convert';
+// import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../main.dart';
 import '../models/product_model.dart';
 
 class ProductProvider extends GetConnect {
-  //! Read
-  static Future<List<Product>> fetchData(String uuid) async {
-    GetStorage cacheUuid = GetStorage(uuid);
-    var cacheProduct = await cacheUuid.read('cacheProducts');
-    bool isCacheExist = await cacheProduct == null ? false : true;
+  //! TotalRow
+  // int totalRowCount = 0;
+  // final int pageSize = 1000;
 
-    if (!isCacheExist) {
-      debugPrint('hit supabase');
+  static Future<int> getTotalRowCount(int totalRowCount) async {
+    // int totalCount = 0;
+    // int currentPage = 1;
 
-      List<Map<String, dynamic>> response =
-          await supabase.from('products').select().eq('owner_id', uuid);
+    try {
+      // while (true) {
+      final response =
+          await supabase.from('products').select().count(CountOption.exact);
+      // .range(currentPage, pageSize);
 
-      await cacheUuid.write('cacheProducts', jsonEncode(response));
+      // if (response.isEmpty) {
+      //   break;
+      // }
 
-      return response.map((product) => Product.fromJson(product)).toList();
-    } else {
-      debugPrint('hit cache');
+      // final int count = response.first['count'] as int;
+      // totalCount += count;
+      // currentPage++;
+      return response.count;
+      // }
 
-      List<Product> response = [];
-      dynamic decodedCache = await json.decode(cacheProduct);
-
-      if (decodedCache is List<dynamic>) {
-        response = decodedCache.map((product) {
-          return Product.fromJson(product);
-        }).toList();
-      }
-
-      return response;
+      // totalRowCount = totalCount;
+    } catch (error) {
+      debugPrint('Error: $error');
+      return 0;
     }
+  }
+
+  //! Read
+  static Future<List<Product>> fetchData(
+      String uuid, String productName) async {
+    debugPrint('hit supabase');
+    late List<Map<String, dynamic>> response;
+
+    if (productName == '') {
+      response = await supabase.from('products').select().eq('owner_id', uuid);
+      // .range(1, 1000);
+    } else {
+      response = await supabase
+          .from('products')
+          .select()
+          .eq('owner_id', uuid)
+          .ilike('product_name', '%$productName%');
+    }
+
+    return response.map((product) => Product.fromJson(product)).toList();
   }
 
   //! create
@@ -55,7 +76,7 @@ class ProductProvider extends GetConnect {
     ]);
 
     await cacheUuid.remove('cacheProducts');
-    List<Product> response = await fetchData(product.uuid);
+    List<Product> response = await fetchData(product.uuid, '');
     return response;
   }
 
@@ -71,7 +92,7 @@ class ProductProvider extends GetConnect {
         .select();
 
     await cacheUuid.remove('cacheProducts');
-    List<Product> response = await fetchData(uuid);
+    List<Product> response = await fetchData(uuid, '');
     return response;
   }
 
@@ -81,7 +102,7 @@ class ProductProvider extends GetConnect {
     await supabase.from('products').delete().eq('id', product.id!);
 
     await cacheUuid.remove('cacheProducts');
-    List<Product> response = await fetchData(product.uuid);
+    List<Product> response = await fetchData(product.uuid, '');
     return response;
   }
 }

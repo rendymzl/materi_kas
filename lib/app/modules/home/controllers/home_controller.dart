@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+// import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
 import 'package:materi_kas/app/modules/invoice/controllers/invoice_controller.dart';
@@ -37,20 +38,23 @@ class HomeController extends GetxController {
     uuid = supabase.auth.currentUser!.id;
     foundProducts.value = productList;
     customers.value = customerList;
+    // GetStorage cacheUuid = GetStorage(uuid);
   }
 
   void filterProducts(String productName) {
-    var result = <Product>[];
-    productName.isEmpty
-        ? result = productList
-        : result = productList
-            .where((product) => product.productName
-                .toString()
-                .toLowerCase()
-                .contains(productName))
-            .toList();
+    // var result = <Product>[];
+    productController.filterProducts(productName);
 
-    foundProducts.value = result;
+    // productName.isEmpty
+    //     ? result = productList
+    //     : result = productList
+    //         .where((product) => product.productName
+    //             .toString()
+    //             .toLowerCase()
+    //             .contains(productName))
+    //         .toList();
+
+    // foundProducts.value = result;
   }
 
   ScrollController scrollController = ScrollController();
@@ -102,6 +106,51 @@ class HomeController extends GetxController {
     cartList.remove(productCart);
   }
 
+  //! dateTime
+  final isDateTimeNow = true.obs;
+  final selectedDate = DateTime.now().obs;
+  final selectedTime = TimeOfDay.now().obs;
+  final displayDate = DateTime.now().toString().obs;
+  final displayTime = TimeOfDay.now().toString().obs;
+
+  void handleDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate.value,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      locale: const Locale('id', 'ID'),
+    );
+
+    selectedDate.value = pickedDate ?? DateTime.now();
+    displayDate.value = pickedDate.toString();
+  }
+
+  void handleTime(BuildContext context) async {
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: selectedTime.value,
+    );
+
+    selectedTime.value = pickedTime ?? TimeOfDay.now();
+    displayTime.value = pickedTime.toString();
+  }
+
+  void dateTimeCheckBox() async {
+    isDateTimeNow.value = !isDateTimeNow.value;
+    if (!isDateTimeNow.value) {
+      displayDate.value = '';
+      displayTime.value = '';
+    } else {
+      displayDate.value = DateTime.now().toString();
+      displayTime.value = TimeOfDay.now().toString();
+    }
+    selectedDate.value = DateTime.now();
+    selectedTime.value = TimeOfDay.now();
+  }
+
+  //! MoneyHandle
+  //* quantity
   void quantityHandle(Cart productCart, String qty) {
     int index = cartList.indexWhere(
         (selectItem) => selectItem.product?.id == productCart.product?.id);
@@ -111,12 +160,34 @@ class HomeController extends GetxController {
     cartList.replaceRange(index, index + 1, [productCart]);
   }
 
+  //* discount
   final pay = TextEditingController();
   final numberFormat = NumberFormat("#,##0", "id_ID");
-  final isRegisteredCustomer = false.obs;
+  void discountHandle(Cart productCart,
+      TextEditingController discountController, String value) {
+    if (value.isNotEmpty) {
+      String newValue =
+          numberFormat.format(int.parse(value.replaceAll('.', '')));
+      if (newValue != discountController.text) {
+        discountController.value = TextEditingValue(
+          text: newValue,
+          selection: TextSelection.collapsed(offset: newValue.length),
+        );
+      }
+    }
 
+    int index = cartList.indexWhere(
+        (selectItem) => selectItem.product?.id == productCart.product?.id);
+
+    int discountParse = value == '' ? 0 : int.parse(value);
+    productCart.individualDiscount = discountParse;
+    cartList.replaceRange(index, index + 1, [productCart]);
+  }
+
+  //* calculating
   final moneyChange = 0.obs;
   final totalPrice = 0.obs;
+  final totalDiscount = 0.obs;
 
   Timer? debounce;
 
@@ -149,6 +220,7 @@ class HomeController extends GetxController {
   final displayName = ''.obs;
   final customerPhoneController = TextEditingController();
   final customerAddressController = TextEditingController();
+  final isRegisteredCustomer = false.obs;
 
   void handleCustomer(String value) {
     isRegisteredCustomer.value = false;
@@ -170,6 +242,7 @@ class HomeController extends GetxController {
   String getLastSerialNumber(Invoice invoice) {
     String? invoiceNumber = invoice.invoiceId;
     DateTime? invoiceDate = invoice.createdAt;
+    String serialPart = '000';
 
     if (invoiceNumber != null && invoiceDate != null) {
       List<String> parts = invoiceNumber.split('/');
@@ -180,13 +253,13 @@ class HomeController extends GetxController {
           invoiceDate.year == today.year &&
           invoiceDate.month == today.month &&
           invoiceDate.day == today.day) {
-        String serialPart = parts[0].replaceAll('INV', '');
+        serialPart = parts[0].replaceAll('INV', '');
         serialPart = serialPart.replaceFirst(RegExp('^0+'), '');
         return serialPart;
       }
     }
 
-    return '000';
+    return serialPart;
   }
 
   String generateInvoice(Customer? customer) {
@@ -217,13 +290,37 @@ class HomeController extends GetxController {
     final payment =
         pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
     final change = moneyChange.value - totalPrice.value;
+    late final Customer customer;
+    DateTime dateTime = DateTime(
+      selectedDate.value.year,
+      selectedDate.value.month,
+      selectedDate.value.day,
+      selectedTime.value.hour,
+      selectedTime.value.minute,
+    );
+
+    if (selectedCustomer.value != null) {
+      customer = Customer(
+        id: selectedCustomer.value!.id,
+        customerId: selectedCustomer.value!.customerId,
+        name: selectedCustomer.value!.name,
+        phone: selectedCustomer.value!.phone,
+        address: selectedCustomer.value!.address,
+        uuid: selectedCustomer.value!.uuid,
+      );
+    } else {
+      customer = Customer(
+        name: customerNameController.text,
+        phone: customerPhoneController.text,
+        address: customerAddressController.text,
+        uuid: uuid,
+      );
+    }
+
     final invoice = Invoice(
       invoiceId: invoiceId.value,
-      customer: Customer(
-          name: customerNameController.text,
-          phone: customerPhoneController.text,
-          address: customerAddressController.text,
-          uuid: uuid),
+      createdAt: dateTime,
+      customer: customer,
       productsCart: ProductsCart(cartList: cartList),
       bill: totalPrice.value,
       pay: payment,
@@ -243,6 +340,13 @@ class HomeController extends GetxController {
             pay.text = '';
             moneyChange.value = 0;
             totalPrice.value = 0;
+            totalDiscount.value = 0;
+
+            displayDate.value = DateTime.now().toString();
+            displayTime.value = TimeOfDay.now().toString();
+
+            selectedDate.value = DateTime.now();
+            selectedTime.value = TimeOfDay.now();
             Get.back();
           },
           child: const Text('OK'),
@@ -280,7 +384,7 @@ class HomeController extends GetxController {
               customerPhoneController.text == '' ||
               customerAddressController.text == '')
           ? validate('Customer')
-          : change <= 0
+          : change < 0
               ? validate('debt')
               : success();
     } on PostgrestException catch (e) {

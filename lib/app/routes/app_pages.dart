@@ -13,6 +13,8 @@ import '../modules/product/bindings/product_binding.dart';
 import '../modules/product/views/product_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/statistic/bindings/statistic_binding.dart';
+import '../modules/statistic/views/statistic_view.dart';
 
 part 'app_routes.dart';
 
@@ -55,6 +57,11 @@ class AppPages {
       name: _Paths.PROFILE,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.STATISTIC,
+      page: () => const StatisticView(),
+      binding: StatisticBinding(),
     ),
   ];
 }

@@ -11,6 +11,7 @@ abstract class Routes {
   static const ADD_PRODUCT = _Paths.ADD_PRODUCT;
   static const CUSTOMER = _Paths.CUSTOMER;
   static const PROFILE = _Paths.PROFILE;
+  static const STATISTIC = _Paths.STATISTIC;
 }
 
 abstract class _Paths {
@@ -23,4 +24,5 @@ abstract class _Paths {
   static const ADD_PRODUCT = '/add-product';
   static const CUSTOMER = '/customer';
   static const PROFILE = '/profile';
+  static const STATISTIC = '/statistic';
 }

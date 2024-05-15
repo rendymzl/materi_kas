@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:materi_kas/app/routes/app_pages.dart';
+// import 'package:materi_kas/app/routes/app_pages.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/models/cart_model.dart';
@@ -66,9 +66,10 @@ class HomeView extends GetView<HomeController> {
                     controller: controller,
                     formatter: formatter), //! 1 ProductListCard
               ),
-              SelectedProductCard(
-                  controller: controller,
-                  formatter: formatter), //! 2 SelectedProductCard
+              Expanded(
+                child: SelectedProductCard(
+                    controller: controller, formatter: formatter),
+              ), //! 2 SelectedProductCard
             ],
           ),
         ),
@@ -96,66 +97,60 @@ class ProductListCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: [
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: "Cari Barang",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  suffixIcon: Icon(Symbols.search),
+              Container(
+                color: Colors.white,
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: "Cari Barang",
+                    labelStyle: TextStyle(color: Colors.grey),
+                    suffixIcon: Icon(Symbols.search),
+                  ),
+                  onChanged: (value) => controller.filterProducts(value),
                 ),
-                onChanged: (value) => controller.filterProducts(value),
               ),
               Expanded(
                 child: Obx(
                   () => Column(
                     children: [
                       Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 4),
-                          child: ListView.builder(
-                            itemCount: controller.foundProducts.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              final foundProducts =
-                                  controller.foundProducts[index];
-                              return Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                decoration: BoxDecoration(
-                                  border: Border.symmetric(
-                                    horizontal:
-                                        BorderSide(color: Colors.grey[200]!),
-                                  ),
+                        child: ListView.builder(
+                          itemCount: controller.foundProducts.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final foundProducts =
+                                controller.foundProducts[index];
+                            return Container(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.symmetric(
+                                  horizontal:
+                                      BorderSide(color: Colors.grey[200]!),
                                 ),
-                                child: ListTile(
-                                  leading: Text(
-                                    foundProducts.productId!,
-                                    style: context.textTheme.bodySmall,
-                                  ),
-                                  title: Text(
-                                    '${foundProducts.productName}',
-                                    style: context.textTheme.titleLarge,
-                                  ),
-                                  trailing: Text(
-                                    'Rp. ${formatter.format(foundProducts.sellPrice)}',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  onTap: () =>
-                                      controller.addToCart(foundProducts),
+                              ),
+                              child: ListTile(
+                                leading: Text(
+                                  foundProducts.productId!,
+                                  style: context.textTheme.bodySmall,
                                 ),
-                              );
-                            },
-                          ),
+                                title: Text(
+                                  '${foundProducts.productName}',
+                                  style: context.textTheme.titleLarge,
+                                ),
+                                trailing: Text(
+                                  'Rp. ${formatter.format(foundProducts.sellPrice)}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                onTap: () =>
+                                    controller.addToCart(foundProducts),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       // const Divider(color: Colors.grey),
                       Container(
                         color: Colors.white,
-                        height: 170,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            CustomerData(controller: controller),
-                          ],
-                        ),
+                        height: 250,
+                        child: CustomerData(controller: controller),
                       ),
                     ],
                   ),
@@ -184,88 +179,84 @@ class CustomerData extends StatelessWidget {
     return Obx(
       () => Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
           children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextField(
-                            controller: controller.customerNameController,
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              labelText: 'Nama',
-                              labelStyle: const TextStyle(color: Colors.grey),
-                              floatingLabelStyle: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
-                              focusedErrorBorder: outlineRed,
-                              errorBorder: outlineRed,
-                            ),
-                            onChanged: (value) {
-                              controller.handleCustomer(value);
-                              controller.displayName.value = value;
-                            }),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
-                        child: TextField(
-                          controller: controller.customerPhoneController,
-                          decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
-                            labelText: 'No. Telp',
-                            labelStyle: const TextStyle(color: Colors.grey),
-                            floatingLabelStyle: TextStyle(
-                                color: Theme.of(context).colorScheme.primary),
-                            focusedErrorBorder: outlineRed,
-                            errorBorder: outlineRed,
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
-                          ],
-                          onChanged: (value) =>
-                              controller.handleCustomer(value),
+            const Divider(),
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => controller.handleCheckBox(null),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                            value: controller.isRegisteredCustomer.value,
+                            onChanged: (value) =>
+                                controller.handleCheckBox(value)),
+                        Text(
+                          'Pelanggan terdaftar  ',
+                          style: controller.isRegisteredCustomer.value
+                              ? context.textTheme.bodySmall!.copyWith(
+                                  color: Theme.of(context).colorScheme.primary)
+                              : context.textTheme.bodySmall,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: () => controller.handleCheckBox(null),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                  value: controller.isRegisteredCustomer.value,
-                                  onChanged: (value) =>
-                                      controller.handleCheckBox(value)),
-                              Text(
-                                'Customer terdaftar  ',
-                                style: context.textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
+                ),
+                if (controller.isRegisteredCustomer.value)
+                  dropdownMenu(controller, context),
+              ],
+            ),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                        controller: controller.customerNameController,
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          labelText: 'Nama Pelanggan',
+                          labelStyle: const TextStyle(color: Colors.grey),
+                          floatingLabelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.primary),
+                          focusedErrorBorder: outlineRed,
+                          errorBorder: outlineRed,
                         ),
+                        onChanged: (value) {
+                          controller.handleCustomer(value);
+                          controller.displayName.value = value;
+                        }),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: controller.customerPhoneController,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: 'No. Telp',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        floatingLabelStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.primary),
+                        focusedErrorBorder: outlineRed,
+                        errorBorder: outlineRed,
                       ),
-                      if (controller.isRegisteredCustomer.value)
-                        dropdownMenu(controller, context),
-                    ],
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+                      ],
+                      onChanged: (value) => controller.handleCustomer(value),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(height: 16),
             Expanded(
               flex: 2,
               child: TextField(
@@ -301,7 +292,7 @@ Widget dropdownMenu(HomeController controller, BuildContext context) {
     child: DropdownButton<Customer>(
       icon: const Icon(Icons.arrow_drop_down),
       hint: Text(
-        'Pilih Customer',
+        'Pilih Pelanggan',
         style: context.textTheme.bodySmall,
       ),
       dropdownColor: Colors.white,
@@ -337,7 +328,7 @@ class SelectedProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 380,
+      // width: 500,
       child: Column(
         children: [
           Expanded(
@@ -346,16 +337,128 @@ class SelectedProductCard extends StatelessWidget {
                 () {
                   final cartList = controller.cartList;
                   controller.totalPrice.value = 0;
+                  controller.totalDiscount.value = 0;
                   for (var item in cartList) {
                     controller.totalPrice.value +=
-                        (item.product!.sellPrice! * item.quantity!);
+                        (item.product!.sellPrice! * item.quantity! -
+                            item.individualDiscount!);
+
+                    controller.totalDiscount.value += item.individualDiscount!;
                   }
+
+                  TimeOfDay selectedTime = controller.selectedTime.value;
+                  DateTime convertedTime = DateTime(
+                      2024, 1, 1, selectedTime.hour, selectedTime.minute);
                   return Column(
                     children: [
                       Container(
-                        height: 12,
+                        height: 60,
                         color: Colors.white,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              onTap: () => controller.dateTimeCheckBox(),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                        value: controller.isDateTimeNow.value,
+                                        onChanged: (value) =>
+                                            controller.dateTimeCheckBox()),
+                                    Text(
+                                      'Tanggal Invoice saat ini',
+                                      style: controller.isDateTimeNow.value
+                                          ? context.textTheme.bodySmall!
+                                              .copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary)
+                                          : context.textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: controller.isDateTimeNow.value
+                                      ? null
+                                      : () async =>
+                                          controller.handleDate(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4, horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      color: controller.isDateTimeNow.value
+                                          ? Colors.white
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      controller.displayDate.value == ''
+                                          ? 'Pilih Tanggal'
+                                          : DateFormat('dd MMMM y', 'id')
+                                              .format(controller
+                                                  .selectedDate.value),
+                                      style: controller.isDateTimeNow.value
+                                          ? context.textTheme.bodySmall!
+                                              .copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              fontStyle: FontStyle.italic,
+                                            )
+                                          : const TextStyle(
+                                              color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                InkWell(
+                                  onTap: controller.isDateTimeNow.value
+                                      ? null
+                                      : () async =>
+                                          controller.handleTime(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4, horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      color: controller.isDateTimeNow.value
+                                          ? Colors.white
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      controller.displayTime.value == ''
+                                          ? 'Pilih Jam'
+                                          : DateFormat('HH:mm', 'id')
+                                              .format(convertedTime),
+                                      style: controller.isDateTimeNow.value
+                                          ? context.textTheme.bodySmall!
+                                              .copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              fontStyle: FontStyle.italic,
+                                            )
+                                          : const TextStyle(
+                                              color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       controller.cartList.isNotEmpty
                           ? Expanded(
@@ -401,6 +504,7 @@ class SelectedProductCard extends StatelessWidget {
                                                   .copyWith(
                                                       fontStyle:
                                                           FontStyle.italic),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                             Text(
                                               controller.invoiceId.value,
@@ -461,9 +565,14 @@ class SelectedProductList extends StatelessWidget {
         final productCart = cartList[index];
         final qty = TextEditingController();
         qty.text = '${productCart.quantity}';
-
         qty.selection = TextSelection.fromPosition(
           TextPosition(offset: qty.text.length),
+        );
+
+        final discount = TextEditingController();
+        discount.text = formatter.format(productCart.individualDiscount);
+        discount.selection = TextSelection.fromPosition(
+          TextPosition(offset: discount.text.length),
         );
 
         return SizedBox(
@@ -524,7 +633,23 @@ class SelectedProductList extends StatelessWidget {
                               productCart:
                                   productCart), //* 1.1 QuantityTextField
                         ),
-                        // const Text(' = ')
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 5,
+                  child: SizedBox(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: DiscountTextfield(
+                              discount: discount,
+                              controller: controller,
+                              productCart:
+                                  productCart), //* 1.1 QuantityTextField
+                        ),
                       ],
                     ),
                   ),
@@ -535,7 +660,7 @@ class SelectedProductList extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'Rp. ${formatter.format(productCart.product!.sellPrice! * productCart.quantity!)}',
+                        'Rp. ${formatter.format(productCart.product!.sellPrice! * productCart.quantity! - productCart.individualDiscount!)}',
                         style: context.textTheme.titleMedium,
                       ),
                     ),
@@ -588,6 +713,46 @@ class QuantityTextField extends StatelessWidget {
   }
 }
 
+//* 1.2 discountTextfield ==================================================================
+class DiscountTextfield extends StatelessWidget {
+  const DiscountTextfield({
+    super.key,
+    required this.discount,
+    required this.controller,
+    required this.productCart,
+  });
+
+  final TextEditingController discount;
+  final HomeController controller;
+  final Cart productCart;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+        controller: discount,
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          labelText: 'Discount',
+          labelStyle: context.textTheme.bodySmall!
+              .copyWith(fontStyle: FontStyle.italic),
+          prefixText: 'Rp. ',
+          counterText: '',
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+          contentPadding: const EdgeInsets.all(10),
+          border: const OutlineInputBorder(borderSide: BorderSide.none),
+          isDense: true,
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
+        onChanged: (value) {
+          // value == '' ? 0 : value;
+          // discount.text = value;
+          controller.discountHandle(productCart, discount, value);
+        });
+  }
+}
+
 //* 2.0 CalculatePrice ==================================================================
 class CalculatePrice extends StatelessWidget {
   const CalculatePrice({
@@ -636,12 +801,25 @@ class CalculatePrice extends StatelessWidget {
                             ),
                             Padding(
                               padding: const EdgeInsets.only(right: 3),
-                              child: Text(
-                                formatter.format(controller.totalPrice.value),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              child: Row(
+                                children: [
+                                  if (controller.totalDiscount.value > 0)
+                                    Text(
+                                      '${formatter.format(controller.totalDiscount.value + controller.totalPrice.value)} - ${formatter.format(controller.totalDiscount.value)}',
+                                      style: context.textTheme.bodySmall!
+                                          .copyWith(
+                                              fontStyle: FontStyle.italic),
+                                    ),
+                                  const SizedBox(width: 16),
+                                  Text(
+                                    formatter
+                                        .format(controller.totalPrice.value),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
