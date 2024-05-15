@@ -23,20 +23,33 @@ class HomeView extends GetView<HomeController> {
         scrolledUnderElevation: 0,
         backgroundColor: const Color(0xFFF5F8FF),
         actions: [
+          // IconButton(
+          //   onPressed: () {
+          //     Get.toNamed(Routes.PRODUCT);
+          //   },
+          //   icon: const Icon(Symbols.box),
+          // ),
+          // IconButton(
+          //   onPressed: () {
+          //     Get.toNamed(Routes.INVOICE);
+          //   },
+          //   icon: const Icon(Symbols.document_scanner),
+          // ),
           IconButton(
-            onPressed: () {
-              Get.toNamed(Routes.PRODUCT);
+            onPressed: () async {
+              Get.defaultDialog(
+                title: 'Logout?',
+                middleText: 'Logout akun?',
+                confirm: TextButton(
+                  onPressed: () => controller.signOut(),
+                  child: const Text('Logout'),
+                ),
+                cancel: TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text('Batal'),
+                ),
+              );
             },
-            icon: const Icon(Symbols.box),
-          ),
-          IconButton(
-            onPressed: () {
-              Get.toNamed(Routes.INVOICE);
-            },
-            icon: const Icon(Symbols.document_scanner),
-          ),
-          IconButton(
-            onPressed: () async => controller.signOut(),
             icon: const Icon(Symbols.logout),
           ),
         ],
