@@ -24,15 +24,22 @@ class StatisticController extends GetxController {
   }
 
   void fetchData(String rangeDate) {
-    if (rangeDate == 'week') {
-      Future.delayed(
-        const Duration(milliseconds: 300),
-        () {
+    Future.delayed(
+      const Duration(milliseconds: 360),
+      () {
+        if (rangeDate == 'week') {
           groupWeekInvoice();
           isLoading.value = false;
-        },
-      );
-    }
+        } else {
+          groupWeekInvoice();
+          isLoading.value = false;
+        }
+      },
+    );
+  }
+
+  DateTime convertToLocal(DateTime utcTime) {
+    return utcTime.add(const Duration(hours: 7));
   }
 
   void groupWeekInvoice() {
@@ -40,7 +47,8 @@ class StatisticController extends GetxController {
     DateTime thisWeek = monday.subtract(const Duration(days: 0));
 
     filteredInvoices = invoiceList
-        .where((invoice) => invoice.createdAt!.isAfter(thisWeek))
+        .where(
+            (invoice) => convertToLocal(invoice.createdAt!).isAfter(thisWeek))
         .toList();
 
     const startingDay = DateTime.monday;
@@ -48,8 +56,6 @@ class StatisticController extends GetxController {
 
     final offset = currentDay - startingDay;
     final adjustedStartingDay = DateTime.now().subtract(Duration(days: offset));
-    debugPrint(monday.toString());
-    debugPrint(adjustedStartingDay.toString());
     getData(adjustedStartingDay);
   }
 
@@ -60,9 +66,9 @@ class StatisticController extends GetxController {
 
       final invoices = filteredInvoices
           .where((invoice) =>
-              invoice.createdAt!.year == currentDate.year &&
-              invoice.createdAt!.month == currentDate.month &&
-              invoice.createdAt!.day == currentDate.day)
+              convertToLocal(invoice.createdAt!).year == currentDate.year &&
+              convertToLocal(invoice.createdAt!).month == currentDate.month &&
+              convertToLocal(invoice.createdAt!).day == currentDate.day)
           .toList();
 
       final dateString = formatter.format(currentDate);
