@@ -26,8 +26,10 @@ class HomeController extends GetxController {
   late final String uuid;
   late final productList = productController.productList;
   late final customerList = customerController.customerList;
+  late final invoiceList = invoiceController.invoiceList;
   final foundProducts = <Product>[].obs;
   final customers = <Customer>[].obs;
+  final invoices = <Invoice>[].obs;
   final cartList = <Cart>[].obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
@@ -38,6 +40,7 @@ class HomeController extends GetxController {
     uuid = supabase.auth.currentUser!.id;
     foundProducts.value = productList;
     customers.value = customerList;
+    invoices.value = invoiceList;
     // GetStorage cacheUuid = GetStorage(uuid);
   }
 
@@ -263,11 +266,11 @@ class HomeController extends GetxController {
   }
 
   String generateInvoice(Customer? customer) {
-    Invoice inv = invoiceController.invoiceList.lastWhere(
-      (inv) => inv.invoiceId!.contains('INV'),
+    Invoice inv = invoices.lastWhere(
+      (invData) => invData.invoiceId!.contains('INV'),
       orElse: () => Invoice(),
     );
-
+    debugPrint(inv.toString());
     int lastSerialNumber = int.parse(getLastSerialNumber(inv));
 
     lastSerialNumber++;

@@ -747,7 +747,6 @@ void editDialog(BuildContext context, InvoiceController controller,
     Invoice? invoice, NumberFormat formatter) {
   controller.isRegisteredCustomer.value = false;
   controller.id.value = invoice!.id!;
-  // debugPrint(invoice!.customer!.customerId);
   if (invoice.customer!.customerId != null) {
     controller.isRegisteredCustomer.value = true;
 

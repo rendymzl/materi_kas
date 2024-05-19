@@ -43,7 +43,6 @@ class ProductProvider extends GetConnect {
   //! Read
   static Future<List<Product>> fetchData(
       String uuid, String productName) async {
-    debugPrint('hit supabase');
     late List<Map<String, dynamic>> response;
 
     if (productName == '') {

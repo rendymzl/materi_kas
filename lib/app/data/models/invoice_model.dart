@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 import 'cart_model.dart';
 import 'customer_model.dart';
 import 'package:powersync/sqlite3.dart' as sqlite;
@@ -39,8 +37,6 @@ class Invoice {
     } else {
       customerjson = json.decode(jsonb['customer']);
     }
-
-    debugPrint(jsonb['products_cart'].toString());
 
     List<Cart> cartList = [];
 

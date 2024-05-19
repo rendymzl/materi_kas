@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // import 'package:get_storage/get_storage.dart';
 import 'package:materi_kas/app/data/providers/product_provider.dart';
@@ -16,7 +15,6 @@ class InvoiceProvider extends GetConnect {
     // bool isCacheExist = await cacheProduct == null ? false : true;
 
     // if (!isCacheExist) {
-    debugPrint('hit supabase inv');
 
     List<Map<String, dynamic>> response = await supabase
         .from('invoices')
@@ -28,7 +26,6 @@ class InvoiceProvider extends GetConnect {
 
     return response.map((invoice) => Invoice.fromJson(invoice)).toList();
     // } else {
-    //   debugPrint('hit cache inv');
 
     //   List<Invoice> response = [];
     //   dynamic decodedCache = await json.decode(cacheProduct);
@@ -67,12 +64,7 @@ class InvoiceProvider extends GetConnect {
       }
     ]).then(
       (value) async {
-        debugPrint('hit then');
-
         for (var cart in invoice.productsCart!.cartList!) {
-          debugPrint(cart.product!.id!.toString());
-          debugPrint(cart.product!.uuid.toString());
-          debugPrint((cart.product!.sold! + cart.quantity!).toString());
           Map<String, dynamic> data = {
             'sold': cart.product!.sold! + cart.quantity!
           };
@@ -90,9 +82,6 @@ class InvoiceProvider extends GetConnect {
   //! update
   static Future<List<Invoice>> update(
       Map<String, Object?> newData, String id, String uuid) async {
-    debugPrint(newData.toString());
-    // debugPrint(uuid);
-    // debugPrint(id);
     await supabase
         .from('invoices')
         .update(newData)

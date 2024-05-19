@@ -9,6 +9,6 @@ class SideMenuData {
     MenuModel(icon: Symbols.groups, label: 'Pelanggan'),
     MenuModel(icon: Symbols.handyman, label: 'Barang'),
     MenuModel(icon: Symbols.monitoring, label: 'Statistik'),
-    MenuModel(icon: Symbols.account_circle, label: 'Profil'),
+    // MenuModel(icon: Symbols.account_circle, label: 'Profil'),
   ];
 }
