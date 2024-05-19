@@ -134,7 +134,8 @@ class BarChartWidget extends GetView<StatisticController> {
                             child: Column(
                               children: [
                                 ListTile(
-                                  title: Text(controller.weekChart.toString()),
+                                  title:
+                                      Text(controller.weeklyChart.toString()),
                                 )
                               ],
                             ),
@@ -193,8 +194,8 @@ class BarChartWidget extends GetView<StatisticController> {
       );
 
   Widget getTitles(double value, TitleMeta meta) {
-    bool isWeekDates = controller.weekChart.isNotEmpty;
-    List<ChartModel> chart = controller.weekChart;
+    bool isWeekDates = controller.weeklyChart.isNotEmpty;
+    List<ChartModel> chart = controller.weeklyChart;
     String dateString = chart[value.toInt()].dateString;
     // debugPrint(controller.weekInvoices[value.toInt()][0].);
     const style = TextStyle(
@@ -275,11 +276,11 @@ class BarChartWidget extends GetView<StatisticController> {
   //     );
 
   List<BarChartGroupData> get barGroups => List.generate(
-        controller.weekChart.length,
+        controller.weeklyChart.length,
         (index) {
           // final date = controller.groupedInvoices.keys.elementAt(index);
           // final count = controller.groupedInvoices[date];
-          ChartModel chart = controller.weekChart[index];
+          ChartModel chart = controller.weeklyChart[index];
           // int count = 0;
           // int totalCost = 0;
           // int profit = 0;
