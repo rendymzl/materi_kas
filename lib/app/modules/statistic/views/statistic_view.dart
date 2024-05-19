@@ -135,7 +135,7 @@ class BarChartWidget extends GetView<StatisticController> {
                               children: [
                                 ListTile(
                                   title:
-                                      Text(controller.weeklyChart.toString()),
+                                      Text(controller.invoiceChart.toString()),
                                 )
                               ],
                             ),
@@ -155,7 +155,11 @@ class BarChartWidget extends GetView<StatisticController> {
                       onPressed: () {}, child: const Text('Hari Ini')),
                   ElevatedButton(
                       onPressed: () {}, child: const Text('Kemarin')),
-                  ElevatedButton(onPressed: () {}, child: const Text('7 Hari')),
+                  ElevatedButton(
+                      onPressed: () {}, child: const Text('Minggu Ini')),
+                  ElevatedButton(
+                      onPressed: () => controller.fetchData('month'),
+                      child: const Text('Bulan Ini')),
                   ElevatedButton(
                       onPressed: () {}, child: const Text('Pilih Tanggal')),
                 ],
@@ -194,8 +198,8 @@ class BarChartWidget extends GetView<StatisticController> {
       );
 
   Widget getTitles(double value, TitleMeta meta) {
-    bool isWeekDates = controller.weeklyChart.isNotEmpty;
-    List<ChartModel> chart = controller.weeklyChart;
+    // bool isWeekDates = controller.invoiceChart.isNotEmpty;
+    List<ChartModel> chart = controller.invoiceChart;
     String dateString = chart[value.toInt()].dateString;
     // debugPrint(controller.weekInvoices[value.toInt()][0].);
     const style = TextStyle(
@@ -204,7 +208,7 @@ class BarChartWidget extends GetView<StatisticController> {
       fontSize: 13,
     );
     String text = '';
-    if (isWeekDates) {
+    if (controller.isWeekly.value) {
       switch (value.toInt()) {
         case 0:
           text = 'Sen';
@@ -237,7 +241,9 @@ class BarChartWidget extends GetView<StatisticController> {
       axisSide: meta.axisSide,
       space: 4,
       child: Text(
-          isWeekDates ? '$text $dateString' : (value.toInt() + 1).toString(),
+          controller.isWeekly.value
+              ? '$text $dateString'
+              : (value.toInt() + 1).toString(),
           style: style),
     );
   }
@@ -276,45 +282,20 @@ class BarChartWidget extends GetView<StatisticController> {
   //     );
 
   List<BarChartGroupData> get barGroups => List.generate(
-        controller.weeklyChart.length,
+        controller.invoiceChart.length,
         (index) {
-          // final date = controller.groupedInvoices.keys.elementAt(index);
-          // final count = controller.groupedInvoices[date];
-          ChartModel chart = controller.weeklyChart[index];
-          // int count = 0;
-          // int totalCost = 0;
-          // int profit = 0;
-
-          // if (chart.invoiceList.isNotEmpty) {
-          //   count = chart.invoiceList.length;
-          //   for (Invoice invoice in chart.invoiceList) {
-          //     totalCost = invoice.productsCart!.cartList!
-          //         .map((cart) => cart.product!.costPrice)
-          //         .reduce((value, element) => value! + element!)!;
-          //     profit += invoice.bill! - totalCost;
-          //   }
-          // }
-          // int debugCounter = 1;
-          // debugPrint((debugCounter++).toString());
-
-          // if (controller.maxY.value < totalCost) {
-          //   controller.maxY.value = totalCost;
-          // }
-
+          ChartModel chart = controller.invoiceChart[index];
           return BarChartGroupData(
             barsSpace: 10,
             x: index,
             barRods: [
               BarChartRodData(
-                toY: chart.totalProfit.toDouble(), color: Colors.red,
-                // toY: count.toDouble(),
-                // gradient: _barsGradient,
+                toY: chart.totalProfit.toDouble(),
+                color: Colors.red,
               ),
               BarChartRodData(
                 toY: chart.totalInvoice.toDouble() * 50000,
                 color: Colors.orange,
-                // toY: count.toDouble(),
-                // gradient: _barsGradient,
               )
             ],
             showingTooltipIndicators: [0, 1],

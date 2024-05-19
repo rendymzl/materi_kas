@@ -10,9 +10,10 @@ class StatisticController extends GetxController {
   InvoiceController invoiceController = Get.put(InvoiceController());
   late final invoiceList = invoiceController.invoiceList;
   late List<Invoice> filteredInvoices = <Invoice>[].obs;
-  late List<ChartModel> weeklyChart = <ChartModel>[].obs;
-  late List<ChartModel> monthlyChart = <ChartModel>[].obs;
+  late List<ChartModel> invoiceChart = <ChartModel>[].obs;
+  // late List<ChartModel> monthlyChart = <ChartModel>[].obs;
   final maxY = 0.obs;
+  final isWeekly = true.obs;
   final isLoading = true.obs;
   DateTime today = DateTime.now();
 
@@ -25,16 +26,20 @@ class StatisticController extends GetxController {
   }
 
   void fetchData(String rangeDate) {
+    invoiceChart.clear();
+    // monthlyChart.clear();
     Future.delayed(
       const Duration(milliseconds: 360),
       () {
         if (rangeDate == 'week') {
-          groupWeekInvoice();
-          isLoading.value = false;
-        } else {
+          isWeekly.value = true;
+          // groupMonthlyInvoices();
           groupWeeklyInvoices();
-          isLoading.value = false;
+        } else {
+          isWeekly.value = false;
+          groupMonthlyInvoices();
         }
+        isLoading.value = false;
       },
     );
   }
@@ -43,25 +48,16 @@ class StatisticController extends GetxController {
     return utcTime.add(const Duration(hours: 7));
   }
 
-  void groupWeekInvoice() {
-    DateTime monday = today.subtract(Duration(days: today.weekday - 1));
-    DateTime thisWeek = monday.subtract(const Duration(days: 0));
-
-    filteredInvoices = invoiceList
-        .where(
-            (invoice) => convertToLocal(invoice.createdAt!).isAfter(thisWeek))
-        .toList();
-
+  void groupWeeklyInvoices() {
     const startingDay = DateTime.monday;
     final currentDay = DateTime.now().weekday;
-
-    weeklyChart.clear();
 
     final offset = currentDay - startingDay;
     final adjustedStartingDay = DateTime.now().subtract(Duration(days: offset));
 
     filteredInvoices = invoiceList
-        .where((invoice) => invoice.createdAt!.isAfter(adjustedStartingDay))
+        .where((invoice) =>
+            convertToLocal(invoice.createdAt!).isAfter(adjustedStartingDay))
         .toList();
     getData(adjustedStartingDay);
   }
@@ -74,13 +70,11 @@ class StatisticController extends GetxController {
     final startOfMonth = DateTime(currentYear, currentMonth, 1);
     final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
 
-    monthlyChart.clear();
-
     filteredInvoices = invoiceList
         .where((invoice) =>
-            invoice.createdAt!
+            convertToLocal(invoice.createdAt!)
                 .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
-            invoice.createdAt!
+            convertToLocal(invoice.createdAt!)
                 .isBefore(endOfMonth.add(const Duration(days: 1))))
         .toList();
     getData(null);
@@ -93,14 +87,11 @@ class StatisticController extends GetxController {
     final currentYear = DateTime.now().year;
 
     final formatter = DateFormat('dd/MM');
-    debugPrint(adjustedStartingDay.toString());
 
     void dateLooping(int i) {
       final currentDate = isWeekly
           ? adjustedStartingDay.add(Duration(days: i))
           : DateTime(currentYear, currentMonth, i);
-
-      debugPrint(filteredInvoices.toString());
 
       final invoices = filteredInvoices
           .where((invoice) =>
@@ -108,8 +99,6 @@ class StatisticController extends GetxController {
               convertToLocal(invoice.createdAt!).month == currentDate.month &&
               convertToLocal(invoice.createdAt!).day == currentDate.day)
           .toList();
-
-      debugPrint(invoices.toString());
 
       final dateString = formatter.format(currentDate);
       int totalSellPrice = 0;
@@ -137,7 +126,7 @@ class StatisticController extends GetxController {
 
       final chartData = ChartModel(dateString, totalSellPrice, totalCostPrice,
           totalProfit, totalInvoice);
-      isWeekly ? weeklyChart.add(chartData) : monthlyChart.add(chartData);
+      invoiceChart.add(chartData);
     }
 
     if (isWeekly) {
@@ -151,5 +140,6 @@ class StatisticController extends GetxController {
         dateLooping(day);
       }
     }
+    // debugPrint(monthlyChart.toString());
   }
 }
