@@ -11,13 +11,14 @@ class StatisticController extends GetxController {
   late final invoiceList = invoiceController.invoiceList;
   late List<Invoice> filteredInvoices = <Invoice>[].obs;
   late List<ChartModel> invoiceChart = <ChartModel>[].obs;
-  // late List<ChartModel> monthlyChart = <ChartModel>[].obs;
   final maxY = 0.obs;
   final isWeekly = true.obs;
   final isLoading = true.obs;
   DateTime today = DateTime.now();
 
   final totalInvoice = 0.obs;
+  final touchedGroupIndex = (-1).obs;
+  final touchedDataIndex = (-1).obs;
 
   @override
   void onInit() async {
@@ -27,17 +28,19 @@ class StatisticController extends GetxController {
 
   void fetchData(String rangeDate) {
     invoiceChart.clear();
-    // monthlyChart.clear();
+    isLoading.value = true;
     Future.delayed(
       const Duration(milliseconds: 360),
       () {
         if (rangeDate == 'week') {
           isWeekly.value = true;
-          // groupMonthlyInvoices();
           groupWeeklyInvoices();
-        } else {
+        } else if (rangeDate == 'month') {
           isWeekly.value = false;
           groupMonthlyInvoices();
+        } else {
+          isWeekly.value = false;
+          groupCustomInvoices();
         }
         isLoading.value = false;
       },
@@ -51,7 +54,6 @@ class StatisticController extends GetxController {
   void groupWeeklyInvoices() {
     const startingDay = DateTime.monday;
     final currentDay = DateTime.now().weekday;
-
     final offset = currentDay - startingDay;
     final adjustedStartingDay = DateTime.now().subtract(Duration(days: offset));
 
@@ -91,7 +93,7 @@ class StatisticController extends GetxController {
     void dateLooping(int i) {
       final currentDate = isWeekly
           ? adjustedStartingDay.add(Duration(days: i))
-          : DateTime(currentYear, currentMonth, i);
+          : DateTime(currentYear, currentMonth, i + 1);
 
       final invoices = filteredInvoices
           .where((invoice) =>
@@ -134,12 +136,10 @@ class StatisticController extends GetxController {
         dateLooping(i);
       }
     } else {
-      for (var day = 0;
-          day <= DateTime(currentYear, currentMonth + 1, 0).day;
-          day++) {
+      final totalDaysInMonth = DateTime(currentYear, currentMonth + 1, 0).day;
+      for (var day = 0; day < totalDaysInMonth; day++) {
         dateLooping(day);
       }
     }
-    // debugPrint(monthlyChart.toString());
   }
 }

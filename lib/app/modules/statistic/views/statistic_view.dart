@@ -52,7 +52,7 @@ class BarChartWidget extends GetView<StatisticController> {
                 : Row(
                     children: [
                       Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: Card(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
@@ -60,15 +60,18 @@ class BarChartWidget extends GetView<StatisticController> {
                               children: [
                                 Expanded(
                                   flex: 9,
-                                  child: BarChart(
-                                    BarChartData(
-                                      barTouchData: barTouchData,
-                                      titlesData: titlesData,
-                                      borderData: borderData,
-                                      barGroups: barGroups,
-                                      gridData: const FlGridData(show: false),
-                                      alignment: BarChartAlignment.spaceAround,
-                                      maxY: controller.maxY.value.toDouble(),
+                                  child: Obx(
+                                    () => BarChart(
+                                      BarChartData(
+                                        barTouchData: barTouchData,
+                                        titlesData: titlesData,
+                                        borderData: borderData,
+                                        barGroups: barGroups,
+                                        gridData: const FlGridData(show: false),
+                                        alignment:
+                                            BarChartAlignment.spaceAround,
+                                        maxY: controller.maxY.value.toDouble(),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -113,7 +116,7 @@ class BarChartWidget extends GetView<StatisticController> {
                                             ),
                                             const SizedBox(width: 10),
                                             Text(
-                                              'Penjualan',
+                                              'Jumlah Invoice',
                                               style:
                                                   context.textTheme.bodySmall,
                                             )
@@ -129,17 +132,17 @@ class BarChartWidget extends GetView<StatisticController> {
                         ),
                       ),
                       Expanded(
-                          flex: 1,
-                          child: Card(
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  title:
-                                      Text(controller.invoiceChart.toString()),
-                                )
-                              ],
-                            ),
-                          )),
+                        flex: 1,
+                        child: Card(
+                          child: Column(
+                            children: [
+                              ListTile(
+                                title: Text('data'),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
           ),
@@ -152,7 +155,8 @@ class BarChartWidget extends GetView<StatisticController> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                      onPressed: () {}, child: const Text('Hari Ini')),
+                      onPressed: () => controller.fetchData('week'),
+                      child: const Text('Hari Ini')),
                   ElevatedButton(
                       onPressed: () {}, child: const Text('Kemarin')),
                   ElevatedButton(
@@ -174,8 +178,12 @@ class BarChartWidget extends GetView<StatisticController> {
   BarTouchData get barTouchData => BarTouchData(
         enabled: false,
         touchTooltipData: BarTouchTooltipData(
-          getTooltipColor: (group) => Colors.transparent,
-          tooltipPadding: EdgeInsets.zero,
+          getTooltipColor: (group) => controller.isWeekly.value
+              ? Colors.transparent
+              : Colors.grey[200]!.withOpacity(0.8),
+          tooltipPadding: controller.isWeekly.value
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
           tooltipMargin: 8,
           getTooltipItem: (
             BarChartGroupData group,
@@ -186,7 +194,11 @@ class BarChartWidget extends GetView<StatisticController> {
             final formatter = NumberFormat('#,##0', 'id_ID');
             return BarTooltipItem(
               rodIndex == 0
-                  ? formatter.format(rod.toY)
+                  ? controller.isWeekly.value
+                      ? formatter.format(rod.toY)
+                      : rod.toY > 1000
+                          ? '${formatter.format(rod.toY / 1000)}K'
+                          : formatter.format(rod.toY / 1000)
                   : (rod.toY / 50000).round().toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
@@ -195,6 +207,21 @@ class BarChartWidget extends GetView<StatisticController> {
             );
           },
         ),
+        touchCallback: controller.isWeekly.value
+            ? null
+            : (event, response) {
+                if (event.isInterestedForInteractions &&
+                    response != null &&
+                    response.spot != null) {
+                  controller.touchedGroupIndex.value =
+                      response.spot!.touchedBarGroupIndex;
+                  controller.touchedDataIndex.value =
+                      response.spot!.touchedRodDataIndex;
+                  // debugPrint(controller.touchedGroupIndex.toString());
+                } else {
+                  controller.touchedGroupIndex.value = -1;
+                }
+              },
       );
 
   Widget getTitles(double value, TitleMeta meta) {
@@ -286,7 +313,7 @@ class BarChartWidget extends GetView<StatisticController> {
         (index) {
           ChartModel chart = controller.invoiceChart[index];
           return BarChartGroupData(
-            barsSpace: 10,
+            barsSpace: controller.isWeekly.value ? 10 : 1,
             x: index,
             barRods: [
               BarChartRodData(
@@ -298,7 +325,11 @@ class BarChartWidget extends GetView<StatisticController> {
                 color: Colors.orange,
               )
             ],
-            showingTooltipIndicators: [0, 1],
+            showingTooltipIndicators: controller.isWeekly.value
+                ? [0, 1]
+                : controller.touchedGroupIndex.value == index
+                    ? [controller.touchedDataIndex.value]
+                    : [],
           );
         },
       );
