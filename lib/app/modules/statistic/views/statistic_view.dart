@@ -155,13 +155,24 @@ class BarChartWidget extends GetView<StatisticController> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                      onPressed: () {
-                        controller.isThisWeek.value = true;
-                        controller.fetchData('week');
-                      },
+                      onPressed: () => controller.handleClickDate('today')
+                      //  {
+                      //   controller.isThisWeek.value = true;
+                      //   controller.selectedDate.value = DateTime.now();
+                      //   controller.fetchData('week');
+                      // }
+                      ,
                       child: const Text('Hari Ini')),
                   ElevatedButton(
-                      onPressed: () {}, child: const Text('Kemarin')),
+                      onPressed: () => controller.handleClickDate('yesterday')
+                      // {
+                      //   controller.isThisWeek.value = true;
+                      //   controller.selectedDate.value =
+                      //       DateTime.now().subtract(const Duration(days: 1));
+                      //   controller.fetchData('week');
+                      // }
+                      ,
+                      child: const Text('Kemarin')),
                   ElevatedButton(
                       onPressed: () {}, child: const Text('Minggu Ini')),
                   ElevatedButton(
@@ -171,26 +182,28 @@ class BarChartWidget extends GetView<StatisticController> {
                     onTap: controller.isDateTimeNow.value
                         ? null
                         : () async => controller.handleDate(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: controller.isDateTimeNow.value
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        controller.displayDate.value == ''
-                            ? 'Pilih Tanggal'
-                            : DateFormat('dd MMMM y', 'id')
-                                .format(controller.selectedDate.value),
-                        style: controller.isDateTimeNow.value
-                            ? context.textTheme.bodySmall!.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontStyle: FontStyle.italic,
-                              )
-                            : const TextStyle(color: Colors.white),
+                    child: Obx(
+                      () => Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: controller.isDateTimeNow.value
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          controller.displayDate.value == ''
+                              ? 'Pilih Tanggal'
+                              : DateFormat('dd MMMM y', 'id')
+                                  .format(controller.selectedDate.value),
+                          style: controller.isDateTimeNow.value
+                              ? context.textTheme.bodySmall!.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontStyle: FontStyle.italic,
+                                )
+                              : const TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
