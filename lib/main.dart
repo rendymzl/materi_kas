@@ -38,6 +38,7 @@ void main() async {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      locale: const Locale('en', 'US'),
       supportedLocales: const [
         Locale('id'),
       ],

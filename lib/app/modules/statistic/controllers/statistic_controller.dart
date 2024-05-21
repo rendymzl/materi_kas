@@ -1,3 +1,4 @@
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +14,7 @@ class StatisticController extends GetxController {
   late List<ChartModel> invoiceChart = <ChartModel>[].obs;
   final maxY = 0.obs;
   final isWeekly = true.obs;
+  final isThisWeek = true.obs;
   final isLoading = true.obs;
   DateTime today = DateTime.now();
 
@@ -34,13 +36,13 @@ class StatisticController extends GetxController {
       () {
         if (rangeDate == 'week') {
           isWeekly.value = true;
-          groupWeeklyInvoices();
+          groupWeeklyInvoices(selectedDate.value);
         } else if (rangeDate == 'month') {
           isWeekly.value = false;
           groupMonthlyInvoices();
         } else {
           isWeekly.value = false;
-          groupCustomInvoices();
+          // groupCustomInvoices();
         }
         isLoading.value = false;
       },
@@ -51,9 +53,10 @@ class StatisticController extends GetxController {
     return utcTime.add(const Duration(hours: 7));
   }
 
-  void groupWeeklyInvoices() {
-    const startingDay = DateTime.monday;
-    final currentDay = DateTime.now().weekday;
+  void groupWeeklyInvoices(DateTime selectedDate) {
+    final startingDay = isThisWeek.value ? DateTime.monday : selectedDate.day;
+    final currentDay =
+        isWeekly.value ? DateTime.now().weekday : selectedDate.weekday;
     final offset = currentDay - startingDay;
     final adjustedStartingDay = DateTime.now().subtract(Duration(days: offset));
 
@@ -141,5 +144,57 @@ class StatisticController extends GetxController {
         dateLooping(day);
       }
     }
+  }
+
+  //! dateTime
+  final isDateTimeNow = false.obs;
+  final selectedDate = DateTime.now().obs;
+  final selectedTime = TimeOfDay.now().obs;
+  final displayDate = DateTime.now().toString().obs;
+  final displayTime = TimeOfDay.now().toString().obs;
+
+  void handleDate(BuildContext context) async {
+    debugPrint(selectedDate.value.toString());
+    DateTime? pickedDate = await showDatePickerDialog(
+      context: context,
+      height: 400,
+      width: 400,
+      initialDate: selectedDate.value,
+      selectedDate: selectedDate.value,
+      minDate: DateTime(2000),
+      maxDate: DateTime.now(),
+      // locale: const Locale('id', 'ID'),
+    );
+
+    selectedDate.value = pickedDate ?? DateTime.now();
+    displayDate.value = pickedDate.toString();
+    selectedDate.value.weekday == DateTime.now().weekday
+        ? isThisWeek.value = false
+        : isThisWeek.value = false;
+
+    // debugPrint(selectedDate.value.toString());
+  }
+
+  // void handleTime(BuildContext context) async {
+  //   TimeOfDay? pickedTime = await showTimePicker(
+  //     context: context,
+  //     initialTime: selectedTime.value,
+  //   );
+
+  //   selectedTime.value = pickedTime ?? TimeOfDay.now();
+  //   displayTime.value = pickedTime.toString();
+  // }
+
+  void dateTimeCheckBox() async {
+    isDateTimeNow.value = !isDateTimeNow.value;
+    if (!isDateTimeNow.value) {
+      displayDate.value = '';
+      displayTime.value = '';
+    } else {
+      displayDate.value = DateTime.now().toString();
+      displayTime.value = TimeOfDay.now().toString();
+    }
+    selectedDate.value = DateTime.now();
+    selectedTime.value = TimeOfDay.now();
   }
 }

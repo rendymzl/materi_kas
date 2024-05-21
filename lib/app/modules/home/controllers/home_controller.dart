@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // import 'package:get_storage/get_storage.dart';
@@ -117,12 +118,15 @@ class HomeController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   void handleDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
+    DateTime? pickedDate = await showDatePickerDialog(
       context: context,
+      height: 400,
+      width: 400,
       initialDate: selectedDate.value,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      locale: const Locale('id', 'ID'),
+      selectedDate: selectedDate.value,
+      minDate: DateTime(2000),
+      maxDate: DateTime.now(),
+      // locale: const Locale('id', 'ID'),
     );
 
     selectedDate.value = pickedDate ?? DateTime.now();

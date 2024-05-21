@@ -155,7 +155,10 @@ class BarChartWidget extends GetView<StatisticController> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                      onPressed: () => controller.fetchData('week'),
+                      onPressed: () {
+                        controller.isThisWeek.value = true;
+                        controller.fetchData('week');
+                      },
                       child: const Text('Hari Ini')),
                   ElevatedButton(
                       onPressed: () {}, child: const Text('Kemarin')),
@@ -164,8 +167,33 @@ class BarChartWidget extends GetView<StatisticController> {
                   ElevatedButton(
                       onPressed: () => controller.fetchData('month'),
                       child: const Text('Bulan Ini')),
-                  ElevatedButton(
-                      onPressed: () {}, child: const Text('Pilih Tanggal')),
+                  InkWell(
+                    onTap: controller.isDateTimeNow.value
+                        ? null
+                        : () async => controller.handleDate(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: controller.isDateTimeNow.value
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        controller.displayDate.value == ''
+                            ? 'Pilih Tanggal'
+                            : DateFormat('dd MMMM y', 'id')
+                                .format(controller.selectedDate.value),
+                        style: controller.isDateTimeNow.value
+                            ? context.textTheme.bodySmall!.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontStyle: FontStyle.italic,
+                              )
+                            : const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
