@@ -133,13 +133,58 @@ class BarChartWidget extends GetView<StatisticController> {
                       ),
                       Expanded(
                         flex: 1,
-                        child: Card(
-                          child: Column(
-                            children: [
-                              ListTile(
-                                title: Text('data'),
-                              )
-                            ],
+                        child: Obx(
+                          () => Card(
+                            child: Column(
+                              children: [
+                                // ListTile(
+                                //   title: Row(
+                                //     children: [
+                                // Expanded(
+                                //     child: Text('Kemarin',
+                                //         style:
+                                //             context.textTheme.bodyLarge)),
+                                //       Expanded(
+                                //           child: Text('Hari ini',
+                                //               style:
+                                //                   context.textTheme.bodyLarge)),
+                                //     ],
+                                //   ),
+                                // ),
+                                ListTile(
+                                  title: Text('Tanggal',
+                                      style: context.textTheme.bodySmall),
+                                  subtitle: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                            '${controller.selectedData.value?.dateString}'),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                            '${controller.selectedData.value?.dateString}'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                ListTile(
+                                  title: Text('Keuntungan',
+                                      style: context.textTheme.bodySmall),
+                                  subtitle: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                            'Rp.${controller.formatter.format(controller.selectedData.value?.totalProfit)}'),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                            'Rp.${controller.formatter.format(controller.selectedData.value?.totalProfit)}'),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -232,14 +277,14 @@ class BarChartWidget extends GetView<StatisticController> {
             BarChartRodData rod,
             int rodIndex,
           ) {
-            final formatter = NumberFormat('#,##0', 'id_ID');
+            // final formatter = NumberFormat('#,##0', 'id_ID');
             return BarTooltipItem(
               rodIndex == 0
                   ? controller.isWeekly.value
-                      ? formatter.format(rod.toY)
+                      ? controller.formatter.format(rod.toY)
                       : rod.toY > 1000
-                          ? '${formatter.format(rod.toY / 1000)}K'
-                          : formatter.format(rod.toY / 1000)
+                          ? '${controller.formatter.format(rod.toY / 1000)}K'
+                          : controller.formatter.format(rod.toY / 1000)
                   : (rod.toY / 50000).round().toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,

@@ -9,10 +9,11 @@ import '../../invoice/controllers/invoice_controller.dart';
 
 class StatisticController extends GetxController {
   InvoiceController invoiceController = Get.put(InvoiceController());
+  final formatter = NumberFormat('#,##0', 'id_ID');
   late final invoiceList = invoiceController.invoiceList;
   late List<Invoice> filteredInvoices = <Invoice>[].obs;
   late List<ChartModel> invoiceChart = <ChartModel>[].obs;
-  late ChartModel selectedData.obs;
+  Rx<ChartModel?> selectedData = Rx<ChartModel?>(null);
   final maxY = 0.obs;
   // final clickSection = 'week'.obs;
   final isWeekly = true.obs;
@@ -30,17 +31,17 @@ class StatisticController extends GetxController {
     fetchData('week');
   }
 
-  void fetchData(String rangeDate) {
+  void fetchData(String typeDate) {
     maxY.value = 0;
     invoiceChart.clear();
     isLoading.value = true;
     Future.delayed(
       const Duration(milliseconds: 360),
       () {
-        if (rangeDate == 'week') {
+        if (typeDate == 'week') {
           isWeekly.value = true;
           groupWeeklyInvoices(selectedDate.value);
-        } else if (rangeDate == 'month') {
+        } else if (typeDate == 'month') {
           isWeekly.value = false;
           groupMonthlyInvoices();
         } else {
@@ -48,6 +49,7 @@ class StatisticController extends GetxController {
           // groupCustomInvoices();
         }
         isLoading.value = false;
+        compareData(typeDate);
       },
     );
   }
@@ -112,7 +114,8 @@ class StatisticController extends GetxController {
               convertToLocal(invoice.createdAt!).day == currentDate.day)
           .toList();
 
-      final dateString = formatter.format(currentDate);
+      DateTime date = currentDate;
+      final dateString = formatter.format(date);
       int totalSellPrice = 0;
       int totalCostPrice = 0;
       int totalProfit = 0;
@@ -136,8 +139,8 @@ class StatisticController extends GetxController {
         maxY.value = (totalProfit * 1.2).toInt();
       }
 
-      final chartData = ChartModel(dateString, totalSellPrice, totalCostPrice,
-          totalProfit, totalInvoice);
+      final chartData = ChartModel(date, dateString, totalSellPrice,
+          totalCostPrice, totalProfit, totalInvoice);
       invoiceChart.add(chartData);
     }
 
@@ -172,29 +175,48 @@ class StatisticController extends GetxController {
     // fetchData('year');
   }
 
-  void compareData(DateTime date, String section) async {
-    String dateString = '';
+  void compareData(String section) async {
+    final dataInvoiceList = invoiceChart
+        .where((invoice) =>
+            convertToLocal(invoice.date).year == selectedDate.value.year &&
+            convertToLocal(invoice.date).month == selectedDate.value.month &&
+            convertToLocal(invoice.date).day == selectedDate.value.day)
+        .toList();
+
+    DateTime date = selectedDate.value;
+    String dateString = DateFormat('EEEE, dd/MM', 'id').format(date);
     int totalSellPrice = 0;
     int totalCostPrice = 0;
     int totalProfit = 0;
     int totalInvoice = 0;
-    
 
-    if (section == 'day') {
-      totalSellPrice = invoiceChart
+    if (section == 'week') {
+      totalSellPrice = dataInvoiceList
           .map((data) => data.totalSellPrice)
           .reduce((value, element) => value + element);
 
-      totalCostPrice = invoiceChart
+      totalCostPrice = dataInvoiceList
           .map((data) => data.totalCostPrice)
           .reduce((value, element) => value + element);
 
-      totalProfit = invoiceChart
-          .map((data) => data.totalCostPrice)
+      totalProfit = dataInvoiceList
+          .map((data) => data.totalProfit)
+          .reduce((value, element) => value + element);
+
+      totalInvoice = dataInvoiceList
+          .map((data) => data.totalInvoice)
           .reduce((value, element) => value + element);
     }
-    selectedData = ChartModel(
-        dateString, totalSellPrice, totalCostPrice, totalProfit, totalInvoice);
+    debugPrint(dataInvoiceList[0].totalProfit.toString());
+    debugPrint(totalProfit.toString());
+    selectedData.value = ChartModel(
+      date,
+      dateString,
+      totalSellPrice,
+      totalCostPrice,
+      totalProfit,
+      totalInvoice,
+    );
   }
 
   //! dateTime
