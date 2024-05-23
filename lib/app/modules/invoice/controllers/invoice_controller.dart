@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ffi';
 
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -169,12 +170,15 @@ class InvoiceController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   void handleDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
+    // debugPrint('current ${selectedDate.value}');
+    // debugPrint('==================');
+    DateTime? pickedDate = await showDatePickerDialog(
       context: context,
       initialDate: selectedDate.value,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      locale: const Locale('id', 'ID'),
+      selectedDate: selectedDate.value,
+      minDate: DateTime(2000),
+      maxDate: DateTime.now(),
+      // locale: const Locale('id', 'ID'),
     );
 
     selectedDate.value = pickedDate ?? DateTime.now();
@@ -295,7 +299,7 @@ class InvoiceController extends GetxController {
       selectedDate.value.day,
       selectedTime.value.hour,
       selectedTime.value.minute,
-    );
+    ).subtract(const Duration(hours: 7));
     if (selectedCustomer.value != null) {
       customer = Customer(
         id: selectedCustomer.value!.id,

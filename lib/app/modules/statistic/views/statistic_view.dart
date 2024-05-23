@@ -1,3 +1,5 @@
+import 'package:date_picker_plus/date_picker_plus.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -52,7 +54,7 @@ class BarChartWidget extends GetView<StatisticController> {
                 : Row(
                     children: [
                       Expanded(
-                        flex: 3,
+                        flex: 7,
                         child: Card(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
@@ -132,61 +134,8 @@ class BarChartWidget extends GetView<StatisticController> {
                         ),
                       ),
                       Expanded(
-                        flex: 1,
-                        child: Obx(
-                          () => Card(
-                            child: Column(
-                              children: [
-                                // ListTile(
-                                //   title: Row(
-                                //     children: [
-                                // Expanded(
-                                //     child: Text('Kemarin',
-                                //         style:
-                                //             context.textTheme.bodyLarge)),
-                                //       Expanded(
-                                //           child: Text('Hari ini',
-                                //               style:
-                                //                   context.textTheme.bodyLarge)),
-                                //     ],
-                                //   ),
-                                // ),
-                                ListTile(
-                                  title: Text('Tanggal',
-                                      style: context.textTheme.bodySmall),
-                                  subtitle: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                            '${controller.selectedData.value?.dateString}'),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                            '${controller.selectedData.value?.dateString}'),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                ListTile(
-                                  title: Text('Keuntungan',
-                                      style: context.textTheme.bodySmall),
-                                  subtitle: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                            'Rp.${controller.formatter.format(controller.selectedData.value?.totalProfit)}'),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                            'Rp.${controller.formatter.format(controller.selectedData.value?.totalProfit)}'),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
+                        flex: 3,
+                        child: DatePickerCard(controller: controller),
                       ),
                     ],
                   ),
@@ -194,64 +143,174 @@ class BarChartWidget extends GetView<StatisticController> {
         ),
         Expanded(
           flex: 1,
-          child: Card(
-            child: SizedBox(
+          child: SizedBox(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 100),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton(
-                      onPressed: () => controller.handleClickDate('today')
-                      //  {
-                      //   controller.isThisWeek.value = true;
-                      //   controller.selectedDate.value = DateTime.now();
-                      //   controller.fetchData('week');
-                      // }
-                      ,
-                      child: const Text('Hari Ini')),
-                  ElevatedButton(
-                      onPressed: () => controller.handleClickDate('yesterday')
-                      // {
-                      //   controller.isThisWeek.value = true;
-                      //   controller.selectedDate.value =
-                      //       DateTime.now().subtract(const Duration(days: 1));
-                      //   controller.fetchData('week');
-                      // }
-                      ,
-                      child: const Text('Kemarin')),
-                  ElevatedButton(
-                      onPressed: () {}, child: const Text('Minggu Ini')),
-                  ElevatedButton(
-                      onPressed: () => controller.fetchData('month'),
-                      child: const Text('Bulan Ini')),
-                  InkWell(
-                    onTap: controller.isDateTimeNow.value
-                        ? null
-                        : () async => controller.handleDate(context),
-                    child: Obx(
-                      () => Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: controller.isDateTimeNow.value
-                              ? Colors.white
-                              : Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(4),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: MaterialStatePropertyAll(
+                          controller.selectedSection.value == 'daily'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
                         ),
-                        child: Text(
-                          controller.displayDate.value == ''
-                              ? 'Pilih Tanggal'
-                              : DateFormat('dd MMMM y', 'id')
-                                  .format(controller.selectedDate.value),
-                          style: controller.isDateTimeNow.value
-                              ? context.textTheme.bodySmall!.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontStyle: FontStyle.italic,
-                                )
-                              : const TextStyle(color: Colors.white),
+                      ),
+                      child: Text(
+                        'Harian',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'daily'
+                              ? Colors.white
+                              : Colors.grey[700],
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: MaterialStatePropertyAll(
+                          controller.selectedSection.value == 'weekly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      child: Text(
+                        'Mingguan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'weekly'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: MaterialStatePropertyAll(
+                          controller.selectedSection.value == 'monthly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      child: Text(
+                        'Bulanan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'montly'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: MaterialStatePropertyAll(
+                          controller.selectedSection.value == 'yearly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      child: Text(
+                        'Tahunan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'yearly'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ElevatedButton(
+                  //     onPressed: () => controller.handleClickDay(DateTime.now())
+                  //     ,
+                  //     child: const Text('Hari Ini')),
+                  // ElevatedButton(
+                  //     onPressed: () => controller.handleClickDay(
+                  //         DateTime.now().subtract(const Duration(days: 1)))
+                  //     ,
+                  //     child: const Text('Kemarin')),
+                  // ElevatedButton(
+                  //     onPressed: () =>
+                  //         controller.handleClickCustom(DateTime.now(), 7),
+                  //     child: const Text('Minggu Ini')),
+                  // ElevatedButton(
+                  //     onPressed: () =>
+                  //         controller.fetchData('month', DateTime.now()),
+                  //     child: const Text('Bulan Ini')),
+                  // InkWell(
+                  //   onTap: () async => controller.handleDate(context),
+                  //   child: Obx(
+                  //     () => Container(
+                  //       padding: const EdgeInsets.symmetric(
+                  //           vertical: 4, horizontal: 8),
+                  //       decoration: BoxDecoration(
+                  //         color: controller.isDateTimeNow.value
+                  //             ? Colors.white
+                  //             : Theme.of(context).colorScheme.primary,
+                  //         borderRadius: BorderRadius.circular(4),
+                  //       ),
+                  //       child: Text(
+                  //         controller.displayDate.value == ''
+                  //             ? 'Pilih Tanggal'
+                  //             : DateFormat('dd MMMM y', 'id')
+                  //                 .format(controller.selectedDate.value),
+                  //         style: controller.isDateTimeNow.value
+                  //             ? context.textTheme.bodySmall!.copyWith(
+                  //                 color: Theme.of(context).colorScheme.primary,
+                  //                 fontStyle: FontStyle.italic,
+                  //               )
+                  //             : const TextStyle(color: Colors.white),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  // InkWell(
+                  //   onTap: () async => controller.handleGroupDate(context),
+                  //   child: Obx(
+                  //     () => Container(
+                  //       padding: const EdgeInsets.symmetric(
+                  //           vertical: 4, horizontal: 8),
+                  //       decoration: BoxDecoration(
+                  //         color: controller.isDateTimeNow.value
+                  //             ? Colors.white
+                  //             : Theme.of(context).colorScheme.primary,
+                  //         borderRadius: BorderRadius.circular(4),
+                  //       ),
+                  //       child: Text(
+                  //         controller.displayDate.value == ''
+                  //             ? 'Pilih Tanggal'
+                  //             : DateFormat('dd MMMM y', 'id')
+                  //                 .format(controller.selectedDate.value),
+                  //         style: controller.isDateTimeNow.value
+                  //             ? context.textTheme.bodySmall!.copyWith(
+                  //                 color: Theme.of(context).colorScheme.primary,
+                  //                 fontStyle: FontStyle.italic,
+                  //               )
+                  //             : const TextStyle(color: Colors.white),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -283,7 +342,7 @@ class BarChartWidget extends GetView<StatisticController> {
                   ? controller.isWeekly.value
                       ? controller.formatter.format(rod.toY)
                       : rod.toY > 1000
-                          ? '${controller.formatter.format(rod.toY / 1000)}K'
+                          ? 'Rp.${controller.formatter.format(rod.toY)}'
                           : controller.formatter.format(rod.toY / 1000)
                   : (rod.toY / 50000).round().toString(),
               TextStyle(
@@ -419,6 +478,180 @@ class BarChartWidget extends GetView<StatisticController> {
           );
         },
       );
+}
+
+class DatePickerCard extends StatelessWidget {
+  const DatePickerCard({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () {
+        final dateFormat = DateFormat('dd MMM y', 'id');
+        final date = dateFormat.format(controller.selectedDay.value!.date);
+        final prevDate =
+            dateFormat.format(controller.prevSelectedDay.value!.date);
+
+        final sell = controller.selectedDay.value!.totalSellPrice;
+        final prevSell = controller.prevSelectedDay.value!.totalSellPrice;
+
+        final profit = controller.selectedDay.value!.totalProfit;
+        final prevProfit = controller.prevSelectedDay.value!.totalProfit;
+
+        final totalInvoice = controller.selectedDay.value!.totalInvoice;
+        final prevTotalInvoice = controller.prevSelectedDay.value!.totalInvoice;
+
+        return Card(
+          child: Column(
+            children: [
+              const Text('Pilih Data:'),
+
+              DatePickerWeekly(controller: controller),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       flex: 9,
+              //       child: Text('Kemarin',
+              //           style: context.textTheme.bodyLarge),
+              //     ),
+              //     Expanded(
+              //       flex: 9,
+              //       child: Text('Hari ini',
+              //           style: context.textTheme.bodyLarge),
+              //     ),
+              //     const Expanded(
+              //         flex: 4, child: SizedBox()),
+              //   ],
+              // ),
+              // DisplayDataListTile(
+              //   controller: controller,
+              //   title: 'Tanggal',
+              //   subtitle1: date,
+              //   subtitle2: prevDate,
+              //   subtitle3: const Text(''),
+              // ),
+              // DisplayDataListTile(
+              //   controller: controller,
+              //   title: 'Pembelian',
+              //   subtitle1:
+              //       'Rp.${controller.formatter.format(sell)}',
+              //   subtitle2:
+              //       'Rp.${controller.formatter.format(prevSell)}',
+              //   subtitle3: controller.percentage(
+              //       sell, prevSell, context),
+              // ),
+              // DisplayDataListTile(
+              //   controller: controller,
+              //   title: 'Keuntungan',
+              //   subtitle1:
+              //       'Rp.${controller.formatter.format(profit)}',
+              //   subtitle2:
+              //       'Rp.${controller.formatter.format(prevProfit)}',
+              //   subtitle3: controller.percentage(
+              //       profit, prevProfit, context),
+              // ),
+              // DisplayDataListTile(
+              //   controller: controller,
+              //   title: 'Jumlah Invoice',
+              //   subtitle1: totalInvoice.toString(),
+              //   subtitle2: prevTotalInvoice.toString(),
+              //   subtitle3: controller.percentage(
+              //       totalInvoice,
+              //       prevTotalInvoice,
+              //       context),
+              // ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class DatePickerDaily extends StatelessWidget {
+  const DatePickerDaily({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 300,
+      child: DaysPicker(
+        minDate: DateTime(2020, 1),
+        maxDate: DateTime.now(),
+        splashRadius: 30,
+        initialDate: controller.selectedDate.value,
+        selectedDate: controller.selectedDate.value,
+        onDateSelected: (value) {
+          debugPrint(value.toString());
+        },
+      ),
+    );
+  }
+}
+
+class DatePickerWeekly extends StatelessWidget {
+  const DatePickerWeekly({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(width: 300, height: 300, child: SfDateRangePicker());
+  }
+}
+
+class DisplayDataListTile extends StatelessWidget {
+  const DisplayDataListTile({
+    super.key,
+    required this.controller,
+    required this.title,
+    required this.subtitle1,
+    required this.subtitle2,
+    required this.subtitle3,
+  });
+
+  final StatisticController controller;
+  final String title;
+  final String subtitle1;
+  final String subtitle2;
+  final Widget subtitle3;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(title, style: context.textTheme.bodySmall),
+      subtitle: Row(
+        children: [
+          Expanded(
+            flex: 9,
+            child: Text(subtitle2),
+          ),
+          Expanded(
+            flex: 9,
+            child: Text(subtitle1, style: context.textTheme.bodyLarge),
+          ),
+          Expanded(
+            flex: 4,
+            child: subtitle3,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class BarChartSample3 extends StatefulWidget {

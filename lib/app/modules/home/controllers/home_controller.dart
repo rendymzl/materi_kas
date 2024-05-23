@@ -304,7 +304,7 @@ class HomeController extends GetxController {
       selectedDate.value.day,
       selectedTime.value.hour,
       selectedTime.value.minute,
-    );
+    ).subtract(const Duration(hours: 7));
 
     if (selectedCustomer.value != null) {
       customer = Customer(

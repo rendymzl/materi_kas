@@ -161,8 +161,9 @@ class BuildGridView extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
-                              DateFormat('dd MMMM y HH:mm', 'id')
-                                  .format(foundInvoice.createdAt!),
+                              DateFormat('dd MMMM y HH:mm', 'id').format(
+                                  foundInvoice.createdAt!
+                                      .add(const Duration(hours: 7))),
                               style: context.theme.textTheme.bodySmall),
                         ),
                         foundInvoice.change! < 0
@@ -457,7 +458,8 @@ void detailDialog(BuildContext context, InvoiceController controller,
                             Expanded(
                               child: Text(
                                 DateFormat('dd MMMM y, HH:mm', 'id').format(
-                                  invoice.createdAt!,
+                                  invoice.createdAt!
+                                      .add(const Duration(hours: 7)),
                                 ),
                                 style: context.textTheme.bodyLarge,
                               ),
@@ -773,7 +775,7 @@ void editDialog(BuildContext context, InvoiceController controller,
     invoice.createdAt!.year,
     invoice.createdAt!.month,
     invoice.createdAt!.day,
-  );
+  ).add(const Duration(hours: 7));
 
   DateTime time = DateTime(
     invoice.createdAt!.year,
@@ -781,7 +783,7 @@ void editDialog(BuildContext context, InvoiceController controller,
     invoice.createdAt!.day,
     invoice.createdAt!.hour,
     invoice.createdAt!.minute,
-  );
+  ).add(const Duration(hours: 7));
   controller.selectedDate.value = date;
   controller.selectedTime.value = TimeOfDay.fromDateTime(time);
 

@@ -1,11 +1,16 @@
 class ChartModel {
-  final DateTime date;
-  final String dateString;
-  final int totalSellPrice;
-  final int totalCostPrice;
-  final int totalProfit;
-  final int totalInvoice;
+  DateTime date;
+  String dateString;
+  int totalSellPrice;
+  int totalCostPrice;
+  int totalProfit;
+  int totalInvoice;
 
-  ChartModel(this.date, this.dateString, this.totalSellPrice,
-      this.totalCostPrice, this.totalProfit, this.totalInvoice);
+  ChartModel(
+      {required this.date,
+      required this.dateString,
+      required this.totalSellPrice,
+      required this.totalCostPrice,
+      required this.totalProfit,
+      required this.totalInvoice});
 }
