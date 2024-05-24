@@ -610,11 +610,18 @@ class DatePickerWeekly extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // var pikcerDate = PickerDateRange(
+    //     DateTime.now(), DateTime.now().subtract(const Duration(days: 7)));
     return SizedBox(
       width: 300,
-      height: 300,
+      height: 450,
       child: SfDateRangePicker(
-        initialSelectedRanges: [],
+        controller: controller.weeklyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        enableMultiView: true,
+        // allowViewNavigation: true,
+        initialSelectedRange: controller.selectedWeekRange.value,
         monthViewSettings: const DateRangePickerMonthViewSettings(
           firstDayOfWeek: 1,
         ),
@@ -622,7 +629,7 @@ class DatePickerWeekly extends StatelessWidget {
         minDate: DateTime(2000),
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-          debugPrint(args.value.toString());
+          controller.weeklyRangePickerHandle(args.value as PickerDateRange);
         },
       ),
     );

@@ -2,6 +2,7 @@ import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/invoice_model.dart';
@@ -16,7 +17,7 @@ class StatisticController extends GetxController {
   late final RxList<Invoice> invoiceList = RxList<Invoice>();
   final selectedSection = 'daily'.obs;
 
-  late List<Invoice> selectedFilteredInvoices = <Invoice>[].obs;
+  late List<Invoice> selectedAndPrevFilteredInvoices = <Invoice>[].obs;
   late List<ChartModel> invoiceChart = <ChartModel>[].obs;
   late List<ChartModel> selectedWeekInvoiceChart = <ChartModel>[].obs;
   late List<ChartModel> prevWeekInvoiceChart = <ChartModel>[].obs;
@@ -46,14 +47,14 @@ class StatisticController extends GetxController {
     fetchData('weekly', selectedDate.value);
   }
 
-  void fetchData(String section, DateTime day) {
+  Future<void> fetchData(String section, DateTime day) async {
     maxY.value = 0;
     invoiceChart.clear();
     isLoading.value = true;
 
     if (section == 'weekly') {
       isWeekly.value = true;
-      groupWeeklyInvoices(day);
+      invoiceChart = await groupWeeklyInvoices(day);
     } else if (section == 'month') {
       isWeekly.value = false;
       groupMonthlyInvoices();
@@ -71,24 +72,51 @@ class StatisticController extends GetxController {
     return utcTime.add(const Duration(hours: 7));
   }
 
-  void groupWeeklyInvoices(DateTime pickedDay) {
+  final weeklyRangeController = DateRangePickerController().obs;
+
+  void weeklyRangePickerHandle(PickerDateRange pickedWeeklyData) async {
+    final DateTime pickedDay = pickedWeeklyData.startDate!;
+    // final DateTime endDate = startDate.subtract(const Duration(days: 6));
+    // await groupWeeklyRange(pickedDay);
+    // final newPickedWeeklyData = PickerDateRange(startDate, endDate);
+    // controller.selectedWeekRange.value = newPickedWeeklyData;
+    weeklyRangeController.value.selectedRange = selectedWeekRange.value;
+    // controller.selecterWidgetWeeklyDatePickerIndex.value = 1;
+  }
+
+  final selectedWeekRange = PickerDateRange(
+          DateTime.now(), DateTime.now().subtract(const Duration(days: 6)))
+      .obs;
+
+  Future<List<ChartModel>> groupWeeklyInvoices(DateTime pickedDay) async {
     DateTime prevWeekPickedDay = pickedDay.subtract(const Duration(days: 7));
 
-    for (var day = 0; day < 2; day++) {
-      final selectedDay =
-          day == 0 ? pickedDay.weekday : prevWeekPickedDay.weekday;
-      final offset = selectedDay - DateTime.monday;
-      DateTime startOfWeek = day == 0
-          ? pickedDay.subtract(Duration(days: offset))
-          : prevWeekPickedDay.subtract(Duration(days: offset));
+    // for (var day = 0; day < 2; day++) {
+    final selectedDay =
+        day == 0 ? pickedDay.weekday : prevWeekPickedDay.weekday;
+    final offset = selectedDay - DateTime.monday;
+    DateTime startOfWeek = day == 0
+        ? pickedDay.subtract(Duration(days: offset))
+        : prevWeekPickedDay.subtract(Duration(days: offset));
 
-      selectedFilteredInvoices = invoiceList.where((invoice) {
-        return convertToLocal(invoice.createdAt!).isAfter(startOfWeek);
-      }).toList();
-      getData(startOfWeek, day == 0);
+    if (day == 0) {
+      selectedWeekRange.value = PickerDateRange(
+          startOfWeek.subtract(const Duration(days: 1)),
+          startOfWeek.subtract(const Duration(days: 7)));
     }
-    invoiceChart = selectedWeekInvoiceChart;
+
+    selectedAndPrevFilteredInvoices = invoiceList.where((invoice) {
+      return convertToLocal(invoice.createdAt!).isAfter(startOfWeek);
+    }).toList();
+    // getData(startOfWeek, day == 0);
+    // }
+    // final selectedWeekInvoiceCharta = ;
+    return await getData(startOfWeek, isWeekly.value);
   }
+
+  // Future groupWeeklyRange(DateTime pickedDay) {
+
+  // }
 
   void groupMonthlyInvoices() {
     final currentMonth = today.month;
@@ -97,7 +125,7 @@ class StatisticController extends GetxController {
     final startOfMonth = DateTime(currentYear, currentMonth, 1);
     final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
 
-    selectedFilteredInvoices = invoiceList.where((invoice) {
+    selectedAndPrevFilteredInvoices = invoiceList.where((invoice) {
       return convertToLocal(invoice.createdAt!)
               .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
           convertToLocal(invoice.createdAt!)
@@ -113,7 +141,7 @@ class StatisticController extends GetxController {
     final startOfMonth = DateTime(currentYear, currentMonth, 1);
     final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
 
-    selectedFilteredInvoices = invoiceList.where((invoice) {
+    selectedAndPrevFilteredInvoices = invoiceList.where((invoice) {
       return convertToLocal(invoice.createdAt!)
               .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
           convertToLocal(invoice.createdAt!)
@@ -122,7 +150,8 @@ class StatisticController extends GetxController {
     getData(null, true);
   }
 
-  void getData(DateTime? adjustedStartingDay, bool isSelectedDate) {
+  Future<ChartModel> getData(
+      DateTime? adjustedStartingDay, bool isSelectedDate) async {
     bool isWeekly = adjustedStartingDay != null;
 
     final currentMonth = today.month;
@@ -135,7 +164,7 @@ class StatisticController extends GetxController {
           ? adjustedStartingDay.add(Duration(days: i))
           : DateTime(currentYear, currentMonth, i + 1);
 
-      final invoices = selectedFilteredInvoices.where((invoice) {
+      final invoices = selectedAndPrevFilteredInvoices.where((invoice) {
         DateTime localDate = convertToLocal(invoice.createdAt!);
         return localDate.year == currentDate.year &&
             localDate.month == currentDate.month &&
@@ -174,16 +203,16 @@ class StatisticController extends GetxController {
         totalProfit: totalProfit,
         totalInvoice: totalInvoice,
       );
-
+      return chartData;
       // invoiceChart.add(chartData);
 
-      isWeekly
-          ? isSelectedDate
-              ? selectedWeekInvoiceChart.add(chartData)
-              : prevWeekInvoiceChart.add(chartData)
-          : isSelectedDate
-              ? selectedMonthInvoiceChart.add(chartData)
-              : prevMonthInvoiceChart.add(chartData);
+      // isWeekly
+      //     ? isSelectedDate
+      //         ? selectedWeekInvoiceChart.add(chartData)
+      //         : prevWeekInvoiceChart.add(chartData)
+      //     : isSelectedDate
+      //         ? selectedMonthInvoiceChart.add(chartData)
+      //         : prevMonthInvoiceChart.add(chartData);
     }
 
     if (isWeekly) {

@@ -79,7 +79,7 @@ class SideMenuWidget extends GetView<SideMenuController> {
                     style: ButtonStyle(
                       alignment: Alignment.centerLeft,
                       enableFeedback: true,
-                      backgroundColor: MaterialStatePropertyAll(
+                      backgroundColor: WidgetStatePropertyAll(
                         controller.selectedIndex.value == index
                             ? Theme.of(context).colorScheme.primary
                             : Colors.white,
@@ -95,9 +95,8 @@ class SideMenuWidget extends GetView<SideMenuController> {
                           : Colors.grey[700],
                     ),
                     style: ButtonStyle(
-                      padding:
-                          const MaterialStatePropertyAll(EdgeInsets.all(12)),
-                      backgroundColor: MaterialStatePropertyAll(
+                      padding: const WidgetStatePropertyAll(EdgeInsets.all(12)),
+                      backgroundColor: WidgetStatePropertyAll(
                         controller.selectedIndex.value == index
                             ? Theme.of(context).colorScheme.primary
                             : Colors.white,
