@@ -154,7 +154,7 @@ class BarChartWidget extends GetView<StatisticController> {
                       onPressed: () {},
                       style: ButtonStyle(
                         enableFeedback: true,
-                        backgroundColor: MaterialStatePropertyAll(
+                        backgroundColor: WidgetStatePropertyAll(
                           controller.selectedSection.value == 'daily'
                               ? Theme.of(context).colorScheme.primary
                               : Colors.white,
@@ -177,7 +177,7 @@ class BarChartWidget extends GetView<StatisticController> {
                       onPressed: () {},
                       style: ButtonStyle(
                         enableFeedback: true,
-                        backgroundColor: MaterialStatePropertyAll(
+                        backgroundColor: WidgetStatePropertyAll(
                           controller.selectedSection.value == 'weekly'
                               ? Theme.of(context).colorScheme.primary
                               : Colors.white,
@@ -200,7 +200,7 @@ class BarChartWidget extends GetView<StatisticController> {
                       onPressed: () {},
                       style: ButtonStyle(
                         enableFeedback: true,
-                        backgroundColor: MaterialStatePropertyAll(
+                        backgroundColor: WidgetStatePropertyAll(
                           controller.selectedSection.value == 'monthly'
                               ? Theme.of(context).colorScheme.primary
                               : Colors.white,
@@ -223,7 +223,7 @@ class BarChartWidget extends GetView<StatisticController> {
                       onPressed: () {},
                       style: ButtonStyle(
                         enableFeedback: true,
-                        backgroundColor: MaterialStatePropertyAll(
+                        backgroundColor: WidgetStatePropertyAll(
                           controller.selectedSection.value == 'yearly'
                               ? Theme.of(context).colorScheme.primary
                               : Colors.white,
@@ -610,7 +610,22 @@ class DatePickerWeekly extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: 300, height: 300, child: SfDateRangePicker());
+    return SizedBox(
+      width: 300,
+      height: 300,
+      child: SfDateRangePicker(
+        initialSelectedRanges: [],
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        selectionMode: DateRangePickerSelectionMode.range,
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          debugPrint(args.value.toString());
+        },
+      ),
+    );
   }
 }
 
