@@ -1,4 +1,4 @@
-class ChartModel {
+class Chart {
   DateTime date;
   String dateString;
   int totalSellPrice;
@@ -6,7 +6,7 @@ class ChartModel {
   int totalProfit;
   int totalInvoice;
 
-  ChartModel(
+  Chart(
       {required this.date,
       required this.dateString,
       required this.totalSellPrice,

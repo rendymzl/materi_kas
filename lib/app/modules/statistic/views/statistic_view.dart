@@ -146,172 +146,178 @@ class BarChartWidget extends GetView<StatisticController> {
           child: SizedBox(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 100),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                        enableFeedback: true,
-                        backgroundColor: WidgetStatePropertyAll(
-                          controller.selectedSection.value == 'daily'
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.white,
+              child: Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            controller.selectedSection.value = 'daily',
+                        style: ButtonStyle(
+                          enableFeedback: true,
+                          backgroundColor: WidgetStatePropertyAll(
+                            controller.selectedSection.value == 'daily'
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.white,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Harian',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: controller.selectedSection.value == 'daily'
-                              ? Colors.white
-                              : Colors.grey[700],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                        enableFeedback: true,
-                        backgroundColor: WidgetStatePropertyAll(
-                          controller.selectedSection.value == 'weekly'
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.white,
-                        ),
-                      ),
-                      child: Text(
-                        'Mingguan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: controller.selectedSection.value == 'weekly'
-                              ? Colors.white
-                              : Colors.grey[700],
+                        child: Text(
+                          'Harian',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: controller.selectedSection.value == 'daily'
+                                ? Colors.white
+                                : Colors.grey[700],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                        enableFeedback: true,
-                        backgroundColor: WidgetStatePropertyAll(
-                          controller.selectedSection.value == 'monthly'
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.white,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            controller.selectedSection.value = 'weekly',
+                        style: ButtonStyle(
+                          enableFeedback: true,
+                          backgroundColor: WidgetStatePropertyAll(
+                            controller.selectedSection.value == 'weekly'
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.white,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Bulanan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: controller.selectedSection.value == 'montly'
-                              ? Colors.white
-                              : Colors.grey[700],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                        enableFeedback: true,
-                        backgroundColor: WidgetStatePropertyAll(
-                          controller.selectedSection.value == 'yearly'
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.white,
-                        ),
-                      ),
-                      child: Text(
-                        'Tahunan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: controller.selectedSection.value == 'yearly'
-                              ? Colors.white
-                              : Colors.grey[700],
+                        child: Text(
+                          'Mingguan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: controller.selectedSection.value == 'weekly'
+                                ? Colors.white
+                                : Colors.grey[700],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  // ElevatedButton(
-                  //     onPressed: () => controller.handleClickDay(DateTime.now())
-                  //     ,
-                  //     child: const Text('Hari Ini')),
-                  // ElevatedButton(
-                  //     onPressed: () => controller.handleClickDay(
-                  //         DateTime.now().subtract(const Duration(days: 1)))
-                  //     ,
-                  //     child: const Text('Kemarin')),
-                  // ElevatedButton(
-                  //     onPressed: () =>
-                  //         controller.handleClickCustom(DateTime.now(), 7),
-                  //     child: const Text('Minggu Ini')),
-                  // ElevatedButton(
-                  //     onPressed: () =>
-                  //         controller.fetchData('month', DateTime.now()),
-                  //     child: const Text('Bulan Ini')),
-                  // InkWell(
-                  //   onTap: () async => controller.handleDate(context),
-                  //   child: Obx(
-                  //     () => Container(
-                  //       padding: const EdgeInsets.symmetric(
-                  //           vertical: 4, horizontal: 8),
-                  //       decoration: BoxDecoration(
-                  //         color: controller.isDateTimeNow.value
-                  //             ? Colors.white
-                  //             : Theme.of(context).colorScheme.primary,
-                  //         borderRadius: BorderRadius.circular(4),
-                  //       ),
-                  //       child: Text(
-                  //         controller.displayDate.value == ''
-                  //             ? 'Pilih Tanggal'
-                  //             : DateFormat('dd MMMM y', 'id')
-                  //                 .format(controller.selectedDate.value),
-                  //         style: controller.isDateTimeNow.value
-                  //             ? context.textTheme.bodySmall!.copyWith(
-                  //                 color: Theme.of(context).colorScheme.primary,
-                  //                 fontStyle: FontStyle.italic,
-                  //               )
-                  //             : const TextStyle(color: Colors.white),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                  // InkWell(
-                  //   onTap: () async => controller.handleGroupDate(context),
-                  //   child: Obx(
-                  //     () => Container(
-                  //       padding: const EdgeInsets.symmetric(
-                  //           vertical: 4, horizontal: 8),
-                  //       decoration: BoxDecoration(
-                  //         color: controller.isDateTimeNow.value
-                  //             ? Colors.white
-                  //             : Theme.of(context).colorScheme.primary,
-                  //         borderRadius: BorderRadius.circular(4),
-                  //       ),
-                  //       child: Text(
-                  //         controller.displayDate.value == ''
-                  //             ? 'Pilih Tanggal'
-                  //             : DateFormat('dd MMMM y', 'id')
-                  //                 .format(controller.selectedDate.value),
-                  //         style: controller.isDateTimeNow.value
-                  //             ? context.textTheme.bodySmall!.copyWith(
-                  //                 color: Theme.of(context).colorScheme.primary,
-                  //                 fontStyle: FontStyle.italic,
-                  //               )
-                  //             : const TextStyle(color: Colors.white),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            controller.selectedSection.value = 'monthly',
+                        style: ButtonStyle(
+                          enableFeedback: true,
+                          backgroundColor: WidgetStatePropertyAll(
+                            controller.selectedSection.value == 'monthly'
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.white,
+                          ),
+                        ),
+                        child: Text(
+                          'Bulanan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: controller.selectedSection.value == 'monthly'
+                                ? Colors.white
+                                : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            controller.selectedSection.value = 'yearly',
+                        style: ButtonStyle(
+                          enableFeedback: true,
+                          backgroundColor: WidgetStatePropertyAll(
+                            controller.selectedSection.value == 'yearly'
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.white,
+                          ),
+                        ),
+                        child: Text(
+                          'Tahunan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: controller.selectedSection.value == 'yearly'
+                                ? Colors.white
+                                : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // ElevatedButton(
+                    //     onPressed: () => controller.handleClickDay(DateTime.now())
+                    //     ,
+                    //     child: const Text('Hari Ini')),
+                    // ElevatedButton(
+                    //     onPressed: () => controller.handleClickDay(
+                    //         DateTime.now().subtract(const Duration(days: 1)))
+                    //     ,
+                    //     child: const Text('Kemarin')),
+                    // ElevatedButton(
+                    //     onPressed: () =>
+                    //         controller.handleClickCustom(DateTime.now(), 7),
+                    //     child: const Text('Minggu Ini')),
+                    // ElevatedButton(
+                    //     onPressed: () =>
+                    //         controller.fetchData('month', DateTime.now()),
+                    //     child: const Text('Bulan Ini')),
+                    // InkWell(
+                    //   onTap: () async => controller.handleDate(context),
+                    //   child: Obx(
+                    //     () => Container(
+                    //       padding: const EdgeInsets.symmetric(
+                    //           vertical: 4, horizontal: 8),
+                    //       decoration: BoxDecoration(
+                    //         color: controller.isDateTimeNow.value
+                    //             ? Colors.white
+                    //             : Theme.of(context).colorScheme.primary,
+                    //         borderRadius: BorderRadius.circular(4),
+                    //       ),
+                    //       child: Text(
+                    //         controller.displayDate.value == ''
+                    //             ? 'Pilih Tanggal'
+                    //             : DateFormat('dd MMMM y', 'id')
+                    //                 .format(controller.selectedDate.value),
+                    //         style: controller.isDateTimeNow.value
+                    //             ? context.textTheme.bodySmall!.copyWith(
+                    //                 color: Theme.of(context).colorScheme.primary,
+                    //                 fontStyle: FontStyle.italic,
+                    //               )
+                    //             : const TextStyle(color: Colors.white),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // InkWell(
+                    //   onTap: () async => controller.handleGroupDate(context),
+                    //   child: Obx(
+                    //     () => Container(
+                    //       padding: const EdgeInsets.symmetric(
+                    //           vertical: 4, horizontal: 8),
+                    //       decoration: BoxDecoration(
+                    //         color: controller.isDateTimeNow.value
+                    //             ? Colors.white
+                    //             : Theme.of(context).colorScheme.primary,
+                    //         borderRadius: BorderRadius.circular(4),
+                    //       ),
+                    //       child: Text(
+                    //         controller.displayDate.value == ''
+                    //             ? 'Pilih Tanggal'
+                    //             : DateFormat('dd MMMM y', 'id')
+                    //                 .format(controller.selectedDate.value),
+                    //         style: controller.isDateTimeNow.value
+                    //             ? context.textTheme.bodySmall!.copyWith(
+                    //                 color: Theme.of(context).colorScheme.primary,
+                    //                 fontStyle: FontStyle.italic,
+                    //               )
+                    //             : const TextStyle(color: Colors.white),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -336,7 +342,6 @@ class BarChartWidget extends GetView<StatisticController> {
             BarChartRodData rod,
             int rodIndex,
           ) {
-            // final formatter = NumberFormat('#,##0', 'id_ID');
             return BarTooltipItem(
               rodIndex == 0
                   ? controller.isWeekly.value
@@ -362,7 +367,6 @@ class BarChartWidget extends GetView<StatisticController> {
                       response.spot!.touchedBarGroupIndex;
                   controller.touchedDataIndex.value =
                       response.spot!.touchedRodDataIndex;
-                  // debugPrint(controller.touchedGroupIndex.toString());
                 } else {
                   controller.touchedGroupIndex.value = -1;
                 }
@@ -370,10 +374,8 @@ class BarChartWidget extends GetView<StatisticController> {
       );
 
   Widget getTitles(double value, TitleMeta meta) {
-    // bool isWeekDates = controller.invoiceChart.isNotEmpty;
-    List<ChartModel> chart = controller.invoiceChart;
+    List<Chart> chart = controller.invoiceChart;
     String dateString = chart[value.toInt()].dateString;
-    // debugPrint(controller.weekInvoices[value.toInt()][0].);
     const style = TextStyle(
       color: Colors.grey,
       fontWeight: FontWeight.bold,
@@ -444,19 +446,10 @@ class BarChartWidget extends GetView<StatisticController> {
         show: false,
       );
 
-  // LinearGradient get _barsGradient => const LinearGradient(
-  //       colors: [
-  //         Colors.orange,
-  //         Colors.red,
-  //       ],
-  //       begin: Alignment.bottomCenter,
-  //       end: Alignment.topCenter,
-  //     );
-
   List<BarChartGroupData> get barGroups => List.generate(
         controller.invoiceChart.length,
         (index) {
-          ChartModel chart = controller.invoiceChart[index];
+          Chart chart = controller.invoiceChart[index];
           return BarChartGroupData(
             barsSpace: controller.isWeekly.value ? 10 : 1,
             x: index,
@@ -493,25 +486,30 @@ class DatePickerCard extends StatelessWidget {
     return Obx(
       () {
         final dateFormat = DateFormat('dd MMM y', 'id');
-        final date = dateFormat.format(controller.selectedDay.value!.date);
+        final date = dateFormat.format(controller.selectedChartDay.value!.date);
         final prevDate =
-            dateFormat.format(controller.prevSelectedDay.value!.date);
+            dateFormat.format(controller.prevSelectedChartDay.value!.date);
 
-        final sell = controller.selectedDay.value!.totalSellPrice;
-        final prevSell = controller.prevSelectedDay.value!.totalSellPrice;
+        final sell = controller.selectedChartDay.value!.totalSellPrice;
+        final prevSell = controller.prevSelectedChartDay.value!.totalSellPrice;
 
-        final profit = controller.selectedDay.value!.totalProfit;
-        final prevProfit = controller.prevSelectedDay.value!.totalProfit;
+        final profit = controller.selectedChartDay.value!.totalProfit;
+        final prevProfit = controller.prevSelectedChartDay.value!.totalProfit;
 
-        final totalInvoice = controller.selectedDay.value!.totalInvoice;
-        final prevTotalInvoice = controller.prevSelectedDay.value!.totalInvoice;
+        final totalInvoice = controller.selectedChartDay.value!.totalInvoice;
+        final prevTotalInvoice =
+            controller.prevSelectedChartDay.value!.totalInvoice;
 
         return Card(
           child: Column(
             children: [
               const Text('Pilih Data:'),
-
-              DatePickerWeekly(controller: controller),
+              if (controller.selectedSection.value == 'daily')
+                DatePickerDaily(controller: controller),
+              if (controller.selectedSection.value == 'weekly')
+                DatePickerWeekly(controller: controller),
+              if (controller.selectedSection.value == 'monthly')
+                DatePickerMonthly(controller: controller),
               // Row(
               //   children: [
               //     Expanded(
@@ -585,15 +583,25 @@ class DatePickerDaily extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 300,
-      height: 300,
-      child: DaysPicker(
-        minDate: DateTime(2020, 1),
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.dailyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        enableMultiView: true,
+        initialSelectedDate: controller.initDate.value,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        selectionMode: DateRangePickerSelectionMode.single,
+        minDate: DateTime(2000),
         maxDate: DateTime.now(),
-        splashRadius: 30,
-        initialDate: controller.selectedDate.value,
-        selectedDate: controller.selectedDate.value,
-        onDateSelected: (value) {
-          debugPrint(value.toString());
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          controller.rangePickerHandle(args);
         },
       ),
     );
@@ -610,18 +618,19 @@ class DatePickerWeekly extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // var pikcerDate = PickerDateRange(
-    //     DateTime.now(), DateTime.now().subtract(const Duration(days: 7)));
     return SizedBox(
       width: 300,
-      height: 450,
+      height: 480,
       child: SfDateRangePicker(
         controller: controller.weeklyRangeController.value,
         navigationDirection: DateRangePickerNavigationDirection.vertical,
         navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
         enableMultiView: true,
-        // allowViewNavigation: true,
-        initialSelectedRange: controller.selectedWeekRange.value,
+        initialSelectedRange: controller.selectedWeeklyRange.value,
         monthViewSettings: const DateRangePickerMonthViewSettings(
           firstDayOfWeek: 1,
         ),
@@ -629,7 +638,47 @@ class DatePickerWeekly extends StatelessWidget {
         minDate: DateTime(2000),
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-          controller.weeklyRangePickerHandle(args.value as PickerDateRange);
+          controller.rangePickerHandle(args);
+        },
+      ),
+    );
+  }
+}
+
+class DatePickerMonthly extends StatelessWidget {
+  const DatePickerMonthly({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.monthlyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        enableMultiView: true,
+        view: DateRangePickerView.year,
+        allowViewNavigation: false,
+        // initialSelectedDate: controller.selectedMonth.value,
+        // initialSelectedRange: controller.selectedWeeklyRange.value,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        // selectionMode: DateRangePickerSelectionMode.single,
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          controller.monthPickerHandle(args);
         },
       ),
     );
