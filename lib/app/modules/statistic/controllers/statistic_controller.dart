@@ -31,6 +31,7 @@ class StatisticController extends GetxController {
   final isLastIndex = false.obs;
   final isLoading = true.obs;
   final initDate = DateTime.now().obs;
+  final selectedDate = DateTime.now().obs;
   DateTime today = DateTime.now();
 
   final touchedGroupIndex = (-1).obs;
@@ -53,11 +54,11 @@ class StatisticController extends GetxController {
     if (section == 'weekly') {
       isWeekly.value = true;
       invoiceChart = await groupWeeklyInvoices(selectedDate);
-    } else if (section == 'month') {
+    } else if (section == 'monthly') {
       isWeekly.value = false;
       invoiceChart = await groupMonthlyInvoices(selectedDate);
       debugPrint(invoiceChart.toString());
-    } else if (section == 'year') {
+    } else if (section == 'yearly') {
       // groupYearlyInvoices();
     } else {
       isWeekly.value = false;
@@ -70,29 +71,34 @@ class StatisticController extends GetxController {
 //! Daily & Weekly ======================================================
   final dailyRangeController = DateRangePickerController().obs;
   final weeklyRangeController = DateRangePickerController().obs;
+  final args = DateRangePickerSelectionChangedArgs(DateTime.now()).obs;
 
   void rangePickerHandle(DateRangePickerSelectionChangedArgs pickedDate) async {
-    var selectedDate = DateTime.now();
+    args.value = pickedDate;
+    var selectedpickedDate = DateTime.now();
     var selectedPickerRange = PickerDateRange(DateTime.now(), null);
 
     if (pickedDate.value is DateTime) {
-      selectedDate = pickedDate.value;
+      selectedpickedDate = pickedDate.value;
     } else if (pickedDate.value is PickerDateRange) {
       selectedPickerRange = pickedDate.value;
-      selectedDate = selectedPickerRange.startDate!;
+      selectedpickedDate = selectedPickerRange.startDate!;
     }
 
-    final DateTime startDate = await getStartofWeek(selectedDate);
+    final DateTime startDate = await getStartofWeek(selectedpickedDate);
 
     final DateTime endDate = startDate.add(const Duration(days: 6));
     final newSelectedPickerRange = PickerDateRange(startDate, endDate);
 
+    selectedWeeklyRange.value = newSelectedPickerRange;
     weeklyRangeController.value.selectedRange = newSelectedPickerRange;
 
     if (selectedPickerRange.endDate == null) {
-      dailyRangeController.value.selectedDate = selectedDate;
-      isLastIndex.value = selectedDate.weekday == DateTime.monday;
-      await fetchData(selectedDate, 'weekly');
+      selectedDate.value = selectedpickedDate;
+      dailyRangeController.value.selectedDate = selectedpickedDate;
+      monthlyRangeController.value.selectedDate = selectedpickedDate;
+      isLastIndex.value = selectedpickedDate.weekday == DateTime.monday;
+      await fetchData(selectedpickedDate, 'weekly');
     }
   }
 
@@ -129,8 +135,18 @@ class StatisticController extends GetxController {
   final monthlyRangeController = DateRangePickerController().obs;
 
   void monthPickerHandle(DateRangePickerSelectionChangedArgs pickedDate) async {
-    await fetchData(pickedDate.value, 'monthly');
-    debugPrint(invoiceChart.length.toString());
+    args.value = pickedDate;
+    var selectedpickedDate = DateTime.now();
+    var selectedPickerRange = PickerDateRange(DateTime.now(), null);
+
+    if (pickedDate.value is DateTime) {
+      selectedpickedDate = pickedDate.value;
+    } else if (pickedDate.value is PickerDateRange) {
+      selectedPickerRange = pickedDate.value;
+      selectedpickedDate = selectedPickerRange.startDate!;
+    }
+    selectedDate.value = selectedpickedDate;
+    await fetchData(selectedpickedDate, 'monthly');
     // var selectedDate = DateTime.now();
     // var selectedPickerRange = PickerDateRange(DateTime.now(), null);
 

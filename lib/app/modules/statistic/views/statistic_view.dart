@@ -152,8 +152,10 @@ class BarChartWidget extends GetView<StatisticController> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () =>
-                            controller.selectedSection.value = 'daily',
+                        onPressed: () {
+                          controller.rangePickerHandle(controller.args.value);
+                          controller.selectedSection.value = 'daily';
+                        },
                         style: ButtonStyle(
                           enableFeedback: true,
                           backgroundColor: WidgetStatePropertyAll(
@@ -176,8 +178,10 @@ class BarChartWidget extends GetView<StatisticController> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () =>
-                            controller.selectedSection.value = 'weekly',
+                        onPressed: () {
+                          controller.rangePickerHandle(controller.args.value);
+                          controller.selectedSection.value = 'weekly';
+                        },
                         style: ButtonStyle(
                           enableFeedback: true,
                           backgroundColor: WidgetStatePropertyAll(
@@ -200,8 +204,10 @@ class BarChartWidget extends GetView<StatisticController> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () =>
-                            controller.selectedSection.value = 'monthly',
+                        onPressed: () {
+                          controller.monthPickerHandle(controller.args.value);
+                          controller.selectedSection.value = 'monthly';
+                        },
                         style: ButtonStyle(
                           enableFeedback: true,
                           backgroundColor: WidgetStatePropertyAll(
@@ -457,10 +463,12 @@ class BarChartWidget extends GetView<StatisticController> {
               BarChartRodData(
                 toY: chart.totalProfit.toDouble(),
                 color: Colors.red,
+                borderRadius: BorderRadius.circular(2),
               ),
               BarChartRodData(
                 toY: chart.totalInvoice.toDouble() * 50000,
                 color: Colors.orange,
+                borderRadius: BorderRadius.circular(2),
               )
             ],
             showingTooltipIndicators: controller.isWeekly.value
