@@ -28,6 +28,7 @@ class StatisticController extends GetxController {
   Rx<Chart?> prevSelectedChartDay = Rx<Chart?>(null);
   final maxY = 0.obs;
   final isWeekly = true.obs;
+  final isMonthly = true.obs;
   final isLastIndex = false.obs;
   final isLoading = true.obs;
   final initDate = DateTime.now().obs;
@@ -50,19 +51,17 @@ class StatisticController extends GetxController {
     maxY.value = 0;
     invoiceChart.clear();
     isLoading.value = true;
-
+    isWeekly.value = false;
+    isMonthly.value = false;
     if (section == 'weekly') {
       isWeekly.value = true;
       invoiceChart = await groupWeeklyInvoices(selectedDate);
     } else if (section == 'monthly') {
-      isWeekly.value = false;
+      isMonthly.value = true;
       invoiceChart = await groupMonthlyInvoices(selectedDate);
       debugPrint(invoiceChart.toString());
     } else if (section == 'yearly') {
-      // groupYearlyInvoices();
-    } else {
-      isWeekly.value = false;
-      // groupCustomInvoices();
+      invoiceChart = await groupYearlyInvoices(selectedDate);
     }
     isLoading.value = false;
     compareData(selectedDate, section);
@@ -147,30 +146,7 @@ class StatisticController extends GetxController {
     }
     selectedDate.value = selectedpickedDate;
     await fetchData(selectedpickedDate, 'monthly');
-    // var selectedDate = DateTime.now();
-    // var selectedPickerRange = PickerDateRange(DateTime.now(), null);
-
-    // if (pickedDate.value is DateTime) {
-    //   selectedDate = pickedDate.value;
-    // } else if (pickedDate.value is PickerDateRange) {
-    //   selectedPickerRange = pickedDate.value;
-    //   selectedDate = selectedPickerRange.startDate!;
-    // }
-
-    // final DateTime startDate = await getStartofWeek(selectedDate);
-
-    // final DateTime endDate = startDate.add(const Duration(days: 6));
-    // final newSelectedPickerRange = PickerDateRange(startDate, endDate);
-
-    // weeklyRangeController.value.selectedRange = newSelectedPickerRange;
-
-    // if (selectedPickerRange.endDate == null) {
-    //   dailyRangeController.value.selectedDate = selectedDate;
-    //   isLastIndex.value = selectedDate.weekday == DateTime.monday;
-    //   await fetchData(selectedDate, 'weekly');
-    // }
   }
-  // final selectedMonth = DateTime.now().month.obs;
 
   Future<List<Chart>> groupMonthlyInvoices(DateTime selectedDate) async {
     final currentMonth = selectedDate.month;
@@ -186,26 +162,56 @@ class StatisticController extends GetxController {
           convertToLocal(invoice.createdAt!)
               .isBefore(endOfMonth.add(const Duration(days: 1)));
     }).toList();
+
     currentMonthInvoiceChart = await getChartData(selectedDate, 'current');
     prevMonthInvoiceChart = await getChartData(selectedDate, 'prev');
     return currentMonthInvoiceChart;
   }
 
-  // void groupYearlyInvoices() {
-  //   final currentMonth = today.month;
-  //   final currentYear = today.year;
+//! Yearly ======================================================
+  final yearlyRangeController = DateRangePickerController().obs;
 
-  //   final startOfMonth = DateTime(currentYear, currentMonth, 1);
-  //   final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
+  void yearPickerHandle(DateRangePickerSelectionChangedArgs pickedDate) async {
+    args.value = pickedDate;
+    var selectedpickedDate = DateTime.now();
+    var selectedPickerRange = PickerDateRange(DateTime.now(), null);
 
-  //   currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
-  //     return convertToLocal(invoice.createdAt!)
-  //             .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
-  //         convertToLocal(invoice.createdAt!)
-  //             .isBefore(endOfMonth.add(const Duration(days: 1)));
-  //   }).toList();
-  //   getChartData(null, 'current');
-  // }
+    if (pickedDate.value is DateTime) {
+      selectedpickedDate = pickedDate.value;
+    } else if (pickedDate.value is PickerDateRange) {
+      selectedPickerRange = pickedDate.value;
+      selectedpickedDate = selectedPickerRange.startDate!;
+    }
+    selectedDate.value = selectedpickedDate;
+    await fetchData(selectedpickedDate, 'yearly');
+  }
+
+  Future<List<Chart>> groupYearlyInvoices(DateTime selectedDate) async {
+    final currentYear = selectedDate.year;
+    final prevYear = selectedDate.year;
+
+    final startOfYear = DateTime(prevYear, 1);
+    final endOfYear = DateTime(currentYear, 12);
+
+    currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
+      return convertToLocal(invoice.createdAt!)
+              .isAfter(startOfYear.subtract(const Duration(days: 1))) &&
+          convertToLocal(invoice.createdAt!)
+              .isBefore(endOfYear.add(const Duration(days: 1)));
+    }).toList();
+
+    final List<Chart> currentYearMonthlyData = [];
+
+    final totalDaysInMonth =
+        DateTime(selectedDate.year, selectedDate.month + 1, 0).day;
+    for (var day = 0; day < totalDaysInMonth; day++) {
+      dayValueLooping(day);
+    }
+
+    currentYearInvoiceChart = await getChartData(selectedDate, 'current');
+    prevYearInvoiceChart = await getChartData(selectedDate, 'prev');
+    return currentYearInvoiceChart;
+  }
 
   Future<List<Chart>> getChartData(
       DateTime? startingDate, String pastPresent) async {
@@ -216,7 +222,7 @@ class StatisticController extends GetxController {
     final startingYear = startingDate.year;
 
     final formatter = DateFormat('dd/MM');
-    debugPrint(isWeekly.value.toString());
+
     void dayValueLooping(int i) {
       final currentDate = isWeekly.value
           ? startingDate.add(Duration(days: i))
@@ -269,7 +275,7 @@ class StatisticController extends GetxController {
       for (var day = 0; day < 7; day++) {
         dayValueLooping(day);
       }
-    } else {
+    } else if (isMonthly.value) {
       final totalDaysInMonth = DateTime(startingYear, startingMonth + 1, 0).day;
       for (var day = 0; day < totalDaysInMonth; day++) {
         dayValueLooping(day);

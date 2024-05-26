@@ -518,6 +518,8 @@ class DatePickerCard extends StatelessWidget {
                 DatePickerWeekly(controller: controller),
               if (controller.selectedSection.value == 'monthly')
                 DatePickerMonthly(controller: controller),
+              if (controller.selectedSection.value == 'yearly')
+                DatePickerYearly(controller: controller),
               // Row(
               //   children: [
               //     Expanded(
@@ -687,6 +689,46 @@ class DatePickerMonthly extends StatelessWidget {
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
           controller.monthPickerHandle(args);
+        },
+      ),
+    );
+  }
+}
+
+class DatePickerYearly extends StatelessWidget {
+  const DatePickerYearly({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.yearlyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        enableMultiView: true,
+        view: DateRangePickerView.decade,
+        allowViewNavigation: false,
+        // initialSelectedDate: controller.selectedMonth.value,
+        // initialSelectedRange: controller.selectedWeeklyRange.value,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        // selectionMode: DateRangePickerSelectionMode.single,
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          controller.yearPickerHandle(args);
         },
       ),
     );
