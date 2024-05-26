@@ -230,8 +230,10 @@ class BarChartWidget extends GetView<StatisticController> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () =>
-                            controller.selectedSection.value = 'yearly',
+                        onPressed: () {
+                          controller.yearPickerHandle(controller.args.value);
+                          controller.selectedSection.value = 'yearly';
+                        },
                         style: ButtonStyle(
                           enableFeedback: true,
                           backgroundColor: WidgetStatePropertyAll(

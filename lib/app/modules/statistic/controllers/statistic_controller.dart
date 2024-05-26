@@ -29,6 +29,7 @@ class StatisticController extends GetxController {
   final maxY = 0.obs;
   final isWeekly = true.obs;
   final isMonthly = true.obs;
+  final isYearly = true.obs;
   final isLastIndex = false.obs;
   final isLoading = true.obs;
   final initDate = DateTime.now().obs;
@@ -53,14 +54,15 @@ class StatisticController extends GetxController {
     isLoading.value = true;
     isWeekly.value = false;
     isMonthly.value = false;
+    isYearly.value = false;
     if (section == 'weekly') {
       isWeekly.value = true;
       invoiceChart = await groupWeeklyInvoices(selectedDate);
     } else if (section == 'monthly') {
       isMonthly.value = true;
       invoiceChart = await groupMonthlyInvoices(selectedDate);
-      debugPrint(invoiceChart.toString());
     } else if (section == 'yearly') {
+      isYearly.value = true;
       invoiceChart = await groupYearlyInvoices(selectedDate);
     }
     isLoading.value = false;
@@ -153,18 +155,20 @@ class StatisticController extends GetxController {
     final prevMonth = currentMonth - 1;
     final currentYear = selectedDate.year;
 
-    final startOfMonth = DateTime(currentYear, prevMonth, 1);
+    final startOfCurrentMonth = DateTime(currentYear, currentMonth, 1);
+    final startOfPrevMonth = DateTime(currentYear, prevMonth, 1);
     final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
 
     currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
       return convertToLocal(invoice.createdAt!)
-              .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
+              .isAfter(startOfPrevMonth.subtract(const Duration(days: 1))) &&
           convertToLocal(invoice.createdAt!)
               .isBefore(endOfMonth.add(const Duration(days: 1)));
     }).toList();
 
-    currentMonthInvoiceChart = await getChartData(selectedDate, 'current');
-    prevMonthInvoiceChart = await getChartData(selectedDate, 'prev');
+    currentMonthInvoiceChart =
+        await getChartData(startOfCurrentMonth, 'current');
+    prevMonthInvoiceChart = await getChartData(startOfPrevMonth, 'prev');
     return currentMonthInvoiceChart;
   }
 
@@ -188,52 +192,71 @@ class StatisticController extends GetxController {
 
   Future<List<Chart>> groupYearlyInvoices(DateTime selectedDate) async {
     final currentYear = selectedDate.year;
-    final prevYear = selectedDate.year;
+    final prevYear = selectedDate.year - 1;
 
-    final startOfYear = DateTime(prevYear, 1);
+    final startOfCurrentYear = DateTime(currentYear, 1);
+    final startOfPrevYear = DateTime(prevYear, 1);
     final endOfYear = DateTime(currentYear, 12);
 
     currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
       return convertToLocal(invoice.createdAt!)
-              .isAfter(startOfYear.subtract(const Duration(days: 1))) &&
+              .isAfter(startOfPrevYear.subtract(const Duration(days: 1))) &&
           convertToLocal(invoice.createdAt!)
               .isBefore(endOfYear.add(const Duration(days: 1)));
     }).toList();
 
-    final List<Chart> currentYearMonthlyData = [];
+    // var yearMonthlyData = <Chart>[];
 
-    final totalDaysInMonth =
-        DateTime(selectedDate.year, selectedDate.month + 1, 0).day;
-    for (var day = 0; day < totalDaysInMonth; day++) {
-      dayValueLooping(day);
-    }
+    // const totalMonthInCurrentYear = 12;
+    // for (var day = 0; day < totalMonthInCurrentYear; day++) {
+    //   final getSelectedMonth = DateTime(currentYear, 1 + day);
+    //   var data = await getChartData(getSelectedMonth, 'current');
+    //   yearMonthlyData.addAll(data);
+    // }
 
-    currentYearInvoiceChart = await getChartData(selectedDate, 'current');
-    prevYearInvoiceChart = await getChartData(selectedDate, 'prev');
+    currentYearInvoiceChart = await getChartData(startOfCurrentYear, 'current');
+
+    // yearMonthlyData.clear;
+
+    // final totalMonthInPrevYear = DateTime(prevYear).month;
+    // for (var day = 0; day < totalMonthInPrevYear; day++) {
+    //   yearMonthlyData.addAll(await getChartData(selectedDate, 'prev'));
+    // }
+
+    prevYearInvoiceChart = await getChartData(startOfPrevYear, 'current');
+    ;
     return currentYearInvoiceChart;
   }
 
   Future<List<Chart>> getChartData(
-      DateTime? startingDate, String pastPresent) async {
+      DateTime? selectedDate, String pastPresent) async {
     bool isCurrentSelected = pastPresent == 'current';
     final List<Chart> listChartData = [];
 
-    final startingMonth = startingDate!.month;
-    final startingYear = startingDate.year;
+    final startingMonth = selectedDate!.month;
+    final startingYear = selectedDate.year;
 
     final formatter = DateFormat('dd/MM');
 
     void dayValueLooping(int i) {
       final currentDate = isWeekly.value
-          ? startingDate.add(Duration(days: i))
-          : DateTime(startingYear, startingMonth, i + 1);
+          ? selectedDate.add(Duration(days: i))
+          : isMonthly.value
+              ? DateTime(startingYear, startingMonth, i + 1)
+              : DateTime(startingYear, startingMonth + i);
 
-      final invoices = currentAndPrevFilteredInvoices.where((invoice) {
-        DateTime localDate = convertToLocal(invoice.createdAt!);
-        return localDate.year == currentDate.year &&
-            localDate.month == currentDate.month &&
-            localDate.day == currentDate.day;
-      }).toList();
+      final invoices = isYearly.value
+          ? currentAndPrevFilteredInvoices.where((invoice) {
+              DateTime localDate = convertToLocal(invoice.createdAt!);
+              return localDate.year == currentDate.year &&
+                  localDate.month == currentDate.month;
+            }).toList()
+          : currentAndPrevFilteredInvoices.where((invoice) {
+              DateTime localDate = convertToLocal(invoice.createdAt!);
+              return localDate.year == currentDate.year &&
+                  localDate.month == currentDate.month &&
+                  localDate.day == currentDate.day;
+            }).toList();
 
       DateTime date = currentDate;
       final dateString = formatter.format(date);
@@ -267,6 +290,7 @@ class StatisticController extends GetxController {
         totalProfit: totalProfit,
         totalInvoice: totalInvoice,
       );
+      debugPrint('$i ${chartData.totalInvoice}');
 
       listChartData.add(chartData);
     }
@@ -280,7 +304,12 @@ class StatisticController extends GetxController {
       for (var day = 0; day < totalDaysInMonth; day++) {
         dayValueLooping(day);
       }
+    } else if (isYearly.value) {
+      for (var day = 0; day < 12; day++) {
+        dayValueLooping(day);
+      }
     }
+    // listChartDataYearly.addAll(listChartData);
     return listChartData;
   }
 
