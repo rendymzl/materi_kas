@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:ffi';
 
-import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/cart_model.dart';
@@ -20,7 +20,7 @@ class InvoiceController extends GetxController {
   // HomeController homeController = Get.put(HomeController());
   late final String uuid;
   late final List<Invoice> invoiceList = <Invoice>[].obs;
-  final foundInvoices = <Invoice>[].obs;
+  final initInvoices = <Invoice>[].obs;
 
   @override
   void onInit() async {
@@ -28,32 +28,179 @@ class InvoiceController extends GetxController {
     uuid = supabase.auth.currentUser!.id;
     foundProducts.value = productList;
     customers.value = customerList;
-    List<Invoice> newData = await InvoiceProvider.fetchData(uuid);
+    List<Invoice> newData = await InvoiceProvider.fetchData(uuid, null);
     refreshFetch(newData);
+  }
+
+  final loadingInvoiceDisplay = false.obs;
+
+  Future<void> resetToInitCartList() async {
+    // List<Invoice> newData = await InvoiceProvider.fetchData(uuid, null);
+    // refreshFetch(newData);
+    cartList.value = initCartList
+        .map((cart) => Cart(
+              product: cart.product,
+              quantity: cart.quantity,
+              individualDiscount: cart.individualDiscount,
+              bundleDiscount: cart.bundleDiscount,
+            ))
+        .toList();
+    cartListReturn.value = initCartListReturn
+        .map((cart) => Cart(
+              product: cart.product,
+              quantity: cart.quantity,
+              individualDiscount: cart.individualDiscount,
+              bundleDiscount: cart.bundleDiscount,
+            ))
+        .toList();
   }
 
   //! Fetch
   void refreshFetch(List<Invoice> newData) async {
     invoiceList.clear();
     invoiceList.assignAll(newData);
-    foundInvoices.value = invoiceList;
   }
 
-  // final disabledButton = true.obs;
+  //! Filtered Display
+  final startFilteredDate = ''.obs;
+  final endFilteredDate = ''.obs;
+  final displayFilteredDate = ''.obs;
+  final dateIsSelected = false.obs;
+  final selectedFilteredDate = DateTime.now().obs;
+
+  handleFilteredDate(BuildContext context) {
+    startFilteredDate.value = '';
+    endFilteredDate.value = '';
+    displayFilteredDate.value = '';
+    Get.defaultDialog(
+      title: 'Pilih Tanggal',
+      backgroundColor: Colors.white,
+      content: Column(
+        children: [
+          Obx(() {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$startFilteredDate',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 4),
+                const Text('sampai',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 4),
+                Text(
+                  '$endFilteredDate',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            );
+          }),
+          SizedBox(
+            width: 400,
+            height: 350,
+            child: SfDateRangePicker(
+              headerStyle: DateRangePickerHeaderStyle(
+                  backgroundColor: Colors.white,
+                  textStyle: context.textTheme.bodyLarge),
+              showNavigationArrow: true,
+              backgroundColor: Colors.white,
+              monthViewSettings: const DateRangePickerMonthViewSettings(
+                firstDayOfWeek: 1,
+              ),
+              initialSelectedDate: selectedFilteredDate.value,
+              selectionMode: DateRangePickerSelectionMode.range,
+              minDate: DateTime(2000),
+              maxDate: DateTime.now(),
+              showActionButtons: true,
+              cancelText: 'Batal',
+              onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+                startFilteredDate.value =
+                    DateFormat('dd MMMM y', 'id').format(args.value.startDate!);
+                if (args.value.endDate != null) {
+                  endFilteredDate.value =
+                      DateFormat('dd MMMM y', 'id').format(args.value.endDate!);
+                }
+              },
+              onCancel: () => Get.back(),
+              onSubmit: (value) {
+                if (value is PickerDateRange) {
+                  if (value.endDate != null) {
+                    final newSelectedPickerRange = PickerDateRange(
+                        value.startDate,
+                        value.endDate!.add(const Duration(days: 1)));
+
+                    selectedFilteredDate.value =
+                        newSelectedPickerRange.startDate!;
+                    displayFilteredDate.value =
+                        '$startFilteredDate sampai $endFilteredDate';
+                    filterInvoices(newSelectedPickerRange);
+                    dateIsSelected.value = true;
+                    Get.back();
+                  }
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void clearHandle() async {
+    dateIsSelected.value = false;
+    startFilteredDate.value = '';
+    endFilteredDate.value = '';
+    displayFilteredDate.value = '';
+    List<Invoice> newData = await InvoiceProvider.fetchData(uuid, null);
+    refreshFetch(newData);
+  }
+
+  Timer? debounce;
+  void filterInvoices(PickerDateRange invoiceDateRange) async {
+    if (debounce?.isActive ?? false) debounce!.cancel();
+    debounce = Timer(const Duration(milliseconds: 200), () async {
+      List<Invoice> newData =
+          await InvoiceProvider.fetchData(uuid, invoiceDateRange);
+      refreshFetch(newData);
+    });
+  }
+
   final numberFormat = NumberFormat("#,##0", "id_ID");
   final showChange = false.obs;
+  final showReturnFee = false.obs;
   final totalCharge = 0.obs;
 
   void onPayChanged(String value, TextEditingController pay, Invoice invoice) {
-    if (value == '') value = '0';
     int charge = invoice.change! * -1;
-    int valueInt = int.parse(value.replaceAll('.', ''));
+    int valueInt = int.parse((value.isEmpty) ? '0' : value.replaceAll('.', ''));
     totalCharge.value = valueInt - charge;
     if (value.isNotEmpty) {
       String newValue = numberFormat.format(valueInt);
-      valueInt > charge ? showChange.value = true : showChange.value = false;
+      showChange.value = valueInt > charge;
       if (newValue != pay.text) {
         pay.value = TextEditingValue(
+          text: newValue,
+          selection: TextSelection.collapsed(offset: newValue.length),
+        );
+      }
+    }
+  }
+
+  final returnFeeTextController = TextEditingController();
+  void returnFeeHandle(String value, Invoice invoice) {
+    int valueInt = int.parse((value.isEmpty) ? '0' : value.replaceAll('.', ''));
+    returnFee.value = valueInt;
+    totalReturnPrice.value = invoice.returnFee! - valueInt;
+    if (value.isNotEmpty) {
+      String newValue = numberFormat.format(valueInt);
+      showReturnFee.value = valueInt > 0;
+      if (newValue != returnFeeTextController.text) {
+        returnFeeTextController.value = TextEditingValue(
           text: newValue,
           selection: TextSelection.collapsed(offset: newValue.length),
         );
@@ -154,10 +301,15 @@ class InvoiceController extends GetxController {
   final customerAddressController = TextEditingController();
   final isRegisteredCustomer = false.obs;
   final cartList = <Cart>[].obs;
+  final initCartList = <Cart>[].obs;
+  final cartListReturn = <Cart>[].obs;
+  final initCartListReturn = <Cart>[].obs;
   // final moneyChange = 0.obs;
   final totalPrice = 0.obs;
+  final totalReturnPrice = 0.obs;
   final totalDiscount = 0.obs;
-  ScrollController scrollController = ScrollController();
+  final returnFee = 0.obs;
+  // ScrollController scrollController = ScrollController();
   final invoiceId = ''.obs;
   final id = ''.obs;
   final addProduct = false.obs;
@@ -170,19 +322,51 @@ class InvoiceController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   void handleDate(BuildContext context) async {
-    // debugPrint('current ${selectedDate.value}');
-    // debugPrint('==================');
-    DateTime? pickedDate = await showDatePickerDialog(
-      context: context,
-      initialDate: selectedDate.value,
-      selectedDate: selectedDate.value,
-      minDate: DateTime(2000),
-      maxDate: DateTime.now(),
+    displayDate.value = selectedDate.value.toString();
+    Get.defaultDialog(
+      title: 'Ubah Tanggal',
+      backgroundColor: Colors.white,
+      content: SizedBox(
+        width: 400,
+        height: 350,
+        child: SfDateRangePicker(
+          headerStyle: DateRangePickerHeaderStyle(
+              backgroundColor: Colors.white,
+              textStyle: context.textTheme.bodyLarge),
+          showNavigationArrow: true,
+          backgroundColor: Colors.white,
+          monthViewSettings: const DateRangePickerMonthViewSettings(
+            firstDayOfWeek: 1,
+          ),
+          initialSelectedDate: selectedDate.value,
+          minDate: DateTime(2000),
+          maxDate: DateTime.now(),
+          showActionButtons: true,
+          cancelText: 'Batal',
+          onCancel: () => Get.back(),
+          onSubmit: (p0) {
+            selectedDate.value = p0 as DateTime;
+            displayDate.value = p0.toString();
+            Get.back();
+          },
+          // onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+
+          // },
+        ),
+      ),
+      // debugPrint('current ${selectedDate.value}');
+      // debugPrint('==================');
+      // DateTime? pickedDate = await showDatePickerDialog(
+      //   context: context,
+      //   initialDate: selectedDate.value,
+      //   selectedDate: selectedDate.value,
+      //   minDate: DateTime(2000),
+      //   maxDate: DateTime.now(),
       // locale: const Locale('id', 'ID'),
     );
 
-    selectedDate.value = pickedDate ?? DateTime.now();
-    displayDate.value = pickedDate.toString();
+    // selectedDate.value = pickedDate ?? DateTime.now();
+    // displayDate.value = pickedDate.toString();
   }
 
   void handleTime(BuildContext context) async {
@@ -190,8 +374,7 @@ class InvoiceController extends GetxController {
       context: context,
       initialTime: selectedTime.value,
     );
-
-    selectedTime.value = pickedTime ?? TimeOfDay.now();
+    if (pickedTime != null) selectedTime.value = pickedTime;
     displayTime.value = pickedTime.toString();
   }
 
@@ -224,24 +407,89 @@ class InvoiceController extends GetxController {
   }
 
   void removeFromCart(Cart productCart) {
-    productCart.quantity = 1;
-    cartList.remove(productCart);
-
-    int payValue = 0;
-    payTextController.text == ''
-        ? payValue = 0
-        : payValue = int.parse(payTextController.text.replaceAll('.', ''));
-    totalCharge.value =
-        payValue - (totalPrice.value - productCart.product!.sellPrice!);
+    if (cartList.length > 1) {
+      // productCart.quantity = 1;
+      cartList.remove(productCart);
+      int payValue = 0;
+      payTextController.text == ''
+          ? payValue = 0
+          : payValue = int.parse(payTextController.text.replaceAll('.', ''));
+      totalCharge.value =
+          payValue - (totalPrice.value - productCart.product!.sellPrice!);
+    } else {
+      Get.snackbar('Uups', 'Invoice tidak boleh kosong',
+          colorText: Colors.white);
+    }
   }
 
-  void quantityHandle(Cart productCart, String qty) {
+  void removeFromReturnCart(Cart productCart) {
+    cartListReturn.remove(productCart);
+  }
+
+  // void quantityReturnHandleDialog(Cart productCart) {
+  //   final TextEditingController qtyController = TextEditingController();
+  //   qtyController.text = '${productCart.quantity}';
+  //   Get.defaultDialog(
+  //     title: 'Masukkan Jumlah Return',
+  //     content: TextField(
+  //       controller: qtyController,
+  //       decoration: const InputDecoration(
+  //         labelText: 'Jumlah',
+  //         border: OutlineInputBorder(),
+  //       ),
+  //       keyboardType: TextInputType.number,
+  //       inputFormatters: [
+  //         FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+  //         TextInputFormatter.withFunction(
+  //           (oldValue, newValue) =>
+  //               newValue.text.length > productCart.quantity.toString().length
+  //                   ? oldValue
+  //                   : newValue,
+  //         ),
+  //       ],
+  //     ),
+  //     onConfirm: () {
+  //       int qtyReturn = int.parse(qtyController.text);
+  //       int qtyRemain = productCart.quantity! - int.parse(qtyController.text);
+  //       if (qtyReturn > 0 && qtyReturn <= productCart.quantity!) {
+  //         quantityReturnHandle(productCart, qtyController.text);
+  //         quantityHandle(productCart, qtyRemain.toString());
+  //         Get.back();
+  //       } else {
+  //         Get.snackbar('Error',
+  //             'Jumlah harus lebih dari 0 dan tidak boleh lebih dari ${productCart.quantity}',
+  //             colorText: Colors.white);
+  //       }
+  //     },
+  //   );
+  // }
+
+  // void returnProduct(Cart productCart) {
+  //   if (cartList.length > 1) {
+  //     cartListReturn.add(productCart);
+  //     cartList.remove(productCart);
+  //   } else {
+  //     Get.snackbar('Uups', 'Cart list tidak boleh kosong',
+  //         colorText: Colors.white);
+  //   }
+  // }
+
+  void quantityHandle(Cart productCart, int qty) {
     int index = cartList.indexWhere(
         (selectItem) => selectItem.product?.id == productCart.product?.id);
 
-    int qtyParse = qty == '' ? 0 : int.parse(qty);
-    productCart.quantity = qtyParse;
+    productCart.quantity = qty;
     cartList.replaceRange(index, index + 1, [productCart]);
+  }
+
+  void returnHandle(Cart productCart, bool isAddToReturn) {
+    if (isAddToReturn) {
+      addToReturnCart(productCart, 1);
+      addToCart(productCart, -1);
+    } else {
+      addToReturnCart(productCart, -1);
+      addToCart(productCart, 1);
+    }
   }
 
   final payTextController = TextEditingController();
@@ -266,7 +514,6 @@ class InvoiceController extends GetxController {
     cartList.replaceRange(index, index + 1, [productCart]);
   }
 
-  Timer? debounce;
   void onPayHandle(String value) {
     if (value.isNotEmpty) {
       String newValue =
@@ -285,6 +532,12 @@ class InvoiceController extends GetxController {
       totalCharge.value =
           int.parse(value.replaceAll('.', '')) - totalPrice.value;
     });
+  }
+
+  @override
+  void dispose() {
+    debounce?.cancel();
+    super.dispose();
   }
 
   Future saveInvoice() async {
@@ -322,6 +575,7 @@ class InvoiceController extends GetxController {
       'created_at': dateTime.toIso8601String(),
       'customer': customer,
       'products_cart': ProductsCart(cartList: cartList).toJson(),
+      'products_return_cart': ProductsCart(cartList: cartListReturn).toJson(),
       'bill': totalPrice.value,
       'pay': payment,
       'change': change,
@@ -336,8 +590,10 @@ class InvoiceController extends GetxController {
         title: 'Berhasil',
         middleText: 'Invoice Edit berhasil disimpan.',
         confirm: TextButton(
-          onPressed: () {
+          onPressed: () async {
             cartList.clear();
+            cartListReturn.clear();
+            await resetToInitCartList();
             payTextController.text = '';
             totalCharge.value = 0;
             totalPrice.value = 0;
@@ -400,66 +656,90 @@ class InvoiceController extends GetxController {
   late final productList = productController.productList;
   final foundProducts = <Product>[].obs;
   void filterProducts(String productName) {
-    // var result = <Product>[];
     productController.filterProducts(productName);
-
-    // productName.isEmpty
-    //     ? result = productList
-    //     : result = productList
-    //         .where((product) => product.productName
-    //             .toString()
-    //             .toLowerCase()
-    //             .contains(productName))
-    //         .toList();
-
-    // foundProducts.value = result;
   }
 
-  void addToCart(Product product) {
-    // invoiceId.value = generateInvoice(selectedCustomer.value);
-    int index = cartList
-        .indexWhere((selectItem) => selectItem.product?.id == product.id);
+  void filterInvoicesId(String invoiceId) async {
+    displayFilteredDate.value = '';
+    dateIsSelected.value = false;
+    if (debounce?.isActive ?? false) debounce!.cancel();
+    debounce = Timer(const Duration(milliseconds: 200), () async {
+      List<Invoice> newData =
+          await InvoiceProvider.fetchDataById(uuid, invoiceId);
+      refreshFetch(newData);
+    });
+  }
+
+  void addToCart(Cart pCart, int qty) {
+    int index = cartList.indexWhere(
+        (selectItem) => selectItem.product?.id == pCart.product!.id);
 
     if (index != -1) {
-      Cart productCart = Cart(
-          product: product,
-          quantity: cartList[index].quantity! + 1,
-          individualDiscount: 0,
-          bundleDiscount: 0);
-
-      cartList.replaceRange(index, index + 1, [productCart]);
-
-      Future.delayed(const Duration(milliseconds: 1), () {
-        scrollController.animateTo(
-          index * 80.0,
-          // scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
+      int totalQty = cartList[index].quantity! + qty;
+      if (totalQty == 0) {
+        removeFromCart(pCart);
+      } else {
+        Cart productCart = Cart(
+          product: pCart.product,
+          quantity: totalQty,
+          individualDiscount: pCart.individualDiscount,
+          bundleDiscount: pCart.bundleDiscount,
         );
-      });
+
+        cartList.replaceRange(index, index + 1, [productCart]);
+      }
     } else {
-      Cart productCart = Cart(
-          product: product,
-          quantity: 1,
-          individualDiscount: 0,
-          bundleDiscount: 0);
-
-      cartList.add(productCart);
-
-      Future.delayed(const Duration(milliseconds: 10), () {
-        scrollController.animateTo(
-          // index * 80.0,
-          scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-        );
-      });
+      cartList.add(
+        Cart(
+          product: pCart.product,
+          quantity: qty,
+          individualDiscount: pCart.individualDiscount,
+          bundleDiscount: pCart.bundleDiscount,
+        ),
+      );
     }
     int payValue = 0;
     payTextController.text == ''
         ? payValue = 0
         : payValue = int.parse(payTextController.text.replaceAll('.', ''));
-    totalCharge.value = payValue - (totalPrice.value + product.sellPrice!);
+    if (qty > 0) {
+      totalCharge.value =
+          payValue - (totalPrice.value + pCart.product!.sellPrice! * qty);
+    } else {
+      totalCharge.value =
+          payValue - (totalPrice.value - pCart.product!.sellPrice! * qty.abs());
+    }
+  }
+
+  void addToReturnCart(Cart pReturnCart, int qty) {
+    int index = cartListReturn.indexWhere(
+      (selectItem) => selectItem.product?.id == pReturnCart.product!.id,
+    );
+
+    if (index != -1) {
+      int totalQty = cartListReturn[index].quantity! + qty;
+      if (totalQty == 0) {
+        removeFromReturnCart(pReturnCart);
+      } else {
+        Cart productCart = Cart(
+          product: pReturnCart.product,
+          quantity: totalQty,
+          individualDiscount: pReturnCart.individualDiscount,
+          bundleDiscount: pReturnCart.bundleDiscount,
+        );
+
+        cartListReturn.replaceRange(index, index + 1, [productCart]);
+      }
+    } else {
+      cartListReturn.add(
+        Cart(
+          product: pReturnCart.product,
+          quantity: qty,
+          individualDiscount: pReturnCart.individualDiscount,
+          bundleDiscount: pReturnCart.bundleDiscount,
+        ),
+      );
+    }
   }
 
   // void filterProducts(String productName) {
@@ -498,6 +778,7 @@ class InvoiceController extends GetxController {
         confirm: TextButton(
           onPressed: () async {
             refreshFetch(await InvoiceProvider.destroy(invoice));
+            Get.back();
             Get.back();
           },
           child: const Text('OK'),

@@ -1,48 +1,71 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 // import 'package:get_storage/get_storage.dart';
 import 'package:materi_kas/app/data/providers/product_provider.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 import '../../../main.dart';
 import '../models/invoice_model.dart';
 
 class InvoiceProvider extends GetConnect {
   //! Read
-  static Future<List<Invoice>> fetchData(String uuid) async {
-    // GetStorage cacheUuid = GetStorage(uuid);
-    // var cacheProduct = await cacheUuid.read('cacheInvoice');
-    // bool isCacheExist = await cacheProduct == null ? false : true;
+  static Future<List<Invoice>> fetchData(
+      String uuid, PickerDateRange? date) async {
+    late List<Map<String, dynamic>> response;
 
-    // if (!isCacheExist) {
-
-    List<Map<String, dynamic>> response = await supabase
-        .from('invoices')
-        .select()
-        .eq('owner_id', uuid)
-        .order('created_at');
-
-    // await cacheUuid.write('cacheInvoice', jsonEncode(response));
+    if (date != null) {
+      final formattedStartDate = DateFormat('yyyy-MM-dd HH:mm:ss')
+          .format(date.startDate!.subtract(const Duration(hours: 7)));
+      final formattedEndDate = DateFormat('yyyy-MM-dd HH:mm:ss')
+          .format(date.endDate!.subtract(const Duration(hours: 7)));
+      debugPrint(formattedStartDate);
+      debugPrint(formattedEndDate);
+      response = await supabase
+          .from('invoices')
+          .select()
+          .eq('owner_id', uuid)
+          .gte('created_at', formattedStartDate)
+          .lte('created_at', formattedEndDate)
+          .order('created_at');
+    } else {
+      response = await supabase
+          .from('invoices')
+          .select()
+          .eq('owner_id', uuid)
+          .order('created_at');
+    }
 
     return response.map((invoice) => Invoice.fromJson(invoice)).toList();
-    // } else {
+  }
 
-    //   List<Invoice> response = [];
-    //   dynamic decodedCache = await json.decode(cacheProduct);
+//! FindById
+  static Future<List<Invoice>> fetchDataById(
+      String uuid, String invoiceId) async {
+    late List<Map<String, dynamic>> response;
 
-    //   if (decodedCache is List<dynamic>) {
-    //     response = decodedCache.map((product) {
-    //       return Invoice.fromJson(product);
-    //     }).toList();
-    //   }
+    if (invoiceId == '') {
+      response = await supabase
+          .from('invoices')
+          .select()
+          .eq('owner_id', uuid)
+          .order('created_at');
+    } else {
+      response = await supabase
+          .from('invoices')
+          .select()
+          .eq('owner_id', uuid)
+          .ilike('invoice_id', '%$invoiceId%')
+          .order('created_at');
+    }
 
-    //   return response;
-    // }
+    return response.map((invoice) => Invoice.fromJson(invoice)).toList();
   }
 
   //! create
   static Future<List<Invoice>> create(Invoice invoice) async {
-    // GetStorage cacheUuid = GetStorage(invoice.uuid!);
     String customerJson = jsonEncode(invoice.customer);
     List<Map<String, dynamic>> productsCartJson =
         invoice.productsCart!.cartList!.map((cart) {
@@ -75,7 +98,7 @@ class InvoiceProvider extends GetConnect {
     );
 
     // await cacheUuid.remove('cacheInvoice');
-    List<Invoice> response = await fetchData(invoice.uuid!);
+    List<Invoice> response = await fetchData(invoice.uuid!, null);
     return response;
   }
 
@@ -89,7 +112,7 @@ class InvoiceProvider extends GetConnect {
         .eq('id', id)
         .select();
 
-    List<Invoice> response = await fetchData(uuid);
+    List<Invoice> response = await fetchData(uuid, null);
     return response;
   }
 
@@ -99,7 +122,7 @@ class InvoiceProvider extends GetConnect {
     await supabase.from('invoices').delete().eq('id', invoice.id!);
 
     // await cacheUuid.remove('cacheInvoice');
-    List<Invoice> response = await fetchData(invoice.uuid!);
+    List<Invoice> response = await fetchData(invoice.uuid!, null);
     return response;
   }
   // static Stream<List<Invoice>> watchInvoice(String uuid) {

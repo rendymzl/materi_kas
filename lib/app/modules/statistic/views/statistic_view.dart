@@ -49,96 +49,178 @@ class BarChartWidget extends GetView<StatisticController> {
         Expanded(
           flex: 5,
           child: Obx(
-            () => controller.isLoading.value
-                ? const Center(child: CircularProgressIndicator())
-                : Row(
-                    children: [
-                      Expanded(
-                        flex: 7,
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  flex: 9,
-                                  child: Obx(
-                                    () => BarChart(
-                                      BarChartData(
-                                        barTouchData: barTouchData,
-                                        titlesData: titlesData,
-                                        borderData: borderData,
-                                        barGroups: barGroups,
-                                        gridData: const FlGridData(show: false),
-                                        alignment:
-                                            BarChartAlignment.spaceAround,
-                                        maxY: controller.maxY.value.toDouble(),
+            () {
+              final date = controller.selectedChart.value!.dateString;
+              final prevDate = controller.prevSelectedChart.value!.dateString;
+
+              final sell = controller.selectedChart.value!.totalSellPrice;
+              final prevSell =
+                  controller.prevSelectedChart.value!.totalSellPrice;
+
+              final profit = controller.selectedChart.value!.totalProfit;
+              final prevProfit =
+                  controller.prevSelectedChart.value!.totalProfit;
+
+              final totalInvoice = controller.selectedChart.value!.totalInvoice;
+              final prevTotalInvoice =
+                  controller.prevSelectedChart.value!.totalInvoice;
+              return controller.isLoading.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : Row(
+                      children: [
+                        Expanded(
+                          flex: 7,
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    flex: 10,
+                                    child: Obx(
+                                      () => BarChart(
+                                        BarChartData(
+                                          barTouchData: barTouchData,
+                                          titlesData: titlesData,
+                                          borderData: borderData,
+                                          barGroups: barGroups,
+                                          gridData:
+                                              const FlGridData(show: false),
+                                          alignment:
+                                              BarChartAlignment.spaceAround,
+                                          maxY:
+                                              controller.maxY.value.toDouble(),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Divider(color: Colors.grey[400]),
-                                Expanded(
-                                  flex: 1,
-                                  child: SizedBox(
-                                    width: 300,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Container(
-                                              height: 16,
-                                              width: 16,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                color: Colors.red,
+                                  Divider(color: Colors.grey[400]),
+                                  Expanded(
+                                    flex: 1,
+                                    child: SizedBox(
+                                      width: 300,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                height: 16,
+                                                width: 16,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  color: Colors.red,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              'Keuntungan',
-                                              style:
-                                                  context.textTheme.bodySmall,
-                                            )
-                                          ],
-                                        ),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              height: 16,
-                                              width: 16,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                color: Colors.orange,
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'Keuntungan',
+                                                style:
+                                                    context.textTheme.bodySmall,
+                                              )
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                height: 16,
+                                                width: 16,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  color: Colors.orange,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              'Jumlah Invoice',
-                                              style:
-                                                  context.textTheme.bodySmall,
-                                            )
-                                          ],
-                                        ),
-                                      ],
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'Jumlah Invoice',
+                                                style:
+                                                    context.textTheme.bodySmall,
+                                              )
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                )
-                              ],
+                                  Divider(color: Colors.grey[400]),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 35),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: '',
+                                              subtitle1: date,
+                                              subtitle2: prevDate,
+                                              subtitle3: const Text(''),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 4,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Pembelian',
+                                              subtitle1:
+                                                  'Rp.${controller.formatter.format(sell)}',
+                                              subtitle2:
+                                                  'Rp.${controller.formatter.format(prevSell)}',
+                                              subtitle3: controller.percentage(
+                                                  sell, prevSell, context),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 4,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Keuntungan',
+                                              subtitle1:
+                                                  'Rp.${controller.formatter.format(profit)}',
+                                              subtitle2:
+                                                  'Rp.${controller.formatter.format(prevProfit)}',
+                                              subtitle3: controller.percentage(
+                                                  profit, prevProfit, context),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 3,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Jumlah Invoice',
+                                              subtitle1:
+                                                  totalInvoice.toString(),
+                                              subtitle2:
+                                                  prevTotalInvoice.toString(),
+                                              subtitle3: controller.percentage(
+                                                totalInvoice,
+                                                prevTotalInvoice,
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: DatePickerCard(controller: controller),
-                      ),
-                    ],
-                  ),
+                        Expanded(
+                          flex: 2,
+                          child: DatePickerCard(controller: controller),
+                        ),
+                      ],
+                    );
+            },
           ),
         ),
         Expanded(
@@ -253,77 +335,6 @@ class BarChartWidget extends GetView<StatisticController> {
                         ),
                       ),
                     ),
-                    // ElevatedButton(
-                    //     onPressed: () => controller.handleClickDay(DateTime.now())
-                    //     ,
-                    //     child: const Text('Hari Ini')),
-                    // ElevatedButton(
-                    //     onPressed: () => controller.handleClickDay(
-                    //         DateTime.now().subtract(const Duration(days: 1)))
-                    //     ,
-                    //     child: const Text('Kemarin')),
-                    // ElevatedButton(
-                    //     onPressed: () =>
-                    //         controller.handleClickCustom(DateTime.now(), 7),
-                    //     child: const Text('Minggu Ini')),
-                    // ElevatedButton(
-                    //     onPressed: () =>
-                    //         controller.fetchData('month', DateTime.now()),
-                    //     child: const Text('Bulan Ini')),
-                    // InkWell(
-                    //   onTap: () async => controller.handleDate(context),
-                    //   child: Obx(
-                    //     () => Container(
-                    //       padding: const EdgeInsets.symmetric(
-                    //           vertical: 4, horizontal: 8),
-                    //       decoration: BoxDecoration(
-                    //         color: controller.isDateTimeNow.value
-                    //             ? Colors.white
-                    //             : Theme.of(context).colorScheme.primary,
-                    //         borderRadius: BorderRadius.circular(4),
-                    //       ),
-                    //       child: Text(
-                    //         controller.displayDate.value == ''
-                    //             ? 'Pilih Tanggal'
-                    //             : DateFormat('dd MMMM y', 'id')
-                    //                 .format(controller.selectedDate.value),
-                    //         style: controller.isDateTimeNow.value
-                    //             ? context.textTheme.bodySmall!.copyWith(
-                    //                 color: Theme.of(context).colorScheme.primary,
-                    //                 fontStyle: FontStyle.italic,
-                    //               )
-                    //             : const TextStyle(color: Colors.white),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-                    // InkWell(
-                    //   onTap: () async => controller.handleGroupDate(context),
-                    //   child: Obx(
-                    //     () => Container(
-                    //       padding: const EdgeInsets.symmetric(
-                    //           vertical: 4, horizontal: 8),
-                    //       decoration: BoxDecoration(
-                    //         color: controller.isDateTimeNow.value
-                    //             ? Colors.white
-                    //             : Theme.of(context).colorScheme.primary,
-                    //         borderRadius: BorderRadius.circular(4),
-                    //       ),
-                    //       child: Text(
-                    //         controller.displayDate.value == ''
-                    //             ? 'Pilih Tanggal'
-                    //             : DateFormat('dd MMMM y', 'id')
-                    //                 .format(controller.selectedDate.value),
-                    //         style: controller.isDateTimeNow.value
-                    //             ? context.textTheme.bodySmall!.copyWith(
-                    //                 color: Theme.of(context).colorScheme.primary,
-                    //                 fontStyle: FontStyle.italic,
-                    //               )
-                    //             : const TextStyle(color: Colors.white),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
@@ -337,10 +348,10 @@ class BarChartWidget extends GetView<StatisticController> {
   BarTouchData get barTouchData => BarTouchData(
         enabled: false,
         touchTooltipData: BarTouchTooltipData(
-          getTooltipColor: (group) => controller.isWeekly.value
+          getTooltipColor: (group) => controller.groupDate.value == 'weekly'
               ? Colors.transparent
               : Colors.grey[200]!.withOpacity(0.8),
-          tooltipPadding: controller.isWeekly.value
+          tooltipPadding: controller.groupDate.value == 'weekly'
               ? EdgeInsets.zero
               : const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
           tooltipMargin: 8,
@@ -352,7 +363,7 @@ class BarChartWidget extends GetView<StatisticController> {
           ) {
             return BarTooltipItem(
               rodIndex == 0
-                  ? controller.isWeekly.value
+                  ? controller.groupDate.value == 'weekly'
                       ? controller.formatter.format(rod.toY)
                       : rod.toY > 1000
                           ? 'Rp.${controller.formatter.format(rod.toY)}'
@@ -365,7 +376,7 @@ class BarChartWidget extends GetView<StatisticController> {
             );
           },
         ),
-        touchCallback: controller.isWeekly.value
+        touchCallback: controller.groupDate.value == 'weekly'
             ? null
             : (event, response) {
                 if (event.isInterestedForInteractions &&
@@ -389,42 +400,13 @@ class BarChartWidget extends GetView<StatisticController> {
       fontWeight: FontWeight.bold,
       fontSize: 13,
     );
-    String text = '';
-    if (controller.isWeekly.value) {
-      switch (value.toInt()) {
-        case 0:
-          text = 'Sen';
-          break;
-        case 1:
-          text = 'Sel';
-          break;
-        case 2:
-          text = 'Rab';
-          break;
-        case 3:
-          text = 'Kam';
-          break;
-        case 4:
-          text = 'Jum';
-          break;
-        case 5:
-          text = 'Sab';
-          break;
-        case 6:
-          text = 'Min';
-          break;
-        default:
-          text = '';
-          break;
-      }
-    }
 
     return SideTitleWidget(
       axisSide: meta.axisSide,
       space: 4,
       child: Text(
-          controller.isWeekly.value
-              ? '$text $dateString'
+          controller.groupDate.value == 'weekly'
+              ? dateString
               : (value.toInt() + 1).toString(),
           style: style),
     );
@@ -459,7 +441,7 @@ class BarChartWidget extends GetView<StatisticController> {
         (index) {
           Chart chart = controller.invoiceChart[index];
           return BarChartGroupData(
-            barsSpace: controller.isWeekly.value ? 10 : 1,
+            barsSpace: controller.groupDate.value == 'weekly' ? 10 : 1,
             x: index,
             barRods: [
               BarChartRodData(
@@ -473,7 +455,7 @@ class BarChartWidget extends GetView<StatisticController> {
                 borderRadius: BorderRadius.circular(2),
               )
             ],
-            showingTooltipIndicators: controller.isWeekly.value
+            showingTooltipIndicators: controller.groupDate.value == 'weekly'
                 ? [0, 1]
                 : controller.touchedGroupIndex.value == index
                     ? [controller.touchedDataIndex.value]
@@ -495,86 +477,18 @@ class DatePickerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () {
-        final dateFormat = DateFormat('dd MMM y', 'id');
-        final date = dateFormat.format(controller.selectedChartDay.value!.date);
-        final prevDate =
-            dateFormat.format(controller.prevSelectedChartDay.value!.date);
-
-        final sell = controller.selectedChartDay.value!.totalSellPrice;
-        final prevSell = controller.prevSelectedChartDay.value!.totalSellPrice;
-
-        final profit = controller.selectedChartDay.value!.totalProfit;
-        final prevProfit = controller.prevSelectedChartDay.value!.totalProfit;
-
-        final totalInvoice = controller.selectedChartDay.value!.totalInvoice;
-        final prevTotalInvoice =
-            controller.prevSelectedChartDay.value!.totalInvoice;
-
         return Card(
           child: Column(
             children: [
               const Text('Pilih Data:'),
               if (controller.selectedSection.value == 'daily')
-                DatePickerDaily(controller: controller),
+                Expanded(child: DatePickerDaily(controller: controller)),
               if (controller.selectedSection.value == 'weekly')
-                DatePickerWeekly(controller: controller),
+                Expanded(child: DatePickerWeekly(controller: controller)),
               if (controller.selectedSection.value == 'monthly')
-                DatePickerMonthly(controller: controller),
+                Expanded(child: DatePickerMonthly(controller: controller)),
               if (controller.selectedSection.value == 'yearly')
-                DatePickerYearly(controller: controller),
-              // Row(
-              //   children: [
-              //     Expanded(
-              //       flex: 9,
-              //       child: Text('Kemarin',
-              //           style: context.textTheme.bodyLarge),
-              //     ),
-              //     Expanded(
-              //       flex: 9,
-              //       child: Text('Hari ini',
-              //           style: context.textTheme.bodyLarge),
-              //     ),
-              //     const Expanded(
-              //         flex: 4, child: SizedBox()),
-              //   ],
-              // ),
-              // DisplayDataListTile(
-              //   controller: controller,
-              //   title: 'Tanggal',
-              //   subtitle1: date,
-              //   subtitle2: prevDate,
-              //   subtitle3: const Text(''),
-              // ),
-              // DisplayDataListTile(
-              //   controller: controller,
-              //   title: 'Pembelian',
-              //   subtitle1:
-              //       'Rp.${controller.formatter.format(sell)}',
-              //   subtitle2:
-              //       'Rp.${controller.formatter.format(prevSell)}',
-              //   subtitle3: controller.percentage(
-              //       sell, prevSell, context),
-              // ),
-              // DisplayDataListTile(
-              //   controller: controller,
-              //   title: 'Keuntungan',
-              //   subtitle1:
-              //       'Rp.${controller.formatter.format(profit)}',
-              //   subtitle2:
-              //       'Rp.${controller.formatter.format(prevProfit)}',
-              //   subtitle3: controller.percentage(
-              //       profit, prevProfit, context),
-              // ),
-              // DisplayDataListTile(
-              //   controller: controller,
-              //   title: 'Jumlah Invoice',
-              //   subtitle1: totalInvoice.toString(),
-              //   subtitle2: prevTotalInvoice.toString(),
-              //   subtitle3: controller.percentage(
-              //       totalInvoice,
-              //       prevTotalInvoice,
-              //       context),
-              // ),
+                Expanded(child: DatePickerYearly(controller: controller)),
             ],
           ),
         );
@@ -613,7 +527,7 @@ class DatePickerDaily extends StatelessWidget {
         minDate: DateTime(2000),
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-          controller.rangePickerHandle(args);
+          controller.rangePickerHandle(args.value);
         },
       ),
     );
@@ -650,7 +564,10 @@ class DatePickerWeekly extends StatelessWidget {
         minDate: DateTime(2000),
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-          controller.rangePickerHandle(args);
+          PickerDateRange value = args.value;
+          if (value.endDate == null) {
+            controller.rangePickerHandle(value.startDate!);
+          }
         },
       ),
     );
@@ -678,19 +595,16 @@ class DatePickerMonthly extends StatelessWidget {
             backgroundColor: Colors.white,
             textStyle: context.textTheme.bodyLarge),
         backgroundColor: Colors.white,
-        enableMultiView: true,
+        // enableMultiView: true,
         view: DateRangePickerView.year,
         allowViewNavigation: false,
-        // initialSelectedDate: controller.selectedMonth.value,
-        // initialSelectedRange: controller.selectedWeeklyRange.value,
         monthViewSettings: const DateRangePickerMonthViewSettings(
           firstDayOfWeek: 1,
         ),
-        // selectionMode: DateRangePickerSelectionMode.single,
         minDate: DateTime(2000),
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-          controller.monthPickerHandle(args);
+          controller.monthPickerHandle(args.value);
         },
       ),
     );
@@ -718,19 +632,15 @@ class DatePickerYearly extends StatelessWidget {
             backgroundColor: Colors.white,
             textStyle: context.textTheme.bodyLarge),
         backgroundColor: Colors.white,
-        enableMultiView: true,
         view: DateRangePickerView.decade,
         allowViewNavigation: false,
-        // initialSelectedDate: controller.selectedMonth.value,
-        // initialSelectedRange: controller.selectedWeeklyRange.value,
         monthViewSettings: const DateRangePickerMonthViewSettings(
           firstDayOfWeek: 1,
         ),
-        // selectionMode: DateRangePickerSelectionMode.single,
         minDate: DateTime(2000),
         maxDate: DateTime.now(),
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-          controller.yearPickerHandle(args);
+          controller.yearPickerHandle(args.value);
         },
       ),
     );
@@ -756,21 +666,23 @@ class DisplayDataListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      dense: true,
       title: Text(title, style: context.textTheme.bodySmall),
-      subtitle: Row(
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 9,
-            child: Text(subtitle2),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(subtitle1,
+                  style: context.textTheme.bodyLarge!
+                      .copyWith(color: Theme.of(context).colorScheme.primary)),
+              const SizedBox(width: 4),
+              subtitle3
+            ],
           ),
-          Expanded(
-            flex: 9,
-            child: Text(subtitle1, style: context.textTheme.bodyLarge),
-          ),
-          Expanded(
-            flex: 4,
-            child: subtitle3,
-          ),
+          const SizedBox(height: 2),
+          Text(subtitle2, style: context.textTheme.bodySmall),
         ],
       ),
     );

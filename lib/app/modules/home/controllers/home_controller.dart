@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
 import 'package:materi_kas/app/modules/invoice/controllers/invoice_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/cart_model.dart';
@@ -61,10 +62,9 @@ class HomeController extends GetxController {
     // foundProducts.value = result;
   }
 
-  ScrollController scrollController = ScrollController();
+  late ScrollController scrollController = ScrollController();
 
   void addToCart(Product product) {
-    invoiceId.value = generateInvoice(selectedCustomer.value);
     int index = cartList
         .indexWhere((selectItem) => selectItem.product?.id == product.id);
 
@@ -95,12 +95,14 @@ class HomeController extends GetxController {
       cartList.add(productCart);
 
       Future.delayed(const Duration(milliseconds: 10), () {
-        scrollController.animateTo(
-          // index * 80.0,
-          scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-        );
+        if (scrollController.hasClients) {
+          scrollController.animateTo(
+            // index * 80.0,
+            scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+          );
+        }
       });
     }
   }
@@ -118,19 +120,49 @@ class HomeController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   void handleDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePickerDialog(
-      context: context,
-      height: 400,
-      width: 400,
-      initialDate: selectedDate.value,
-      selectedDate: selectedDate.value,
-      minDate: DateTime(2000),
-      maxDate: DateTime.now(),
-      // locale: const Locale('id', 'ID'),
+    // displayDate.value = selectedDate.value.toString();
+    Get.defaultDialog(
+      title: 'Pilih Tanggal',
+      backgroundColor: Colors.white,
+      content: SizedBox(
+        width: 400,
+        height: 350,
+        child: SfDateRangePicker(
+          headerStyle: DateRangePickerHeaderStyle(
+              backgroundColor: Colors.white,
+              textStyle: context.textTheme.bodyLarge),
+          showNavigationArrow: true,
+          backgroundColor: Colors.white,
+          monthViewSettings: const DateRangePickerMonthViewSettings(
+            firstDayOfWeek: 1,
+          ),
+          initialSelectedDate: selectedDate.value,
+          minDate: DateTime(2000),
+          maxDate: DateTime.now(),
+          showActionButtons: true,
+          cancelText: 'Batal',
+          onCancel: () => Get.back(),
+          onSubmit: (p0) {
+            selectedDate.value = p0 as DateTime;
+            displayDate.value = p0.toString();
+            Get.back();
+          },
+        ),
+      ),
     );
 
-    selectedDate.value = pickedDate ?? DateTime.now();
-    displayDate.value = pickedDate.toString();
+    // DateTime? pickedDate = await showDatePickerDialog(
+    //   context: context,
+    //   height: 400,
+    //   width: 400,
+    //   initialDate: selectedDate.value,
+    //   selectedDate: selectedDate.value,
+    //   minDate: DateTime(2000),
+    //   maxDate: DateTime.now(),
+    // );
+
+    // selectedDate.value = pickedDate ?? DateTime.now();
+    // displayDate.value = pickedDate.toString();
   }
 
   void handleTime(BuildContext context) async {
@@ -154,6 +186,37 @@ class HomeController extends GetxController {
     }
     selectedDate.value = DateTime.now();
     selectedTime.value = TimeOfDay.now();
+  }
+
+  //! delete
+  destroyHandle(Invoice invoice) async {
+    try {
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Hapus barang ini?',
+        confirm: TextButton(
+          onPressed: () async {
+            List<Invoice> newData = await InvoiceProvider.destroy(invoice);
+            invoiceController.refreshFetch(newData);
+            Get.back();
+          },
+          child: const Text('OK'),
+        ),
+        cancel: TextButton(
+          onPressed: () => Get.back(),
+          child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+        ),
+      );
+    } on PostgrestException catch (e) {
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: e.message,
+        confirm: TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('OK'),
+        ),
+      );
+    }
   }
 
   //! MoneyHandle
@@ -248,20 +311,18 @@ class HomeController extends GetxController {
 
   String getLastSerialNumber(Invoice invoice) {
     String? invoiceNumber = invoice.invoiceId;
-    DateTime? invoiceDate = invoice.createdAt;
+    DateTime? invoiceDate = invoice.createdAt!.add(const Duration(hours: 7));
     String serialPart = '000';
-
-    if (invoiceNumber != null && invoiceDate != null) {
+    if (invoiceNumber != null) {
       List<String> parts = invoiceNumber.split('/');
-
-      DateTime today = DateTime.now();
-
+      DateTime selected = selectedDate.value;
       if (parts.length == 2 &&
-          invoiceDate.year == today.year &&
-          invoiceDate.month == today.month &&
-          invoiceDate.day == today.day) {
+          invoiceDate.year == selected.year &&
+          invoiceDate.month == selected.month &&
+          invoiceDate.day == selected.day) {
         serialPart = parts[0].replaceAll('INV', '');
         serialPart = serialPart.replaceFirst(RegExp('^0+'), '');
+
         return serialPart;
       }
     }
@@ -269,14 +330,13 @@ class HomeController extends GetxController {
     return serialPart;
   }
 
-  String generateInvoice(Customer? customer) {
+  Future<String> generateInvoice(Customer? customer) async {
     Invoice inv = invoices.lastWhere(
-      (invData) => invData.invoiceId!.contains('INV'),
+      (invData) => invData.createdAt! == invoices.first.createdAt,
       orElse: () => Invoice(),
     );
-    debugPrint(inv.toString());
-    int lastSerialNumber = int.parse(getLastSerialNumber(inv));
 
+    int lastSerialNumber = int.parse(getLastSerialNumber(inv));
     lastSerialNumber++;
 
     String serialNumber = lastSerialNumber.toString().padLeft(3, '0');
@@ -284,16 +344,18 @@ class HomeController extends GetxController {
     String clientCode =
         (customer != null) ? customer.customerId!.toUpperCase() : 'G';
 
-    DateTime date = DateTime.now();
+    DateTime date = selectedDate.value;
+    String year = date.year.toString().substring(2);
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
 
-    String invoiceNumber = 'INV$serialNumber/$clientCode$month$day';
+    String invoiceNumber = 'INV$serialNumber/$clientCode$month$day$year';
 
     return invoiceNumber;
   }
 
   Future saveInvoice() async {
+    invoiceId.value = await generateInvoice(selectedCustomer.value);
     final payment =
         pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
     final change = moneyChange.value - totalPrice.value;

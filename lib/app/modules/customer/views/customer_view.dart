@@ -18,7 +18,7 @@ class CustomerView extends GetView<CustomerController> {
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Customers'),
+        title: const Text('Pelanggan'),
         centerTitle: true,
         backgroundColor: const Color(0xFFF5F8FF),
       ),
@@ -269,6 +269,7 @@ class TableContent extends StatelessWidget {
 //* addEditDialog ==================================================================
 void addEditDialog(BuildContext context, CustomerController controller,
     Customer? foundCustomer, String title) {
+  controller.maxNameLenght.value = 0;
   controller.clickedField['name'] = false;
   controller.clickedField['phone'] = false;
   controller.clickedField['address'] = false;

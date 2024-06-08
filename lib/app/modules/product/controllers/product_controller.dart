@@ -8,6 +8,7 @@ import 'dart:async' show Future, Timer;
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/product_model.dart';
@@ -19,7 +20,10 @@ class ProductController extends GetxController {
   late final String uuid;
   late final List<Product> productList = <Product>[].obs;
   final totalProduct = 0.obs;
-
+  final isLoading = false.obs;
+  final totalCsvData = 1.obs;
+  final currentlCsvData = 0.obs;
+  final emptyCsv = 0.obs;
   final foundProducts = <Product>[].obs;
 
   @override
@@ -67,8 +71,9 @@ class ProductController extends GetxController {
   }
 
   //! pickCSV
+  final isSafe = true.obs;
   Future<void> pickCSV(BuildContext context) async {
-    addStatus = 1;
+    isSafe.value = true;
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -79,56 +84,74 @@ class ProductController extends GetxController {
         String? filePath = result.files.single.path;
         if (filePath != null) {
           List<List<dynamic>> csvData = await readCSV(filePath);
+          totalCsvData.value = csvData.length + 1;
+          List<Product> productList = [];
+          if (!context.mounted) return;
+          ProgressDialog dialog = ProgressDialog(context: context);
 
+          dialog.show(
+            msg: 'Menambahkan Barang dari Excel...',
+            max: totalCsvData.value,
+          );
           for (var i = 1; i < csvData.length; i++) {
             var data = csvData[i];
 
-            var existingProduct = productList
-                .where((product) => product.productId == data[0])
-                .toList();
+            if (data[1] != '') {
+              var existingProduct = <Product>[];
+              existingProduct = checkexistingProduct(data[0] as String);
 
-            int sellPrice = 0;
-            int costPrice = 0;
+              int sellPrice = 0;
+              int costPrice = 0;
 
-            if (data.length > 2 && data[2].toString().contains("Rp")) {
-              sellPrice = int.parse(data[2].replaceAll(RegExp(r'[Rp,]'), ''));
-            }
+              if (data.length > 2 &&
+                  data[2].toString().contains("Rp") &&
+                  !data[2].toString().contains("-")) {
+                sellPrice = int.parse(data[2].replaceAll(RegExp(r'[Rp,]'), ''));
+              }
 
-            if (data.length > 3 && data[3].toString().contains("Rp")) {
-              costPrice = int.parse(data[3].replaceAll(RegExp(r'[Rp,]'), ''));
-            }
+              if (data.length > 3 &&
+                  data[3].toString().contains("Rp") &&
+                  !data[3].toString().contains("-")) {
+                costPrice = int.parse(data[3].replaceAll(RegExp(r'[Rp,]'), ''));
+              }
+              debugPrint(costPrice.toString());
+              final newProduct = Product(
+                productId: data[0],
+                featured: false,
+                productName: data[1],
+                sellPrice: sellPrice,
+                costPrice: costPrice,
+                sold: 0,
+                uuid: uuid,
+              );
 
-            final product = Product(
-              productId: data[0],
-              featured: false,
-              productName: data[1],
-              sellPrice: sellPrice,
-              costPrice: costPrice,
-              sold: 0,
-              uuid: uuid,
-            );
-
-            if (existingProduct.isNotEmpty) {
-              updateProduct(product, existingProduct[0].id!,
-                  existingProduct[0].productId!);
+              if (existingProduct.isEmpty) {
+                //   updateProduct(newProduct, existingProduct[0].id!,
+                //       existingProduct[0].productId!);
+                // } else {
+                productList.add(newProduct);
+                // await addProduct(newProduct);
+              }
+              if (!isSafe.value) {
+                break;
+              }
             } else {
-              await addProduct(product);
+              emptyCsv.value = i + 1;
             }
-            if (addStatus == 0) {
-              break;
-            }
+            dialog.update(value: i + 1);
           }
-          if (addStatus == 1) {
-            await Get.defaultDialog(
-              title: 'Berhasil',
-              middleText: 'Product berhasil ditambahkan',
-              confirm: TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('OK'),
-              ),
-            );
-            addStatus = 1;
-          }
+          List<Map<String, Object?>> newProductList = productList
+              .map((newProduct) => {
+                    'product_id': newProduct.productId,
+                    'featured': newProduct.featured,
+                    'product_name': newProduct.productName,
+                    'sell_price': newProduct.sellPrice,
+                    'cost_price': newProduct.costPrice,
+                    'sold': newProduct.sold,
+                    'owner_id': newProduct.uuid
+                  })
+              .toList();
+          await addProduct(newProductList);
         }
       }
     } catch (e) {
@@ -136,13 +159,33 @@ class ProductController extends GetxController {
     }
   }
 
+  // void dialogLoading() {
+  //   Get.defaultDialog(
+  //     title: 'Menambahkan Barang',
+  //     barrierDismissible: false,
+  //     content: Column(
+  //       children: [
+  //         (currentlCsvData.value != totalCsvData.value)
+  //             ? Text(
+  //                 'Menambahkan barang ke-${currentlCsvData.value} dari ${totalCsvData.value} baris Excel')
+  //             : Text(
+  //                 'Berhasil menambahkan ${totalCsvData.value - emptyCsv.value} barang dari ${totalCsvData.value} baris Excel'),
+  //         if (emptyCsv.value > 0)
+  //           Text('Baris kosong: ${emptyCsv.value} barang'),
+  //         if (currentlCsvData.value != totalCsvData.value)
+  //           const CircularProgressIndicator(),
+  //       ],
+  //     ),
+  //     confirm: (currentlCsvData.value != totalCsvData.value)
+  //         ? TextButton(onPressed: () => Get.back(), child: const Text('Oke'))
+  //         : null,
+  //   );
+  // }
+
   //! update
-  int updateStatus = 1;
   Future updateProduct(
       Product newProduct, String curentid, String curentProductId) async {
-    bool isProductIdExists =
-        productList.any((item) => item.productId == newProduct.productId);
-    if (isProductIdExists && newProduct.productId != curentProductId) {
+    if (newProduct.productId != curentProductId) {
       await Get.defaultDialog(
         title: 'Gagal',
         middleText: 'Kode yang dimasukkan sudah ada',
@@ -178,46 +221,65 @@ class ProductController extends GetxController {
     }
   }
 
+  void updateSuccessDialog() async {
+    await Get.defaultDialog(
+      title: 'Berhasil',
+      middleText: 'Product berhasil diupdate',
+      confirm: TextButton(
+        onPressed: () {
+          Get.back();
+          Get.back();
+        },
+        child: const Text('OK'),
+      ),
+    );
+  }
+
+  List<Product> checkexistingProduct(String newProductId) {
+    var existingProduct = <Product>[];
+    existingProduct = productList
+        .where((product) => product.productId == newProductId)
+        .toList();
+    return existingProduct;
+  }
+
   //! create
-  int addStatus = 1;
-  Future addProduct(Product product) async {
-    bool isProductIdExists =
-        productList.any((item) => item.productId == product.productId);
-    if (isProductIdExists) {
-      await Get.defaultDialog(
-        title: 'Gagal',
-        middleText: 'Kode yang dimasukkan sudah ada',
+  Future addProduct(List<Map<String, Object?>> newProductList) async {
+    try {
+      List<Product> newData =
+          await ProductProvider.create(newProductList, uuid);
+      refreshFetch(newData);
+      Get.back();
+    } on PostgrestException catch (e) {
+      isSafe.value = false;
+      String errorMessage = e.message;
+      if (errorMessage.toLowerCase().contains('duplicate')) {
+        errorMessage = 'Kode produk sudah ada sebelumnya.';
+      }
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: errorMessage,
         confirm: TextButton(
           onPressed: () {
-            addStatus = 0;
+            isSafe.value = false;
             Get.back();
           },
           child: const Text('OK'),
         ),
       );
-    } else {
-      try {
-        List<Product> newData = await ProductProvider.create(product);
-        refreshFetch(newData);
-        Get.back();
-      } on PostgrestException catch (e) {
-        String errorMessage = e.message;
-        if (errorMessage.toLowerCase().contains('duplicate')) {
-          errorMessage = 'Kode produk sudah ada sebelumnya.';
-        }
-        Get.defaultDialog(
-          title: 'Error',
-          middleText: errorMessage,
-          confirm: TextButton(
-            onPressed: () {
-              addStatus = 0;
-              Get.back();
-            },
-            child: const Text('OK'),
-          ),
-        );
-      }
     }
+    // }
+  }
+
+  void addSuccessDialog() async {
+    await Get.defaultDialog(
+      title: 'Berhasil',
+      middleText: 'Product berhasil ditambahkan',
+      confirm: TextButton(
+        onPressed: () => Get.back(),
+        child: const Text('OK'),
+      ),
+    );
   }
 
   //! delete
@@ -229,6 +291,36 @@ class ProductController extends GetxController {
         confirm: TextButton(
           onPressed: () async {
             List<Product> newData = await ProductProvider.destroy(product);
+            refreshFetch(newData);
+            Get.back();
+          },
+          child: const Text('OK'),
+        ),
+        cancel: TextButton(
+          onPressed: () => Get.back(),
+          child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+        ),
+      );
+    } on PostgrestException catch (e) {
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: e.message,
+        confirm: TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('OK'),
+        ),
+      );
+    }
+  }
+
+  destroyAllHandle() async {
+    try {
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: 'Hapus semua barang?',
+        confirm: TextButton(
+          onPressed: () async {
+            List<Product> newData = await ProductProvider.destroyAll(uuid);
             refreshFetch(newData);
             Get.back();
           },
@@ -336,13 +428,14 @@ class ProductController extends GetxController {
   }
 
   Future handleSave(Product? curentProduct) async {
-    addStatus = 1;
+    isSafe.value = true;
     clickedField['code'] = true;
     clickedField['productName'] = true;
     clickedField['sell'] = true;
     clickedField['cost'] = true;
+    List<Product> productList = [];
     if (formkey.currentState!.validate()) {
-      final product = Product(
+      final newProduct = Product(
         productId: codeController.text,
         featured: false,
         productName: productNameController.text,
@@ -353,33 +446,29 @@ class ProductController extends GetxController {
       );
       if (curentProduct != null) {
         await updateProduct(
-            product, curentProduct.id!, curentProduct.productId!);
-        if (updateStatus == 1) {
-          await Get.defaultDialog(
-            title: 'Berhasil',
-            middleText: 'Product berhasil diupdate',
-            confirm: TextButton(
-              onPressed: () {
-                Get.back();
-                Get.back();
-              },
-              child: const Text('OK'),
-            ),
-          );
+            newProduct, curentProduct.id!, curentProduct.productId!);
+        if (isSafe.value) {
+          updateSuccessDialog();
         }
       } else {
-        await addProduct(product);
-        if (addStatus == 1) {
-          await Get.defaultDialog(
-            title: 'Berhasil',
-            middleText: 'Product berhasil ditambahkan',
-            confirm: TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          );
-        }
+        productList.add(newProduct);
       }
+    }
+    List<Map<String, Object?>> newProductList = productList
+        .map((newProduct) => {
+              'product_id': newProduct.productId,
+              'featured': newProduct.featured,
+              'product_name': newProduct.productName,
+              'sell_price': newProduct.sellPrice,
+              'cost_price': newProduct.costPrice,
+              'sold': newProduct.sold,
+              'owner_id': newProduct.uuid
+            })
+        .toList();
+
+    await addProduct(newProductList);
+    if (isSafe.value) {
+      addSuccessDialog();
     }
   }
 
@@ -402,5 +491,16 @@ class ProductController extends GetxController {
     String csvData = await File(filePath).readAsString();
     List<List<dynamic>> csvTable = const CsvToListConverter().convert(csvData);
     return csvTable;
+  }
+
+  void loadingDialog() async {
+    await Get.defaultDialog(
+      title: 'Menambahkan Barang',
+      middleText: 'Sedang menambahkan barang',
+      confirm: TextButton(
+        onPressed: () => Get.back(),
+        child: const Text('OK'),
+      ),
+    );
   }
 }

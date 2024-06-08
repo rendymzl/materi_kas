@@ -55,6 +55,12 @@ class ProductView extends GetView<ProductController> {
                             Row(
                               children: [
                                 ElevatedButton(
+                                  onPressed: () =>
+                                      controller.destroyAllHandle(),
+                                  child: const Text('HAPUS SEMUA'),
+                                ),
+                                const SizedBox(width: 16),
+                                ElevatedButton(
                                   onPressed: () {
                                     controller.bindingEditData(Product(
                                         productId: '',
@@ -460,7 +466,7 @@ void addEditDialog(BuildContext context, ProductController controller,
       width: 160,
       child: OutlinedButton(
         style: ButtonStyle(
-          side: MaterialStateProperty.all(
+          side: WidgetStateProperty.all(
               BorderSide(color: Colors.black.withOpacity(0.5))),
         ),
         onPressed: () => Get.back(),
@@ -468,4 +474,45 @@ void addEditDialog(BuildContext context, ProductController controller,
       ),
     ),
   );
+}
+
+//! Loading Dialog
+class LoadingDialog extends StatelessWidget {
+  const LoadingDialog({
+    super.key,
+    required this.controller,
+  });
+
+  final ProductController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentProduct = controller.currentlCsvData.value;
+    final totalProduct = controller.totalCsvData.value;
+    final emptyProduct = controller.emptyCsv.value;
+    return Obx(
+      () => AlertDialog(
+        title: const Text('Menambahkan Barang'),
+        content: Column(
+          children: [
+            (currentProduct != totalProduct)
+                ? Text(
+                    'Menambahkan barang ke-$currentProduct dari $totalProduct baris Excel')
+                : Text(
+                    'Berhasil menambahkan ${totalProduct - emptyProduct} barang dari $totalProduct baris Excel'),
+            if (emptyProduct > 0) Text('Baris kosong: $emptyProduct barang'),
+            if (currentProduct != totalProduct)
+              const CircularProgressIndicator(),
+          ],
+        ),
+        actions: <Widget>[
+          if (currentProduct != totalProduct)
+            TextButton(
+              onPressed: () => controller.isLoading.value = false,
+              child: const Text('Oke'),
+            ),
+        ],
+      ),
+    );
+  }
 }

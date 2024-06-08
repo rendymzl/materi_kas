@@ -190,10 +190,17 @@ class CustomerController extends GetxController {
     'address': false,
   }.obs;
 
+  final maxNameLenght = 0.obs;
+
   String? nameValidator(String value) {
     value = value.trim();
+    if (value.length > maxNameLenght.value) maxNameLenght.value = value.length;
     if (value.isEmpty && clickedField['name'] == true) {
       return 'Nama tidak boleh kosong';
+    } else if (value.length < 3 &&
+        maxNameLenght >= 3 &&
+        clickedField['name'] == true) {
+      return 'Nama harus di isi minimal 3 karakter';
     }
     return null;
   }
