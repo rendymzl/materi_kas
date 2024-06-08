@@ -20,6 +20,7 @@ class ProductController extends GetxController {
   late final String uuid;
   late final List<Product> productList = <Product>[].obs;
   final totalProduct = 0.obs;
+  final lastCode = ''.obs;
   final isLoading = false.obs;
   final totalCsvData = 1.obs;
   final currentlCsvData = 0.obs;
@@ -30,8 +31,6 @@ class ProductController extends GetxController {
   void onInit() async {
     super.onInit();
     uuid = supabase.auth.currentUser!.id;
-    totalProduct.value =
-        await ProductProvider.getTotalRowCount(totalProduct.value);
     List<Product> newData = await ProductProvider.fetchData(uuid, '');
     refreshFetch(newData);
   }
@@ -41,6 +40,8 @@ class ProductController extends GetxController {
     productList.clear();
     productList.assignAll(newData);
     foundProducts.value = productList;
+    totalProduct.value = await ProductProvider.getTotalRowCount();
+    lastCode.value = await ProductProvider.getLastIdProduct();
   }
 
   Timer? debounce;

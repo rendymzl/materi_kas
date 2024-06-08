@@ -411,15 +411,16 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
   if (invoice.change! > 0) {
     charge = '(Kembalian: Rp. ${formatter.format(invoice.change)})';
   }
-  controller.returnFee.value = invoice.returnFee!;
   controller.totalReturnPrice.value = controller.cartListReturn.fold(
-        0,
-        (sum, pCart) =>
-            sum +
-            (pCart.product!.sellPrice! * pCart.quantity!) -
-            pCart.individualDiscount!,
-      ) -
-      invoice.returnFee!;
+    0,
+    (sum, pCart) =>
+        sum +
+        (pCart.product!.sellPrice! * pCart.quantity!) -
+        pCart.individualDiscount!,
+  );
+  controller.returnFee.value = invoice.returnFee!;
+  controller.totalReturn.value =
+      controller.totalReturnPrice.value - invoice.returnFee!;
   controller.loadingInvoiceDisplay.value = false;
   return Get.defaultDialog(
       title: 'Invoice',
@@ -677,11 +678,11 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                   },
                 ),
                 const Divider(color: Colors.grey),
-                if (controller.cartListReturn.isNotEmpty)
-                  Row(
-                    children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (controller.cartListReturn.isNotEmpty)
                       Expanded(
-                        flex: 4,
                         child: Container(
                           decoration: BoxDecoration(
                               border: Border.all(color: Colors.red[100]!)),
@@ -742,7 +743,10 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                               ),
                               ListTile(
                                 title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
+                                    Text(
+                                        'Rp ${formatter.format(controller.totalReturnPrice.value)}'),
                                     Row(
                                       children: [
                                         const Expanded(
@@ -760,7 +764,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                         Expanded(
                                           flex: 2,
                                           child: Text(
-                                            'Rp ${formatter.format(controller.returnFee.value)}',
+                                            '-Rp ${formatter.format(controller.returnFee.value)}',
                                             textAlign: TextAlign.end,
                                             style: Theme.of(Get.context!)
                                                 .textTheme
@@ -782,7 +786,6 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                                 .textTheme
                                                 .bodyLarge!
                                                 .copyWith(
-                                                    fontStyle: FontStyle.italic,
                                                     color:
                                                         Theme.of(Get.context!)
                                                             .colorScheme
@@ -792,13 +795,12 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                         Expanded(
                                           flex: 2,
                                           child: Text(
-                                            'Rp ${formatter.format(controller.totalReturnPrice.value)}',
+                                            'Rp ${formatter.format(controller.totalReturn.value)}',
                                             textAlign: TextAlign.end,
                                             style: Theme.of(Get.context!)
                                                 .textTheme
                                                 .bodyLarge!
                                                 .copyWith(
-                                                    fontStyle: FontStyle.italic,
                                                     color:
                                                         Theme.of(Get.context!)
                                                             .colorScheme
@@ -814,54 +816,144 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                           ),
                         ),
                       ),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          children: [
+                    SizedBox(
+                      width: 370,
+                      child: Column(
+                        children: [
+                          ListTile(
+                            dense: true,
+                            title: Row(
+                              children: [
+                                Expanded(
+                                    flex: 5,
+                                    child: Text(
+                                        'TOTAL HARGA (${controller.cartList.length} Barang):',
+                                        style: Theme.of(Get.context!)
+                                            .textTheme
+                                            .titleLarge,
+                                        textAlign: TextAlign.right)),
+                                Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                        'Rp. ${formatter.format((invoice.bill))}',
+                                        style: Theme.of(Get.context!)
+                                            .textTheme
+                                            .titleLarge,
+                                        textAlign: TextAlign.end)),
+                              ],
+                            ),
+                          ),
+                          ListTile(
+                            dense: true,
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: Text('BAYAR:',
+                                      style: Theme.of(Get.context!)
+                                          .textTheme
+                                          .titleSmall,
+                                      textAlign: TextAlign.right),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                      'Rp. ${formatter.format(invoice.pay)}',
+                                      style: Theme.of(Get.context!)
+                                          .textTheme
+                                          .titleSmall,
+                                      textAlign: TextAlign.end),
+                                ),
+                              ],
+                            ),
+                            subtitle: Text(charge,
+                                style: Theme.of(Get.context!)
+                                    .textTheme
+                                    .bodySmall!
+                                    .copyWith(fontStyle: FontStyle.italic),
+                                textAlign: TextAlign.end),
+                          ),
+                          const SizedBox(height: 20),
+                          if (controller.totalReturnPrice.value != 0)
                             ListTile(
                               dense: true,
                               title: Row(
                                 children: [
-                                  const Expanded(flex: 5, child: Text('')),
                                   Expanded(
                                       flex: 5,
-                                      child: Text('TOTAL TAGIHAN:',
+                                      child: Text('Total Return:',
                                           style: Theme.of(Get.context!)
                                               .textTheme
-                                              .titleLarge,
+                                              .titleSmall!
+                                              .copyWith(
+                                                  color: Theme.of(Get.context!)
+                                                      .colorScheme
+                                                      .primary),
                                           textAlign: TextAlign.right)),
                                   Expanded(
                                       flex: 2,
                                       child: Text(
-                                          'Rp. ${formatter.format(invoice.bill)}',
+                                          '-Rp. ${formatter.format(controller.totalReturn.value)}',
                                           style: Theme.of(Get.context!)
                                               .textTheme
-                                              .titleLarge,
+                                              .titleSmall!
+                                              .copyWith(
+                                                  color: Theme.of(Get.context!)
+                                                      .colorScheme
+                                                      .primary),
                                           textAlign: TextAlign.end)),
                                 ],
                               ),
                             ),
+                          ListTile(
+                            dense: true,
+                            title: Row(
+                              children: [
+                                Expanded(
+                                    flex: 5,
+                                    child: Text('TOTAL TAGIHAN:',
+                                        style: Theme.of(Get.context!)
+                                            .textTheme
+                                            .titleLarge,
+                                        textAlign: TextAlign.right)),
+                                Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                        'Rp. ${formatter.format((invoice.bill! - controller.totalReturn.value))}',
+                                        style: Theme.of(Get.context!)
+                                            .textTheme
+                                            .titleLarge,
+                                        textAlign: TextAlign.end)),
+                              ],
+                            ),
+                          ),
+                          if (invoice.change! < 0)
                             ListTile(
                               dense: true,
                               title: Row(
                                 children: [
-                                  const Expanded(flex: 5, child: Text('')),
                                   Expanded(
                                     flex: 5,
-                                    child: Text('BAYAR:',
+                                    child: Text('TAGIHAN YANG PERLU DIBAYAR:',
                                         style: Theme.of(Get.context!)
                                             .textTheme
-                                            .titleLarge,
+                                            .bodySmall!
+                                            .copyWith(
+                                                fontStyle: FontStyle.italic),
                                         textAlign: TextAlign.right),
                                   ),
                                   Expanded(
                                     flex: 2,
                                     child: Text(
-                                        'Rp. ${formatter.format(invoice.pay)}',
-                                        style: Theme.of(Get.context!)
-                                            .textTheme
-                                            .titleLarge,
-                                        textAlign: TextAlign.end),
+                                      'Rp ${formatter.format(invoice.change! * -1)}',
+                                      style: Theme.of(Get.context!)
+                                          .textTheme
+                                          .titleLarge!
+                                          .copyWith(
+                                              fontStyle: FontStyle.italic,
+                                              color: Colors.red),
+                                      textAlign: TextAlign.end,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -872,49 +964,11 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                       .copyWith(fontStyle: FontStyle.italic),
                                   textAlign: TextAlign.end),
                             ),
-                            if (invoice.change! < 0)
-                              ListTile(
-                                dense: true,
-                                title: Row(
-                                  children: [
-                                    const Expanded(flex: 5, child: Text('')),
-                                    Expanded(
-                                      flex: 5,
-                                      child: Text('TAGIHAN YANG PERLU DIBAYAR:',
-                                          style: Theme.of(Get.context!)
-                                              .textTheme
-                                              .bodySmall!
-                                              .copyWith(
-                                                  fontStyle: FontStyle.italic),
-                                          textAlign: TextAlign.right),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'Rp ${formatter.format(invoice.change! * -1)}',
-                                        style: Theme.of(Get.context!)
-                                            .textTheme
-                                            .titleLarge!
-                                            .copyWith(
-                                                fontStyle: FontStyle.italic,
-                                                color: Colors.red),
-                                        textAlign: TextAlign.end,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Text(charge,
-                                    style: Theme.of(Get.context!)
-                                        .textTheme
-                                        .bodySmall!
-                                        .copyWith(fontStyle: FontStyle.italic),
-                                    textAlign: TextAlign.end),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
                 ListTile(
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1063,6 +1117,10 @@ void editDialog(BuildContext context, InvoiceController controller,
   debugPrint(date.toString());
   controller.selectedTime.value = TimeOfDay.fromDateTime(date);
 
+  controller.returnFee.value = invoice.returnFee!;
+  controller.totalReturn.value =
+      controller.totalReturnPrice.value - invoice.returnFee!;
+
   Get.defaultDialog(
     title: 'Edit Invoice ${invoice.invoiceId}',
     content: Container(
@@ -1073,15 +1131,13 @@ void editDialog(BuildContext context, InvoiceController controller,
         padding: const EdgeInsets.all(16),
         child: Obx(
           () => SizedBox(
-            height: controller.cartListReturn.isNotEmpty
-                ? (800.0 +
-                    (controller.cartList.length * 100) +
-                    (controller.cartListReturn.length * 100))
-                : (800) + (controller.cartList.length * 100),
+            height: 700 +
+                ((controller.cartList.length > controller.cartListReturn.length)
+                    ? controller.cartList.length * 130
+                    : controller.cartListReturn.length * 130),
             child: Column(
               children: [
                 CustomerData(controller: controller, invoice: invoice),
-                // const SizedBox(height: 4),
                 Expanded(
                   child: SelectedProductCard(
                     controller: controller,
@@ -1375,6 +1431,8 @@ class SelectedProductCard extends StatelessWidget {
                       TimeOfDay selectedTime = controller.selectedTime.value;
                       DateTime convertedTime = DateTime(
                           2024, 1, 1, selectedTime.hour, selectedTime.minute);
+                      controller.returnFeeTextController.text =
+                          formatter.format(controller.returnFee.value);
                       return Column(
                         children: [
                           Container(
@@ -1382,8 +1440,15 @@ class SelectedProductCard extends StatelessWidget {
                             color: Colors.white,
                             margin: const EdgeInsets.symmetric(horizontal: 12),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Text(
+                                  cartListReturn.isEmpty ? '' : 'Return',
+                                  style: context.textTheme.titleLarge!.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary),
+                                ),
                                 Row(
                                   children: [
                                     InkWell(
@@ -1435,166 +1500,241 @@ class SelectedProductCard extends StatelessWidget {
                             ),
                           ),
                           Expanded(
-                            flex: cartList.length,
-                            child: SelectedProductList(
-                              cartList: cartList,
-                              formatter: formatter,
-                              controller: controller,
-                              isReturn: false,
-                            ),
-                          ),
-                          Container(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 350),
                             child: Row(
                               children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Get.defaultDialog(
-                                        content: Container(
-                                          margin: const EdgeInsets.all(8),
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              (3 / 4),
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              (9 / 10),
-                                          child: ProductListCard(
-                                            controller: controller,
-                                            formatter: formatter,
+                                if (cartListReturn.isNotEmpty)
+                                  Expanded(
+                                    flex: 3,
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        border: Border(
+                                          right: BorderSide(
+                                            color: Colors.grey,
                                           ),
                                         ),
-                                      );
-                                    },
-                                    child: const Text('Tambah Barang'),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            child: SelectedProductList(
+                                              cartList: cartListReturn,
+                                              formatter: formatter,
+                                              controller: controller,
+                                              isReturn: true,
+                                            ),
+                                          ),
+                                          ListTile(
+                                            title: Padding(
+                                              padding: const EdgeInsets.all(12),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        'Total:',
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        style: Theme.of(
+                                                                Get.context!)
+                                                            .textTheme
+                                                            .bodyLarge!
+                                                            .copyWith(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic,
+                                                                color: Theme.of(
+                                                                        Get.context!)
+                                                                    .colorScheme
+                                                                    .primary),
+                                                      ),
+                                                      const SizedBox(width: 20),
+                                                      SizedBox(
+                                                        width: 120,
+                                                        child: Text(
+                                                          'Rp ${formatter.format(controller.totalReturnPrice.value)}',
+                                                          textAlign:
+                                                              TextAlign.end,
+                                                          style: Theme.of(
+                                                                  Get.context!)
+                                                              .textTheme
+                                                              .bodyLarge!
+                                                              .copyWith(
+                                                                  fontStyle:
+                                                                      FontStyle
+                                                                          .italic,
+                                                                  color: Theme.of(
+                                                                          Get.context!)
+                                                                      .colorScheme
+                                                                      .primary),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        'Biaya Return:',
+                                                        style: context.textTheme
+                                                            .titleLarge,
+                                                      ),
+                                                      const SizedBox(width: 20),
+                                                      SizedBox(
+                                                        width: 120,
+                                                        child: TextField(
+                                                            controller: controller
+                                                                .returnFeeTextController,
+                                                            style: context
+                                                                .textTheme
+                                                                .titleLarge,
+                                                            textAlign:
+                                                                TextAlign.right,
+                                                            decoration:
+                                                                InputDecoration(
+                                                              prefixIcon: Text(
+                                                                'Rp. ',
+                                                                style: context
+                                                                    .textTheme
+                                                                    .titleLarge,
+                                                              ),
+                                                              prefixIconConstraints:
+                                                                  const BoxConstraints(
+                                                                      minWidth:
+                                                                          0,
+                                                                      minHeight:
+                                                                          0),
+                                                              hintText: '0',
+                                                            ),
+                                                            keyboardType:
+                                                                const TextInputType
+                                                                    .numberWithOptions(
+                                                                    decimal:
+                                                                        true),
+                                                            inputFormatters: [
+                                                              FilteringTextInputFormatter
+                                                                  .allow(RegExp(
+                                                                      r'[0-9]'))
+                                                            ],
+                                                            onChanged: (value) {
+                                                              controller
+                                                                  .returnFeeHandle(
+                                                                      value,
+                                                                      invoice);
+                                                            }),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        'TOTAL RETURN:',
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        style: Theme.of(
+                                                                Get.context!)
+                                                            .textTheme
+                                                            .bodyLarge!
+                                                            .copyWith(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic,
+                                                                color: Theme.of(
+                                                                        Get.context!)
+                                                                    .colorScheme
+                                                                    .primary),
+                                                      ),
+                                                      const SizedBox(width: 20),
+                                                      SizedBox(
+                                                        width: 120,
+                                                        child: Text(
+                                                          'Rp ${formatter.format(controller.totalReturn.value)}',
+                                                          textAlign:
+                                                              TextAlign.end,
+                                                          style: Theme.of(
+                                                                  Get.context!)
+                                                              .textTheme
+                                                              .bodyLarge!
+                                                              .copyWith(
+                                                                  fontStyle:
+                                                                      FontStyle
+                                                                          .italic,
+                                                                  color: Theme.of(
+                                                                          Get.context!)
+                                                                      .colorScheme
+                                                                      .primary),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(
+                                  flex: 5,
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: SelectedProductList(
+                                          cartList: cartList,
+                                          formatter: formatter,
+                                          controller: controller,
+                                          isReturn: false,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 200,
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  Get.defaultDialog(
+                                                    content: Container(
+                                                      margin:
+                                                          const EdgeInsets.all(
+                                                              8),
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              (3 / 4),
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              (9 / 10),
+                                                      child: ProductListCard(
+                                                        controller: controller,
+                                                        formatter: formatter,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                child:
+                                                    const Text('Tambah Barang'),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          if (cartListReturn.isNotEmpty)
-                            Column(
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: Divider(),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  child: ListTile(
-                                    title: Text(
-                                      'Return',
-                                      style: context.textTheme.titleLarge!
-                                          .copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          if (cartListReturn.isNotEmpty)
-                            Expanded(
-                              flex: cartListReturn.length,
-                              child: SelectedProductList(
-                                cartList: cartListReturn,
-                                formatter: formatter,
-                                controller: controller,
-                                isReturn: true,
-                              ),
-                            ),
-                          if (cartListReturn.isNotEmpty)
-                            ListTile(
-                              title: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          'Biaya Return:',
-                                          style: context.textTheme.titleLarge,
-                                        ),
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 120,
-                                          child: TextField(
-                                              controller: controller
-                                                  .returnFeeTextController,
-                                              style:
-                                                  context.textTheme.titleLarge,
-                                              textAlign: TextAlign.right,
-                                              decoration: InputDecoration(
-                                                prefixIcon: Text(
-                                                  'Rp. ',
-                                                  style: context
-                                                      .textTheme.titleLarge,
-                                                ),
-                                                prefixIconConstraints:
-                                                    const BoxConstraints(
-                                                        minWidth: 0,
-                                                        minHeight: 0),
-                                                hintText: '0',
-                                              ),
-                                              keyboardType: const TextInputType
-                                                  .numberWithOptions(
-                                                  decimal: true),
-                                              inputFormatters: [
-                                                FilteringTextInputFormatter
-                                                    .allow(RegExp(r'[0-9]'))
-                                              ],
-                                              onChanged: (value) {
-                                                controller.returnFeeHandle(
-                                                    value, invoice);
-                                              }),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          'TOTAL RETURN:',
-                                          textAlign: TextAlign.right,
-                                          style: Theme.of(Get.context!)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                  fontStyle: FontStyle.italic,
-                                                  color: Theme.of(Get.context!)
-                                                      .colorScheme
-                                                      .primary),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 120,
-                                          child: Text(
-                                            'Rp ${formatter.format(controller.totalReturnPrice.value)}',
-                                            textAlign: TextAlign.end,
-                                            style: Theme.of(Get.context!)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                    fontStyle: FontStyle.italic,
-                                                    color:
-                                                        Theme.of(Get.context!)
-                                                            .colorScheme
-                                                            .primary),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                           const SizedBox(height: 20),
                         ],
                       );
@@ -1798,15 +1938,16 @@ class SelectedProductList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  flex: 5,
-                  child: SizedBox(
-                    child: DiscountTextfield(
-                        discount: discount,
-                        controller: controller,
-                        productCart: productCart), //* 1.1 QuantityTextField,
+                if (!isReturn)
+                  Expanded(
+                    flex: 5,
+                    child: SizedBox(
+                      child: DiscountTextfield(
+                          discount: discount,
+                          controller: controller,
+                          productCart: productCart), //* 1.1 QuantityTextField,
+                    ),
                   ),
-                ),
                 Expanded(
                   flex: 7,
                   child: SizedBox(

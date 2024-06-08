@@ -13,30 +13,28 @@ class ProductProvider extends GetConnect {
   // int totalRowCount = 0;
   // final int pageSize = 1000;
 
-  static Future<int> getTotalRowCount(int totalRowCount) async {
-    // int totalCount = 0;
-    // int currentPage = 1;
-
+  static Future<int> getTotalRowCount() async {
     try {
-      // while (true) {
       final response =
           await supabase.from('products').select().count(CountOption.exact);
-      // .range(currentPage, pageSize);
-
-      // if (response.isEmpty) {
-      //   break;
-      // }
-
-      // final int count = response.first['count'] as int;
-      // totalCount += count;
-      // currentPage++;
       return response.count;
-      // }
-
-      // totalRowCount = totalCount;
     } catch (error) {
       debugPrint('Error: $error');
       return 0;
+    }
+  }
+
+  static Future<String> getLastIdProduct() async {
+    try {
+      final response = await supabase
+          .from('products')
+          .select('product_id')
+          .order('product_id', ascending: false)
+          .range(0, 1);
+      return response[0]['product_id'];
+    } catch (error) {
+      debugPrint('Error: $error');
+      return '';
     }
   }
 

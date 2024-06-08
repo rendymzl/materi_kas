@@ -195,7 +195,7 @@ class InvoiceController extends GetxController {
   void returnFeeHandle(String value, Invoice invoice) {
     int valueInt = int.parse((value.isEmpty) ? '0' : value.replaceAll('.', ''));
     returnFee.value = valueInt;
-    totalReturnPrice.value = invoice.returnFee! - valueInt;
+    totalReturn.value = totalReturnPrice.value - valueInt;
     if (value.isNotEmpty) {
       String newValue = numberFormat.format(valueInt);
       showReturnFee.value = valueInt > 0;
@@ -307,12 +307,14 @@ class InvoiceController extends GetxController {
   // final moneyChange = 0.obs;
   final totalPrice = 0.obs;
   final totalReturnPrice = 0.obs;
+  final totalReturn = 0.obs;
   final totalDiscount = 0.obs;
   final returnFee = 0.obs;
   // ScrollController scrollController = ScrollController();
   final invoiceId = ''.obs;
   final id = ''.obs;
   final addProduct = false.obs;
+  // final maxHeightList = 500.obs;
 
   //! dateTime
   final isDateTimeNow = true.obs;
@@ -483,16 +485,20 @@ class InvoiceController extends GetxController {
   }
 
   void returnHandle(Cart productCart, bool isAddToReturn) {
+    // int totalSellPrice = productCart.
     if (isAddToReturn) {
       addToReturnCart(productCart, 1);
       addToCart(productCart, -1);
+      totalReturnPrice.value += productCart.product!.sellPrice!;
     } else {
       addToReturnCart(productCart, -1);
       addToCart(productCart, 1);
+      totalReturnPrice.value -= productCart.product!.sellPrice!;
     }
   }
 
   final payTextController = TextEditingController();
+  final lastChangeDiscount = 0.obs;
   void discountHandle(Cart productCart,
       TextEditingController discountController, String value) {
     if (value.isNotEmpty) {
@@ -512,6 +518,16 @@ class InvoiceController extends GetxController {
     int discountParse = value == '' ? 0 : int.parse(value);
     productCart.individualDiscount = discountParse;
     cartList.replaceRange(index, index + 1, [productCart]);
+    // debugPrint(payTextController.text);
+    // debugPrint(totalPrice.value.toString());
+    if (payTextController.text == '') payTextController.text = '0';
+    int initTotalPrice = totalPrice.value + lastChangeDiscount.value;
+    debugPrint(initTotalPrice.toString());
+    lastChangeDiscount.value = discountParse;
+    // debugPrint(lastChangeDiscount.value.toString());
+    totalCharge.value = (int.parse(payTextController.text.replaceAll('.', '')) -
+            initTotalPrice) +
+        discountParse;
   }
 
   void onPayHandle(String value) {
@@ -578,6 +594,7 @@ class InvoiceController extends GetxController {
       'products_return_cart': ProductsCart(cartList: cartListReturn).toJson(),
       'bill': totalPrice.value,
       'pay': payment,
+      'return_fee': totalReturn.value,
       'change': change,
       'is_paid': change > 0 ? true : false,
     };
@@ -598,6 +615,7 @@ class InvoiceController extends GetxController {
             totalCharge.value = 0;
             totalPrice.value = 0;
             totalDiscount.value = 0;
+            totalReturn.value = 0;
             Get.back();
             Get.back();
             Get.back();
