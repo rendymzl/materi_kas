@@ -56,7 +56,7 @@ class ProductView extends GetView<ProductController> {
                             ),
                             Obx(
                               () => Text(
-                                'Kode Terakhir: ${controller.lastCode.value.toString()}',
+                                'Kode terakhir: ${controller.lastCode.value.toString()}',
                                 style: context.textTheme.bodySmall,
                               ),
                             ),

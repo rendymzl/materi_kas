@@ -44,6 +44,8 @@ class StatisticController extends GetxController {
         totalInvoice: 0),
   );
   final maxY = 0.obs;
+  int maxTotalInvoice = 0;
+  int scale = 20000;
   final groupDate = ''.obs;
   final dailyData = true;
   final isLastIndex = false.obs;
@@ -262,6 +264,12 @@ class StatisticController extends GetxController {
       if (maxY.value < totalProfit && isCurrentSelected) {
         maxY.value = (totalProfit * 1.4).toInt();
       }
+
+      if (maxTotalInvoice < totalInvoice && isCurrentSelected) {
+        maxTotalInvoice = (totalInvoice * 1.4).toInt();
+      }
+
+      scale = (maxY.value * maxTotalInvoice) ~/ maxTotalInvoice;
 
       final chartData = Chart(
         date: date,

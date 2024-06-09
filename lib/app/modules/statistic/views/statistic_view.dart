@@ -88,8 +88,8 @@ class BarChartWidget extends GetView<StatisticController> {
                                               const FlGridData(show: false),
                                           alignment:
                                               BarChartAlignment.spaceAround,
-                                          maxY:
-                                              controller.maxY.value.toDouble(),
+                                          maxY: controller.maxY.value /
+                                              controller.scale,
                                         ),
                                       ),
                                     ),
@@ -361,14 +361,13 @@ class BarChartWidget extends GetView<StatisticController> {
             BarChartRodData rod,
             int rodIndex,
           ) {
+            debugPrint((rod.toY * rodIndex == 0).toString());
             return BarTooltipItem(
               rodIndex == 0
-                  ? controller.groupDate.value == 'weekly'
-                      ? controller.formatter.format(rod.toY)
-                      : rod.toY > 1000
-                          ? 'Rp.${controller.formatter.format(rod.toY)}'
-                          : controller.formatter.format(rod.toY / 1000)
-                  : (rod.toY / 50000).round().toString(),
+                  ? rod.toY == 0
+                      ? '0'
+                      : 'Rp.${controller.formatter.format(rod.toY * controller.scale)}'
+                  : controller.invoiceChart[groupIndex].totalInvoice.toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
                 fontWeight: FontWeight.bold,
@@ -445,12 +444,12 @@ class BarChartWidget extends GetView<StatisticController> {
             x: index,
             barRods: [
               BarChartRodData(
-                toY: chart.totalProfit.toDouble(),
+                toY: chart.totalProfit / controller.scale,
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(2),
               ),
               BarChartRodData(
-                toY: chart.totalInvoice.toDouble() * 50000,
+                toY: chart.totalInvoice.toDouble(),
                 color: Colors.orange,
                 borderRadius: BorderRadius.circular(2),
               )
@@ -699,6 +698,12 @@ class BarChartSample3 extends StatefulWidget {
 class BarChartSample3State extends State<BarChartSample3> {
   @override
   Widget build(BuildContext context) {
+    // List data = [
+    //   {'profit': controller.scale, 'terjual': 3},
+    //   {'profit': 30000, 'terjual': 2},
+    //   {'profit': 22000, 'terjual': 5},
+    //   {'profit': controller.scale, 'terjual': 7},
+    // ];
     return const AspectRatio(
       aspectRatio: 1.6,
       child: BarChartWidget(),

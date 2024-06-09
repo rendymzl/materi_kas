@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+// import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../main.dart';
@@ -13,10 +13,13 @@ class ProductProvider extends GetConnect {
   // int totalRowCount = 0;
   // final int pageSize = 1000;
 
-  static Future<int> getTotalRowCount() async {
+  static Future<int> getTotalRowCount(String uuid) async {
     try {
-      final response =
-          await supabase.from('products').select().count(CountOption.exact);
+      final response = await supabase
+          .from('products')
+          .select()
+          .eq('owner_id', uuid)
+          .count(CountOption.exact);
       return response.count;
     } catch (error) {
       debugPrint('Error: $error');
@@ -24,18 +27,38 @@ class ProductProvider extends GetConnect {
     }
   }
 
-  static Future<String> getLastIdProduct() async {
-    try {
+  static Future<List<Product>> getAllProduct(int totalRows, String uuid) async {
+    int pageSize = 1000;
+    int start = 0;
+    bool hasMoreData = true;
+
+    List<Map<String, dynamic>> allProduct = [];
+    while (hasMoreData) {
       final response = await supabase
           .from('products')
-          .select('product_id')
+          .select()
+          .eq('owner_id', uuid)
           .order('product_id', ascending: false)
-          .range(0, 1);
-      return response[0]['product_id'];
-    } catch (error) {
-      debugPrint('Error: $error');
-      return '';
+          .range(start, start + pageSize - 1);
+
+      allProduct.addAll(response);
+      if (response.length < pageSize) {
+        hasMoreData = false;
+      } else {
+        start += pageSize;
+      }
     }
+
+    int extractNumber(String item) {
+      final regex = RegExp(r'\d+');
+      final match = regex.firstMatch(item);
+      return int.parse(match!.group(0)!);
+    }
+
+    allProduct.sort((a, b) => extractNumber(b['product_id'])
+        .compareTo(extractNumber(a['product_id'])));
+
+    return allProduct.map((product) => Product.fromJson(product)).toList();
   }
 
   //! Read
@@ -44,7 +67,13 @@ class ProductProvider extends GetConnect {
     late List<Map<String, dynamic>> response;
 
     if (productName == '') {
-      response = await supabase.from('products').select().eq('owner_id', uuid);
+      // return getAllProduct(await getTotalRowCount(uuid), uuid);
+      response = await supabase
+          .from('products')
+          .select()
+          .eq('owner_id', uuid)
+          .limit(200)
+          .order('sold', ascending: false);
     } else {
       response = await supabase
           .from('products')
@@ -52,7 +81,6 @@ class ProductProvider extends GetConnect {
           .eq('owner_id', uuid)
           .ilike('product_name', '%$productName%');
     }
-
     return response.map((product) => Product.fromJson(product)).toList();
   }
 

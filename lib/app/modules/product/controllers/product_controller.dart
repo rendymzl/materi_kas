@@ -19,6 +19,7 @@ class ProductController extends GetxController {
   final csvList = <Product>[].obs;
   late final String uuid;
   late final List<Product> productList = <Product>[].obs;
+  late final List<Product> allProductList = <Product>[].obs;
   final totalProduct = 0.obs;
   final lastCode = ''.obs;
   final isLoading = false.obs;
@@ -31,6 +32,7 @@ class ProductController extends GetxController {
   void onInit() async {
     super.onInit();
     uuid = supabase.auth.currentUser!.id;
+
     List<Product> newData = await ProductProvider.fetchData(uuid, '');
     refreshFetch(newData);
   }
@@ -38,10 +40,21 @@ class ProductController extends GetxController {
   //! Fetch
   void refreshFetch(List<Product> newData) async {
     productList.clear();
+    allProductList.assignAll(
+        await ProductProvider.getAllProduct(totalProduct.value, uuid));
+    // newData.sort((a, b) => b.sold!.compareTo(a.sold!));
     productList.assignAll(newData);
     foundProducts.value = productList;
-    totalProduct.value = await ProductProvider.getTotalRowCount();
-    lastCode.value = await ProductProvider.getLastIdProduct();
+
+    totalProduct.value = await ProductProvider.getTotalRowCount(uuid);
+
+    List<Product> allProductreversed = List.from(allProductList);
+
+    lastCode.value = allProductreversed.isEmpty
+        ? 'Tidak ada barang'
+        : allProductreversed[0].productId!;
+
+    allProductreversed.clear();
   }
 
   Timer? debounce;
@@ -115,7 +128,6 @@ class ProductController extends GetxController {
                   !data[3].toString().contains("-")) {
                 costPrice = int.parse(data[3].replaceAll(RegExp(r'[Rp,]'), ''));
               }
-              debugPrint(costPrice.toString());
               final newProduct = Product(
                 productId: data[0],
                 featured: false,
@@ -238,7 +250,7 @@ class ProductController extends GetxController {
 
   List<Product> checkexistingProduct(String newProductId) {
     var existingProduct = <Product>[];
-    existingProduct = productList
+    existingProduct = allProductList
         .where((product) => product.productId == newProductId)
         .toList();
     return existingProduct;
