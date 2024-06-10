@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -45,7 +47,7 @@ class StatisticController extends GetxController {
   );
   int maxTotalProfit = 0;
   int maxTotalInvoice = 0;
-  final maxY = 0.obs;
+  final maxY = 0.0.obs;
   int scale = 0;
   final groupDate = ''.obs;
   final dailyData = true;
@@ -68,7 +70,7 @@ class StatisticController extends GetxController {
   }
 
   Future<void> fetchData(DateTime selectedDate, String section) async {
-    maxY.value = 0;
+    maxY.value = 0.0;
     invoiceChart.clear();
     groupDate.value = section;
 
@@ -264,21 +266,8 @@ class StatisticController extends GetxController {
       }
 
       if (isCurrentSelected) {
-        if (maxTotalProfit < totalProfit) {
-          maxTotalProfit = (totalProfit * 1.4).toInt();
-        }
-
-        if (maxTotalInvoice < totalInvoice) {
-          maxTotalInvoice = (totalInvoice * 1.4).toInt();
-        }
-
-        if (maxY.value < totalProfit) {
-          maxY.value = (totalProfit * 1.4).toInt();
-        }
-
-        if (maxTotalInvoice & maxY.value > 0 && isCurrentSelected) {
-          scale = (maxY.value * maxTotalInvoice) ~/ maxTotalInvoice;
-        }
+        maxTotalProfit = max(maxTotalProfit, totalProfit);
+        maxTotalInvoice = max(maxTotalInvoice, totalInvoice);
       }
 
       final chartData = Chart(
@@ -309,10 +298,25 @@ class StatisticController extends GetxController {
     }
 
     if (isCurrentSelected) {
-      debugPrint('Total Profit:${maxY.value}');
-      debugPrint('Total Invoice:$maxTotalInvoice');
-      debugPrint(scale.toString());
+      double maxYTotalProfit =
+          (maxTotalProfit == 0 ? 0 : (maxTotalProfit / maxTotalProfit) + 0.40);
+      double maxYTotalInvoice = (maxTotalInvoice == 0
+          ? 0
+          : (maxTotalInvoice / maxTotalInvoice) + 0.40);
+      debugPrint(
+          'maxTotalProfit ${maxTotalProfit == 0 ? 0 : (maxTotalProfit / maxTotalProfit) + 0.40}');
+      debugPrint(
+          'maxTotalInvoice ${maxTotalInvoice == 0 ? 0 : (maxTotalInvoice / maxTotalInvoice) + 0.40}');
+      // debugPrint((maxTotalInvoice == 0
+      //         ? 0
+      //         : (maxTotalInvoice / maxTotalInvoice) + 0.40)
+      //     .toString());
+      maxY.value = (maxYTotalProfit > maxYTotalInvoice)
+          ? maxYTotalProfit
+          : maxYTotalInvoice;
+      debugPrint(maxY.value.toString());
     }
+
     return listChartData;
   }
 

@@ -88,8 +88,7 @@ class BarChartWidget extends GetView<StatisticController> {
                                               const FlGridData(show: false),
                                           alignment:
                                               BarChartAlignment.spaceAround,
-                                          maxY: controller.maxY.value /
-                                              controller.scale,
+                                          maxY: controller.maxY.value,
                                         ),
                                       ),
                                     ),
@@ -365,7 +364,7 @@ class BarChartWidget extends GetView<StatisticController> {
               rodIndex == 0
                   ? rod.toY == 0
                       ? '0'
-                      : 'Rp.${controller.formatter.format(rod.toY * controller.scale)}'
+                      : 'Rp.${controller.invoiceChart[groupIndex].totalProfit}'
                   : controller.invoiceChart[groupIndex].totalInvoice.toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
@@ -443,12 +442,18 @@ class BarChartWidget extends GetView<StatisticController> {
             x: index,
             barRods: [
               BarChartRodData(
-                toY: chart.totalProfit / controller.scale,
+                toY: chart.totalProfit == 0
+                    ? 0
+                    : (chart.totalProfit / controller.maxTotalProfit),
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(2),
               ),
               BarChartRodData(
-                toY: chart.totalInvoice.toDouble(),
+                toY: (chart.totalInvoice == 0
+                        ? 0
+                        : chart.totalInvoice /
+                            (controller.maxTotalInvoice * (120 / 100))) *
+                    (100 / 100),
                 color: Colors.orange,
                 borderRadius: BorderRadius.circular(2),
               )
