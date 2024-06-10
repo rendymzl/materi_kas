@@ -361,7 +361,6 @@ class BarChartWidget extends GetView<StatisticController> {
             BarChartRodData rod,
             int rodIndex,
           ) {
-            debugPrint((rod.toY * rodIndex == 0).toString());
             return BarTooltipItem(
               rodIndex == 0
                   ? rod.toY == 0
@@ -698,12 +697,6 @@ class BarChartSample3 extends StatefulWidget {
 class BarChartSample3State extends State<BarChartSample3> {
   @override
   Widget build(BuildContext context) {
-    // List data = [
-    //   {'profit': controller.scale, 'terjual': 3},
-    //   {'profit': 30000, 'terjual': 2},
-    //   {'profit': 22000, 'terjual': 5},
-    //   {'profit': controller.scale, 'terjual': 7},
-    // ];
     return const AspectRatio(
       aspectRatio: 1.6,
       child: BarChartWidget(),

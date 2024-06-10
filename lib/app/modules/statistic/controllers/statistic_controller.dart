@@ -43,9 +43,10 @@ class StatisticController extends GetxController {
         totalProfit: 0,
         totalInvoice: 0),
   );
-  final maxY = 0.obs;
+  int maxTotalProfit = 0;
   int maxTotalInvoice = 0;
-  int scale = 20000;
+  final maxY = 0.obs;
+  int scale = 0;
   final groupDate = ''.obs;
   final dailyData = true;
   final isLastIndex = false.obs;
@@ -247,6 +248,7 @@ class StatisticController extends GetxController {
       int totalCostPrice = 0;
       int totalProfit = 0;
       int totalInvoice = invoices.length;
+      scale = 0;
 
       for (var invoice in invoices) {
         int sellPrice = invoice.productsCart!.cartList!.map((cart) {
@@ -261,15 +263,23 @@ class StatisticController extends GetxController {
         totalProfit += invoice.bill! - costPrice;
       }
 
-      if (maxY.value < totalProfit && isCurrentSelected) {
-        maxY.value = (totalProfit * 1.4).toInt();
-      }
+      if (isCurrentSelected) {
+        if (maxTotalProfit < totalProfit) {
+          maxTotalProfit = (totalProfit * 1.4).toInt();
+        }
 
-      if (maxTotalInvoice < totalInvoice && isCurrentSelected) {
-        maxTotalInvoice = (totalInvoice * 1.4).toInt();
-      }
+        if (maxTotalInvoice < totalInvoice) {
+          maxTotalInvoice = (totalInvoice * 1.4).toInt();
+        }
 
-      scale = (maxY.value * maxTotalInvoice) ~/ maxTotalInvoice;
+        if (maxY.value < totalProfit) {
+          maxY.value = (totalProfit * 1.4).toInt();
+        }
+
+        if (maxTotalInvoice & maxY.value > 0 && isCurrentSelected) {
+          scale = (maxY.value * maxTotalInvoice) ~/ maxTotalInvoice;
+        }
+      }
 
       final chartData = Chart(
         date: date,
@@ -296,6 +306,12 @@ class StatisticController extends GetxController {
       for (var day = 0; day < 12; day++) {
         dayValueLooping(day);
       }
+    }
+
+    if (isCurrentSelected) {
+      debugPrint('Total Profit:${maxY.value}');
+      debugPrint('Total Invoice:$maxTotalInvoice');
+      debugPrint(scale.toString());
     }
     return listChartData;
   }
