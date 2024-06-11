@@ -34,6 +34,7 @@ class StatisticController extends GetxController {
         totalSellPrice: 0,
         totalCostPrice: 0,
         totalProfit: 0,
+        totalPaid: 0,
         totalInvoice: 0),
   );
   Rx<Chart?> prevSelectedChart = Rx<Chart?>(
@@ -43,11 +44,12 @@ class StatisticController extends GetxController {
         totalSellPrice: 0,
         totalCostPrice: 0,
         totalProfit: 0,
+        totalPaid: 0,
         totalInvoice: 0),
   );
   int maxTotalProfit = 0;
   int maxTotalInvoice = 0;
-  final maxY = 0.0.obs;
+  // final maxY = 1.4.obs;
   int scale = 0;
   final groupDate = ''.obs;
   final dailyData = true;
@@ -70,7 +72,7 @@ class StatisticController extends GetxController {
   }
 
   Future<void> fetchData(DateTime selectedDate, String section) async {
-    maxY.value = 0.0;
+    // maxY.value = 1.4;
     invoiceChart.clear();
     groupDate.value = section;
 
@@ -209,7 +211,7 @@ class StatisticController extends GetxController {
 
     currentYearInvoiceChart = await getChartData(startOfCurrentYear, 'current');
 
-    prevYearInvoiceChart = await getChartData(startOfPrevYear, 'current');
+    prevYearInvoiceChart = await getChartData(startOfPrevYear, '');
 
     return currentYearInvoiceChart;
   }
@@ -249,6 +251,7 @@ class StatisticController extends GetxController {
       int totalSellPrice = 0;
       int totalCostPrice = 0;
       int totalProfit = 0;
+      int totalPaid = 0;
       int totalInvoice = invoices.length;
       scale = 0;
 
@@ -259,10 +262,12 @@ class StatisticController extends GetxController {
         int costPrice = invoice.productsCart!.cartList!.map((cart) {
           return (cart.product!.costPrice! * cart.quantity!);
         }).reduce((value, element) => value + element);
+        int paid = invoice.change! > 0 ? invoice.pay! - invoice.change! : 0;
 
         totalSellPrice += sellPrice;
         totalCostPrice += costPrice;
         totalProfit += invoice.bill! - costPrice;
+        totalPaid += paid;
       }
 
       if (isCurrentSelected) {
@@ -276,10 +281,16 @@ class StatisticController extends GetxController {
         totalSellPrice: totalSellPrice,
         totalCostPrice: totalCostPrice,
         totalProfit: totalProfit,
+        totalPaid: totalPaid,
         totalInvoice: totalInvoice,
       );
 
       listChartData.add(chartData);
+    }
+
+    if (isCurrentSelected) {
+      maxTotalProfit = 0;
+      maxTotalInvoice = 0;
     }
 
     if (groupDate.value == 'weekly') {
@@ -298,23 +309,23 @@ class StatisticController extends GetxController {
     }
 
     if (isCurrentSelected) {
-      double maxYTotalProfit =
-          (maxTotalProfit == 0 ? 0 : (maxTotalProfit / maxTotalProfit) + 0.40);
-      double maxYTotalInvoice = (maxTotalInvoice == 0
-          ? 0
-          : (maxTotalInvoice / maxTotalInvoice) + 0.40);
-      debugPrint(
-          'maxTotalProfit ${maxTotalProfit == 0 ? 0 : (maxTotalProfit / maxTotalProfit) + 0.40}');
-      debugPrint(
-          'maxTotalInvoice ${maxTotalInvoice == 0 ? 0 : (maxTotalInvoice / maxTotalInvoice) + 0.40}');
+      // double maxYTotalProfit =
+      //     (maxTotalProfit == 0 ? 0 : (maxTotalProfit / maxTotalProfit) + 0.40);
+      // double maxYTotalInvoice = (maxTotalInvoice == 0
+      //     ? 0
+      //     : (maxTotalInvoice / maxTotalInvoice) + 0.40);
+      debugPrint('=== start');
+      debugPrint('maxTotalProfit $maxTotalProfit');
+      debugPrint('maxTotalInvoice $maxTotalInvoice');
+      debugPrint('==== end');
       // debugPrint((maxTotalInvoice == 0
       //         ? 0
       //         : (maxTotalInvoice / maxTotalInvoice) + 0.40)
       //     .toString());
-      maxY.value = (maxYTotalProfit > maxYTotalInvoice)
-          ? maxYTotalProfit
-          : maxYTotalInvoice;
-      debugPrint(maxY.value.toString());
+      // maxY.value = (maxYTotalProfit > maxYTotalInvoice)
+      //     ? maxYTotalProfit
+      //     : maxYTotalInvoice;
+      // debugPrint(maxY.value.toString());
     }
 
     return listChartData;
@@ -361,7 +372,7 @@ class StatisticController extends GetxController {
         formatter = DateFormat('EEEE, dd/MM', 'id');
         break;
       case 'weekly':
-        formatter = DateFormat('EEE, dd/MM', 'id');
+        formatter = DateFormat('dd/MM', 'id');
         break;
       case 'monthly':
         formatter = DateFormat('MMM y', 'id');
@@ -382,6 +393,7 @@ class StatisticController extends GetxController {
           totalSellPrice: value.totalSellPrice + element.totalSellPrice,
           totalCostPrice: value.totalCostPrice + element.totalCostPrice,
           totalProfit: value.totalProfit + element.totalProfit,
+          totalPaid: value.totalPaid + element.totalPaid,
           totalInvoice: value.totalInvoice + element.totalInvoice,
         );
       });
@@ -452,7 +464,7 @@ class StatisticController extends GetxController {
     if (prevValue == 0 || doubleValue == 0) {
       return Text('(0%)',
           style: context.textTheme.bodySmall!.copyWith(
-            fontSize: 11,
+            fontSize: 10,
             color: Colors.grey,
             fontStyle: FontStyle.italic,
           ));
@@ -467,7 +479,7 @@ class StatisticController extends GetxController {
 
     return Text('($sign$formattedValue%)',
         style: context.textTheme.bodySmall!.copyWith(
-          fontSize: 11,
+          fontSize: 10,
           color: color,
           fontStyle: FontStyle.italic,
         ));

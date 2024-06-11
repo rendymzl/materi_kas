@@ -1,4 +1,5 @@
 import 'package:date_picker_plus/date_picker_plus.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +62,9 @@ class BarChartWidget extends GetView<StatisticController> {
               final prevProfit =
                   controller.prevSelectedChart.value!.totalProfit;
 
+              final pay = controller.selectedChart.value!.totalPaid;
+              final prevPay = controller.prevSelectedChart.value!.totalPaid;
+
               final totalInvoice = controller.selectedChart.value!.totalInvoice;
               final prevTotalInvoice =
                   controller.prevSelectedChart.value!.totalInvoice;
@@ -88,7 +92,7 @@ class BarChartWidget extends GetView<StatisticController> {
                                               const FlGridData(show: false),
                                           alignment:
                                               BarChartAlignment.spaceAround,
-                                          maxY: controller.maxY.value,
+                                          maxY: 1.4,
                                         ),
                                       ),
                                     ),
@@ -163,10 +167,10 @@ class BarChartWidget extends GetView<StatisticController> {
                                             ),
                                           ),
                                           Expanded(
-                                            flex: 4,
+                                            flex: 5,
                                             child: DisplayDataListTile(
                                               controller: controller,
-                                              title: 'Pembelian',
+                                              title: 'Tagihan',
                                               subtitle1:
                                                   'Rp.${controller.formatter.format(sell)}',
                                               subtitle2:
@@ -176,7 +180,7 @@ class BarChartWidget extends GetView<StatisticController> {
                                             ),
                                           ),
                                           Expanded(
-                                            flex: 4,
+                                            flex: 5,
                                             child: DisplayDataListTile(
                                               controller: controller,
                                               title: 'Keuntungan',
@@ -189,10 +193,23 @@ class BarChartWidget extends GetView<StatisticController> {
                                             ),
                                           ),
                                           Expanded(
+                                            flex: 5,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Dibayar',
+                                              subtitle1:
+                                                  'Rp.${controller.formatter.format(pay)}',
+                                              subtitle2:
+                                                  'Rp.${controller.formatter.format(prevPay)}',
+                                              subtitle3: controller.percentage(
+                                                  profit, prevProfit, context),
+                                            ),
+                                          ),
+                                          Expanded(
                                             flex: 3,
                                             child: DisplayDataListTile(
                                               controller: controller,
-                                              title: 'Jumlah Invoice',
+                                              title: 'Invoice',
                                               subtitle1:
                                                   totalInvoice.toString(),
                                               subtitle2:
@@ -222,120 +239,118 @@ class BarChartWidget extends GetView<StatisticController> {
             },
           ),
         ),
-        Expanded(
-          flex: 1,
-          child: SizedBox(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 100),
-              child: Obx(
-                () => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          controller.rangePickerHandle(controller.args.value);
-                          controller.selectedSection.value = 'daily';
-                        },
-                        style: ButtonStyle(
-                          enableFeedback: true,
-                          backgroundColor: WidgetStatePropertyAll(
-                            controller.selectedSection.value == 'daily'
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.white,
-                          ),
+        Card(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            height: 70,
+            child: Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.rangePickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'daily';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'daily'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
                         ),
-                        child: Text(
-                          'Harian',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: controller.selectedSection.value == 'daily'
-                                ? Colors.white
-                                : Colors.grey[700],
-                          ),
+                      ),
+                      child: Text(
+                        'Harian',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'daily'
+                              ? Colors.white
+                              : Colors.grey[700],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          controller.rangePickerHandle(controller.args.value);
-                          controller.selectedSection.value = 'weekly';
-                        },
-                        style: ButtonStyle(
-                          enableFeedback: true,
-                          backgroundColor: WidgetStatePropertyAll(
-                            controller.selectedSection.value == 'weekly'
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.white,
-                          ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.rangePickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'weekly';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'weekly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
                         ),
-                        child: Text(
-                          'Mingguan',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: controller.selectedSection.value == 'weekly'
-                                ? Colors.white
-                                : Colors.grey[700],
-                          ),
+                      ),
+                      child: Text(
+                        'Mingguan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'weekly'
+                              ? Colors.white
+                              : Colors.grey[700],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          controller.monthPickerHandle(controller.args.value);
-                          controller.selectedSection.value = 'monthly';
-                        },
-                        style: ButtonStyle(
-                          enableFeedback: true,
-                          backgroundColor: WidgetStatePropertyAll(
-                            controller.selectedSection.value == 'monthly'
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.white,
-                          ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.monthPickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'monthly';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'monthly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
                         ),
-                        child: Text(
-                          'Bulanan',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: controller.selectedSection.value == 'monthly'
-                                ? Colors.white
-                                : Colors.grey[700],
-                          ),
+                      ),
+                      child: Text(
+                        'Bulanan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'monthly'
+                              ? Colors.white
+                              : Colors.grey[700],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          controller.yearPickerHandle(controller.args.value);
-                          controller.selectedSection.value = 'yearly';
-                        },
-                        style: ButtonStyle(
-                          enableFeedback: true,
-                          backgroundColor: WidgetStatePropertyAll(
-                            controller.selectedSection.value == 'yearly'
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.white,
-                          ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.yearPickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'yearly';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'yearly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
                         ),
-                        child: Text(
-                          'Tahunan',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: controller.selectedSection.value == 'yearly'
-                                ? Colors.white
-                                : Colors.grey[700],
-                          ),
+                      ),
+                      child: Text(
+                        'Tahunan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'yearly'
+                              ? Colors.white
+                              : Colors.grey[700],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -347,12 +362,9 @@ class BarChartWidget extends GetView<StatisticController> {
   BarTouchData get barTouchData => BarTouchData(
         enabled: false,
         touchTooltipData: BarTouchTooltipData(
-          getTooltipColor: (group) => controller.groupDate.value == 'weekly'
-              ? Colors.transparent
-              : Colors.grey[200]!.withOpacity(0.8),
-          tooltipPadding: controller.groupDate.value == 'weekly'
-              ? EdgeInsets.zero
-              : const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+          getTooltipColor: (group) => Colors.grey[200]!.withOpacity(0.8),
+          tooltipPadding:
+              const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
           tooltipMargin: 8,
           getTooltipItem: (
             BarChartGroupData group,
@@ -364,7 +376,7 @@ class BarChartWidget extends GetView<StatisticController> {
               rodIndex == 0
                   ? rod.toY == 0
                       ? '0'
-                      : 'Rp.${controller.invoiceChart[groupIndex].totalProfit}'
+                      : 'Rp${controller.formatter.format(controller.invoiceChart[groupIndex].totalProfit)}'
                   : controller.invoiceChart[groupIndex].totalInvoice.toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
@@ -373,20 +385,18 @@ class BarChartWidget extends GetView<StatisticController> {
             );
           },
         ),
-        touchCallback: controller.groupDate.value == 'weekly'
-            ? null
-            : (event, response) {
-                if (event.isInterestedForInteractions &&
-                    response != null &&
-                    response.spot != null) {
-                  controller.touchedGroupIndex.value =
-                      response.spot!.touchedBarGroupIndex;
-                  controller.touchedDataIndex.value =
-                      response.spot!.touchedRodDataIndex;
-                } else {
-                  controller.touchedGroupIndex.value = -1;
-                }
-              },
+        touchCallback: (event, response) {
+          if (event.isInterestedForInteractions &&
+              response != null &&
+              response.spot != null) {
+            controller.touchedGroupIndex.value =
+                response.spot!.touchedBarGroupIndex;
+            controller.touchedDataIndex.value =
+                response.spot!.touchedRodDataIndex;
+          } else {
+            controller.touchedGroupIndex.value = -1;
+          }
+        },
       );
 
   Widget getTitles(double value, TitleMeta meta) {
@@ -437,8 +447,14 @@ class BarChartWidget extends GetView<StatisticController> {
         controller.invoiceChart.length,
         (index) {
           Chart chart = controller.invoiceChart[index];
+          // debugPrint('-----');
+          // debugPrint(
+          //     'chartTotalProfit: ${chart.totalProfit == 0 ? 0 : (chart.totalProfit / controller.maxTotalProfit)}');
+          // debugPrint(
+          //     'chartTotalInvoice: ${chart.totalInvoice == 0 ? 0 : (chart.totalInvoice / controller.maxTotalInvoice)}');
+          // debugPrint('-----');
           return BarChartGroupData(
-            barsSpace: controller.groupDate.value == 'weekly' ? 10 : 1,
+            barsSpace: 1,
             x: index,
             barRods: [
               BarChartRodData(
@@ -458,9 +474,8 @@ class BarChartWidget extends GetView<StatisticController> {
                 borderRadius: BorderRadius.circular(2),
               )
             ],
-            showingTooltipIndicators: controller.groupDate.value == 'weekly'
-                ? [0, 1]
-                : controller.touchedGroupIndex.value == index
+            showingTooltipIndicators:
+                controller.touchedGroupIndex.value == index
                     ? [controller.touchedDataIndex.value]
                     : [],
           );
@@ -674,18 +689,17 @@ class DisplayDataListTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 10),
           Row(
             children: [
               Text(subtitle1,
                   style: context.textTheme.bodyLarge!
                       .copyWith(color: Theme.of(context).colorScheme.primary)),
-              const SizedBox(width: 4),
-              subtitle3
             ],
           ),
           const SizedBox(height: 2),
           Text(subtitle2, style: context.textTheme.bodySmall),
+          const SizedBox(height: 2),
+          subtitle3,
         ],
       ),
     );

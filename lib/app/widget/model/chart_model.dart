@@ -4,6 +4,7 @@ class Chart {
   int totalSellPrice;
   int totalCostPrice;
   int totalProfit;
+  int totalPaid;
   int totalInvoice;
 
   Chart(
@@ -12,5 +13,6 @@ class Chart {
       required this.totalSellPrice,
       required this.totalCostPrice,
       required this.totalProfit,
+      required this.totalPaid,
       required this.totalInvoice});
 }

@@ -408,6 +408,7 @@ class InvoiceController extends GetxController {
     displayName.value = '';
   }
 
+  bool isStop = false;
   void removeFromCart(Cart productCart) {
     if (cartList.length > 1) {
       // productCart.quantity = 1;
@@ -421,6 +422,8 @@ class InvoiceController extends GetxController {
     } else {
       Get.snackbar('Uups', 'Invoice tidak boleh kosong',
           colorText: Colors.white);
+      isStop = true;
+      debugPrint('1 ${totalReturnPrice.value}');
     }
   }
 
@@ -485,16 +488,25 @@ class InvoiceController extends GetxController {
   }
 
   void returnHandle(Cart productCart, bool isAddToReturn) {
-    // int totalSellPrice = productCart.
+    isStop = false;
+
     if (isAddToReturn) {
-      addToReturnCart(productCart, 1);
       addToCart(productCart, -1);
-      totalReturnPrice.value += productCart.product!.sellPrice!;
+      debugPrint('2 ${totalReturnPrice.value}');
+      if (isStop) {
+        return;
+      } else {
+        addToReturnCart(productCart, 1);
+        totalReturnPrice.value += productCart.product!.sellPrice!;
+        totalReturn.value += productCart.product!.sellPrice!;
+      }
     } else {
       addToReturnCart(productCart, -1);
       addToCart(productCart, 1);
       totalReturnPrice.value -= productCart.product!.sellPrice!;
+      totalReturn.value -= productCart.product!.sellPrice!;
     }
+    debugPrint('3 ${totalReturnPrice.value}');
   }
 
   final payTextController = TextEditingController();
@@ -697,6 +709,7 @@ class InvoiceController extends GetxController {
       if (totalQty == 0) {
         removeFromCart(pCart);
       } else {
+        // totalReturnPrice.value += pCart.product!.sellPrice!;
         Cart productCart = Cart(
           product: pCart.product,
           quantity: totalQty,
@@ -707,6 +720,7 @@ class InvoiceController extends GetxController {
         cartList.replaceRange(index, index + 1, [productCart]);
       }
     } else {
+      // totalReturnPrice.value += pCart.product!.sellPrice!;
       cartList.add(
         Cart(
           product: pCart.product,
@@ -716,16 +730,21 @@ class InvoiceController extends GetxController {
         ),
       );
     }
-    int payValue = 0;
-    payTextController.text == ''
-        ? payValue = 0
-        : payValue = int.parse(payTextController.text.replaceAll('.', ''));
-    if (qty > 0) {
-      totalCharge.value =
-          payValue - (totalPrice.value + pCart.product!.sellPrice! * qty);
+
+    if (isStop) {
+      return;
     } else {
-      totalCharge.value =
-          payValue - (totalPrice.value - pCart.product!.sellPrice! * qty.abs());
+      int payValue = 0;
+      payTextController.text == ''
+          ? payValue = 0
+          : payValue = int.parse(payTextController.text.replaceAll('.', ''));
+      if (qty > 0) {
+        totalCharge.value =
+            payValue - (totalPrice.value + pCart.product!.sellPrice! * qty);
+      } else {
+        totalCharge.value = payValue -
+            (totalPrice.value - pCart.product!.sellPrice! * qty.abs());
+      }
     }
   }
 
@@ -734,6 +753,10 @@ class InvoiceController extends GetxController {
       (selectItem) => selectItem.product?.id == pReturnCart.product!.id,
     );
 
+//         int indexCartList = cartList.indexWhere(
+//         (selectItem) => selectItem.product?.id == pReturnCart.product!.id);
+
+// if (cartList.length == 1 && cartList[indexCartList].quantity! == 1)
     if (index != -1) {
       int totalQty = cartListReturn[index].quantity! + qty;
       if (totalQty == 0) {

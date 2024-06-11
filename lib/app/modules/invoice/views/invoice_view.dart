@@ -725,12 +725,12 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                           ),
                                         ),
                                         Expanded(
-                                          flex: 2,
+                                          flex: 1,
                                           child: Text('x ${cart.quantity}',
                                               textAlign: TextAlign.center),
                                         ),
                                         Expanded(
-                                          flex: 3,
+                                          flex: 4,
                                           child: Text(
                                             'Rp ${formatter.format(cart.product!.sellPrice! * cart.quantity! - cart.individualDiscount!)}',
                                             textAlign: TextAlign.end,
@@ -762,7 +762,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                           ),
                                         ),
                                         Expanded(
-                                          flex: 2,
+                                          flex: 4,
                                           child: Text(
                                             '-Rp ${formatter.format(controller.returnFee.value)}',
                                             textAlign: TextAlign.end,
@@ -793,7 +793,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                           ),
                                         ),
                                         Expanded(
-                                          flex: 2,
+                                          flex: 4,
                                           child: Text(
                                             'Rp ${formatter.format(controller.totalReturn.value)}',
                                             textAlign: TextAlign.end,
@@ -817,7 +817,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                         ),
                       ),
                     SizedBox(
-                      width: 370,
+                      width: 450,
                       child: Column(
                         children: [
                           ListTile(
@@ -1120,6 +1120,8 @@ void editDialog(BuildContext context, InvoiceController controller,
   controller.returnFee.value = invoice.returnFee!;
   controller.totalReturn.value =
       controller.totalReturnPrice.value - invoice.returnFee!;
+  controller.totalReturnPrice.value = 0;
+  controller.totalReturn.value = 0;
 
   Get.defaultDialog(
     title: 'Edit Invoice ${invoice.invoiceId}',
@@ -1131,7 +1133,7 @@ void editDialog(BuildContext context, InvoiceController controller,
         padding: const EdgeInsets.all(16),
         child: Obx(
           () => SizedBox(
-            height: 700 +
+            height: 750 +
                 ((controller.cartList.length > controller.cartListReturn.length)
                     ? controller.cartList.length * 130
                     : controller.cartListReturn.length * 130),
@@ -2074,10 +2076,11 @@ class CalculatePrice extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const SizedBox(
-                        width: 120,
-                        child: Text('Total',
-                            style: TextStyle(
+                      SizedBox(
+                        width: 300,
+                        child: Text(
+                            'TOTAL HARGA (${controller.cartList.length} Barang):',
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             )),
@@ -2121,11 +2124,64 @@ class CalculatePrice extends StatelessWidget {
                       )
                     ],
                   ),
+                  if (controller.cartListReturn.isNotEmpty)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(
+                          width: 300,
+                          child: Text(
+                            'Total Return',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ).copyWith(
+                                color:
+                                    Theme.of(Get.context!).colorScheme.primary),
+                          ),
+                        ),
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Rp. ',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ).copyWith(
+                                    color: Theme.of(Get.context!)
+                                        .colorScheme
+                                        .primary),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 3),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      formatter
+                                          .format(controller.totalReturn.value),
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          fontStyle: FontStyle.italic,
+                                          color: Theme.of(Get.context!)
+                                              .colorScheme
+                                              .primary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const SizedBox(
-                        width: 120,
+                        width: 300,
                         child: Text('Bayar',
                             style: TextStyle(
                               fontSize: 18,
@@ -2167,7 +2223,7 @@ class CalculatePrice extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       SizedBox(
-                        width: 120,
+                        width: 300,
                         child: Text('Kembalian',
                             style: TextStyle(
                               fontSize: 18,
@@ -2191,8 +2247,9 @@ class CalculatePrice extends StatelessWidget {
                                 padding: const EdgeInsets.only(right: 3),
                                 child: Obx(
                                   () => Text(
-                                    formatter
-                                        .format(controller.totalCharge.value),
+                                    formatter.format(
+                                        controller.totalCharge.value -
+                                            controller.totalReturnPrice.value),
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
