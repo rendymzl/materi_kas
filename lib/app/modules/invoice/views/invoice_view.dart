@@ -409,14 +409,11 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
   final pay = TextEditingController();
   var charge = '';
   if (invoice.change! > 0) {
-    charge = '(Kembalian: Rp. ${formatter.format(invoice.change)})';
+    charge = '(Kembalian: Rp${formatter.format(invoice.change)})';
   }
   controller.totalReturnPrice.value = controller.cartListReturn.fold(
     0,
-    (sum, pCart) =>
-        sum +
-        (pCart.product!.sellPrice! * pCart.quantity!) -
-        pCart.individualDiscount!,
+    (sum, pCart) => sum + (pCart.product!.sellPrice! * pCart.quantity!),
   );
   controller.returnFee.value = invoice.returnFee!;
   controller.totalReturn.value =
@@ -732,7 +729,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                         Expanded(
                                           flex: 4,
                                           child: Text(
-                                            'Rp ${formatter.format(cart.product!.sellPrice! * cart.quantity! - cart.individualDiscount!)}',
+                                            'Rp ${formatter.format(cart.product!.sellPrice! * cart.quantity!)}',
                                             textAlign: TextAlign.end,
                                           ),
                                         ),
@@ -835,7 +832,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                 Expanded(
                                     flex: 2,
                                     child: Text(
-                                        'Rp. ${formatter.format((invoice.bill))}',
+                                        'Rp. ${formatter.format((invoice.bill! + controller.totalReturnPrice.value))}',
                                         style: Theme.of(Get.context!)
                                             .textTheme
                                             .titleLarge,
@@ -843,36 +840,37 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                               ],
                             ),
                           ),
-                          ListTile(
-                            dense: true,
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: Text('BAYAR:',
-                                      style: Theme.of(Get.context!)
-                                          .textTheme
-                                          .titleSmall,
-                                      textAlign: TextAlign.right),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                      'Rp. ${formatter.format(invoice.pay)}',
-                                      style: Theme.of(Get.context!)
-                                          .textTheme
-                                          .titleSmall,
-                                      textAlign: TextAlign.end),
-                                ),
-                              ],
+                          if (!invoice.isPaid!)
+                            ListTile(
+                              dense: true,
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: Text('BAYAR:',
+                                        style: Theme.of(Get.context!)
+                                            .textTheme
+                                            .titleSmall,
+                                        textAlign: TextAlign.right),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                        'Rp. ${formatter.format(invoice.pay)}',
+                                        style: Theme.of(Get.context!)
+                                            .textTheme
+                                            .titleSmall,
+                                        textAlign: TextAlign.end),
+                                  ),
+                                ],
+                              ),
+                              // subtitle: Text(charge,
+                              //     style: Theme.of(Get.context!)
+                              //         .textTheme
+                              //         .bodySmall!
+                              //         .copyWith(fontStyle: FontStyle.italic),
+                              //     textAlign: TextAlign.end),
                             ),
-                            subtitle: Text(charge,
-                                style: Theme.of(Get.context!)
-                                    .textTheme
-                                    .bodySmall!
-                                    .copyWith(fontStyle: FontStyle.italic),
-                                textAlign: TextAlign.end),
-                          ),
                           const SizedBox(height: 20),
                           if (controller.totalReturnPrice.value != 0)
                             ListTile(
@@ -919,7 +917,7 @@ Future<void> detailDialog(BuildContext context, InvoiceController controller,
                                 Expanded(
                                     flex: 2,
                                     child: Text(
-                                        'Rp. ${formatter.format((invoice.bill! - controller.totalReturn.value))}',
+                                        'Rp. ${formatter.format(invoice.bill! + controller.totalReturnPrice.value - controller.totalReturn.value)}',
                                         style: Theme.of(Get.context!)
                                             .textTheme
                                             .titleLarge,
@@ -1120,8 +1118,13 @@ void editDialog(BuildContext context, InvoiceController controller,
   controller.returnFee.value = invoice.returnFee!;
   controller.totalReturn.value =
       controller.totalReturnPrice.value - invoice.returnFee!;
-  controller.totalReturnPrice.value = 0;
-  controller.totalReturn.value = 0;
+  controller.totalReturnPrice.value = controller.cartListReturn.fold(
+    0,
+    (sum, pCart) =>
+        sum +
+        (pCart.product!.sellPrice! * pCart.quantity!) -
+        pCart.individualDiscount!,
+  );
 
   Get.defaultDialog(
     title: 'Edit Invoice ${invoice.invoiceId}',
@@ -1133,7 +1136,7 @@ void editDialog(BuildContext context, InvoiceController controller,
         padding: const EdgeInsets.all(16),
         child: Obx(
           () => SizedBox(
-            height: 750 +
+            height: (controller.cartListReturn.isEmpty ? 750 : 850) +
                 ((controller.cartList.length > controller.cartListReturn.length)
                     ? controller.cartList.length * 130
                     : controller.cartListReturn.length * 130),
@@ -1408,6 +1411,24 @@ class SelectedProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    controller.totalPrice.value = 0;
+    final cartList = controller.cartList;
+    final cartListReturn = controller.cartListReturn;
+    // if (cartListReturn.isNotEmpty) {}
+
+    controller.totalDiscount.value = 0;
+    for (var item in cartList) {
+      controller.totalPrice.value +=
+          (item.product!.sellPrice! * item.quantity! -
+              item.individualDiscount!);
+
+      controller.totalDiscount.value += item.individualDiscount!;
+    }
+    TimeOfDay selectedTime = controller.selectedTime.value;
+    DateTime convertedTime =
+        DateTime(2024, 1, 1, selectedTime.hour, selectedTime.minute);
+    controller.returnFeeTextController.text =
+        formatter.format(controller.returnFee.value);
     return Column(
       children: [
         Expanded(
@@ -1417,24 +1438,6 @@ class SelectedProductCard extends StatelessWidget {
                 Expanded(
                   child: Obx(
                     () {
-                      final cartList = controller.cartList;
-                      final cartListReturn = controller.cartListReturn;
-                      // if (cartListReturn.isNotEmpty) {}
-                      controller.totalPrice.value = 0;
-                      controller.totalDiscount.value = 0;
-                      for (var item in cartList) {
-                        controller.totalPrice.value +=
-                            (item.product!.sellPrice! * item.quantity! -
-                                item.individualDiscount!);
-
-                        controller.totalDiscount.value +=
-                            item.individualDiscount!;
-                      }
-                      TimeOfDay selectedTime = controller.selectedTime.value;
-                      DateTime convertedTime = DateTime(
-                          2024, 1, 1, selectedTime.hour, selectedTime.minute);
-                      controller.returnFeeTextController.text =
-                          formatter.format(controller.returnFee.value);
                       return Column(
                         children: [
                           Container(
@@ -1776,7 +1779,9 @@ class SelectedProductCard extends StatelessWidget {
                     decoration: const BoxDecoration(
                         borderRadius: BorderRadius.all(Radius.circular(10))),
                     child: CalculatePrice(
-                        formatter: formatter, controller: controller),
+                        formatter: formatter,
+                        controller: controller,
+                        invoice: invoice),
                   ),
                 ],
               ),
@@ -1816,6 +1821,21 @@ class SelectedProductList extends StatelessWidget {
       itemCount: cartList.length,
       itemBuilder: (BuildContext context, int index) {
         final productCart = cartList[index];
+        int qtyProductRetunt = 0;
+        // late Cart pCartReturn;
+        if (controller.cartListReturn.isNotEmpty) {
+          int indexCartReturn = controller.cartListReturn.indexWhere(
+              (selectItem) =>
+                  selectItem.product?.id == productCart.product?.id);
+          if (indexCartReturn != -1) {
+            qtyProductRetunt =
+                controller.cartListReturn[indexCartReturn].quantity!;
+          }
+          //   pCartReturn = controller.cartListReturn[indexCartReturn];
+          // } else {
+          //   pCartReturn = productCart;
+        }
+
         final qty = TextEditingController();
         qty.text = '${productCart.quantity}';
         qty.selection = TextSelection.fromPosition(
@@ -1955,9 +1975,20 @@ class SelectedProductList extends StatelessWidget {
                   child: SizedBox(
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: Text(
-                        'Rp. ${formatter.format(productCart.product!.sellPrice! * productCart.quantity! - productCart.individualDiscount!)}',
-                        style: context.textTheme.titleMedium,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Rp. ${formatter.format(productCart.product!.sellPrice! * productCart.quantity! - (isReturn ? 0 : productCart.individualDiscount!))}',
+                            style: context.textTheme.titleMedium,
+                          ),
+                          if (!isReturn && controller.cartListReturn.isNotEmpty)
+                            Text(
+                              'Return Rp. ${formatter.format(productCart.product!.sellPrice! * qtyProductRetunt)}',
+                              style: context.textTheme.bodySmall!
+                                  .copyWith(fontStyle: FontStyle.italic),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -2055,10 +2086,12 @@ class CalculatePrice extends StatelessWidget {
     super.key,
     required this.formatter,
     required this.controller,
+    required this.invoice,
   });
 
   final InvoiceController controller;
   final NumberFormat formatter;
+  final Invoice invoice;
 
   @override
   Widget build(BuildContext context) {
@@ -2102,15 +2135,16 @@ class CalculatePrice extends StatelessWidget {
                                 children: [
                                   if (controller.totalDiscount.value > 0)
                                     Text(
-                                      '${formatter.format(controller.totalDiscount.value + controller.totalPrice.value)} - ${formatter.format(controller.totalDiscount.value)}',
+                                      '${formatter.format(controller.totalDiscount.value + controller.totalPrice.value + controller.totalReturnPrice.value)} - ${formatter.format(controller.totalDiscount.value)}',
                                       style: context.textTheme.bodySmall!
                                           .copyWith(
                                               fontStyle: FontStyle.italic),
                                     ),
                                   const SizedBox(width: 16),
                                   Text(
-                                    formatter
-                                        .format(controller.totalPrice.value),
+                                    formatter.format(
+                                        controller.totalPrice.value +
+                                            controller.totalReturnPrice.value),
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -2124,59 +2158,6 @@ class CalculatePrice extends StatelessWidget {
                       )
                     ],
                   ),
-                  if (controller.cartListReturn.isNotEmpty)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        SizedBox(
-                          width: 300,
-                          child: Text(
-                            'Total Return',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ).copyWith(
-                                color:
-                                    Theme.of(Get.context!).colorScheme.primary),
-                          ),
-                        ),
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Rp. ',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ).copyWith(
-                                    color: Theme.of(Get.context!)
-                                        .colorScheme
-                                        .primary),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(right: 3),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      formatter
-                                          .format(controller.totalReturn.value),
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          fontStyle: FontStyle.italic,
-                                          color: Theme.of(Get.context!)
-                                              .colorScheme
-                                              .primary),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -2262,6 +2243,141 @@ class CalculatePrice extends StatelessWidget {
                       )
                     ],
                   ),
+                  if (controller.cartListReturn.isNotEmpty)
+                    Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              height: 30,
+                              width: 300,
+                              child: Text(
+                                'Total Return',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ).copyWith(
+                                    color: Theme.of(Get.context!)
+                                        .colorScheme
+                                        .primary),
+                              ),
+                            ),
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Rp. ',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ).copyWith(
+                                        color: Theme.of(Get.context!)
+                                            .colorScheme
+                                            .primary),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 3),
+                                    child: Obx(
+                                      () => Column(
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                '${formatter.format(controller.totalReturnPrice.value)} - ${formatter.format(controller.returnFee.value)}',
+                                                style: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              // Text(
+                                              //   ' - Rp${formatter.format(controller.returnFee.value)}',
+                                              //   style: const TextStyle(
+                                              //     color: Colors.grey,
+                                              //   ),
+                                              // ),
+                                              Text(
+                                                formatter.format(controller
+                                                    .totalReturn.value),
+                                                style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontStyle: FontStyle.italic,
+                                                    color:
+                                                        Theme.of(Get.context!)
+                                                            .colorScheme
+                                                            .primary),
+                                              ),
+                                            ],
+                                          ),
+                                          // Text(
+                                          //   '(${formatter.format(invoice.bill! + controller.totalReturnPrice.value)})',
+                                          //   style: const TextStyle(
+                                          //     color: Colors.grey,
+                                          //   ),
+                                          // ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const SizedBox(
+                              width: 300,
+                              child: Text('TOTAL TAGIHAN',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                            ),
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Rp. ',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 3),
+                                    child: Row(
+                                      children: [
+                                        Obx(
+                                          () => Text(
+                                            formatter.format(controller
+                                                    .totalPrice.value +
+                                                controller
+                                                    .totalReturnPrice.value -
+                                                controller.totalReturn.value),
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 30),
                   Row(
                     children: [

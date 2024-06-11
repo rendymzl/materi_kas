@@ -487,6 +487,8 @@ class InvoiceController extends GetxController {
     cartList.replaceRange(index, index + 1, [productCart]);
   }
 
+  final qtyMoveCount = 0.obs;
+
   void returnHandle(Cart productCart, bool isAddToReturn) {
     isStop = false;
 
@@ -499,12 +501,14 @@ class InvoiceController extends GetxController {
         addToReturnCart(productCart, 1);
         totalReturnPrice.value += productCart.product!.sellPrice!;
         totalReturn.value += productCart.product!.sellPrice!;
+        qtyMoveCount.value++;
       }
     } else {
       addToReturnCart(productCart, -1);
       addToCart(productCart, 1);
       totalReturnPrice.value -= productCart.product!.sellPrice!;
       totalReturn.value -= productCart.product!.sellPrice!;
+      qtyMoveCount.value--;
     }
     debugPrint('3 ${totalReturnPrice.value}');
   }
@@ -606,7 +610,7 @@ class InvoiceController extends GetxController {
       'products_return_cart': ProductsCart(cartList: cartListReturn).toJson(),
       'bill': totalPrice.value,
       'pay': payment,
-      'return_fee': totalReturn.value,
+      'return_fee': returnFee.value,
       'change': change,
       'is_paid': change > 0 ? true : false,
     };
