@@ -1,54 +1,52 @@
-// import 'package:powersync/sqlite3.dart' as sqlite;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product {
   String? id;
   String? productId;
-  DateTime? createdAt;
+  Timestamp? createdAt;
   bool? featured;
   String? productName;
   int? sellPrice;
   int? costPrice;
   int? sold;
   int? stock;
-  late String uuid;
+  String? uuid;
 
-  Product(
-      {this.id,
-      this.productId,
-      this.createdAt,
-      this.featured,
-      this.productName,
-      this.sellPrice,
-      this.costPrice,
-      this.sold,
-      // this.stock,
-      required this.uuid});
+  Product({
+    this.id,
+    this.productId,
+    this.createdAt,
+    this.featured,
+    this.productName,
+    this.sellPrice,
+    this.costPrice,
+    this.sold,
+    this.stock,
+    this.uuid,
+  });
 
-  Product.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    productId = json['product_id'];
-    createdAt = DateTime.parse(json['created_at']);
-    featured = json['featured'];
-    productName = json['product_name'];
-    sellPrice = json['sell_price'];
-    costPrice = json['cost_price'];
-    sold = json['sold'];
-    // stock = json['stock'];
-    uuid = json['owner_id'];
-  }
+  Product.fromJson(Map<String, dynamic> json)
+      : id = json['id'],
+        productId = json['product_id'],
+        createdAt = json['created_at'],
+        featured = json['featured'],
+        productName = json['product_name'],
+        sellPrice = json['sell_price'],
+        costPrice = json['cost_price'],
+        sold = json['sold'],
+        stock = json['stock'],
+        uuid = json['owner_id'];
 
-  Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['id'] = id;
-    data['product_id'] = productId;
-    data['created_at'] = createdAt!.toIso8601String();
-    data['featured'] = featured;
-    data['product_name'] = productName;
-    data['sell_price'] = sellPrice;
-    data['cost_price'] = costPrice;
-    data['sold'] = sold;
-    // data['stock'] = stock;
-    data['owner_id'] = uuid;
-    return data;
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'product_id': productId,
+        'created_at': createdAt,
+        'featured': featured,
+        'product_name': productName,
+        'sell_price': sellPrice,
+        'cost_price': costPrice,
+        'sold': sold,
+        'stock': stock,
+        'owner_id': uuid,
+      };
 }

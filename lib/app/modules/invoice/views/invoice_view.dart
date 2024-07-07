@@ -62,14 +62,14 @@ class InvoiceGridCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            // TextField(
-            //   decoration: const InputDecoration(
-            //     labelText: "Cari Barang",
-            //     labelStyle: TextStyle(color: Colors.grey),
-            //     suffixIcon: Icon(Symbols.search),
-            //   ),
-            //   onChanged: (value) => controller.filterInvoices(value),
-            // ),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "Cari Invoice",
+                labelStyle: TextStyle(color: Colors.grey),
+                suffixIcon: Icon(Symbols.search),
+              ),
+              onChanged: (value) => controller.filterInvoices(value),
+            ),
             Expanded(
               flex: 10,
               child: LayoutBuilder(builder: (context, constraints) {
@@ -99,7 +99,7 @@ class InvoiceGridCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Obx(() => Text(
-                        'Total invoice: ${controller.invoiceList.length.toString()}'))
+                        'Total invoice: ${controller.invoices.length.toString()}'))
                   ],
                 ),
               ),
@@ -162,7 +162,7 @@ class BuildGridView extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                               DateFormat('dd MMMM y HH:mm', 'id')
-                                  .format(foundInvoice.createdAt!),
+                                  .format(foundInvoice.createdAt!.toDate()),
                               style: context.theme.textTheme.bodySmall),
                         ),
                         foundInvoice.change! < 0
@@ -174,12 +174,11 @@ class BuildGridView extends StatelessWidget {
                                 Symbols.check_circle,
                                 color: Colors.green,
                               ),
-
-                        // IconButton(
-                        //   onPressed: () =>
-                        //       controller.destroyHandle(foundInvoice),
-                        //   icon: const Icon(Symbols.delete, color: Colors.red),
-                        // ),
+                        IconButton(
+                          onPressed: () =>
+                              controller.destroyHandle(foundInvoice),
+                          icon: const Icon(Symbols.delete, color: Colors.red),
+                        ),
                       ],
                     ),
                     const Divider(color: Colors.grey),
@@ -457,7 +456,7 @@ void detailDialog(BuildContext context, InvoiceController controller,
                             Expanded(
                               child: Text(
                                 DateFormat('dd MMMM y, HH:mm', 'id').format(
-                                  invoice.createdAt!,
+                                  invoice.createdAt!.toDate(),
                                 ),
                                 style: context.textTheme.bodyLarge,
                               ),
@@ -769,18 +768,20 @@ void editDialog(BuildContext context, InvoiceController controller,
   controller.totalPrice.value = invoice.bill!;
   controller.addProduct.value = false;
 
+  DateTime invoiceDateTime = invoice.createdAt!.toDate();
+
   DateTime date = DateTime(
-    invoice.createdAt!.year,
-    invoice.createdAt!.month,
-    invoice.createdAt!.day,
+    invoiceDateTime.year,
+    invoiceDateTime.month,
+    invoiceDateTime.day,
   );
 
   DateTime time = DateTime(
-    invoice.createdAt!.year,
-    invoice.createdAt!.month,
-    invoice.createdAt!.day,
-    invoice.createdAt!.hour,
-    invoice.createdAt!.minute,
+    invoiceDateTime.year,
+    invoiceDateTime.month,
+    invoiceDateTime.day,
+    invoiceDateTime.hour,
+    invoiceDateTime.minute,
   );
   controller.selectedDate.value = date;
   controller.selectedTime.value = TimeOfDay.fromDateTime(time);

@@ -1,72 +1,72 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
-import 'package:materi_kas/app/modules/invoice/controllers/invoice_controller.dart';
+import 'package:materi_kas/app/data/providers/invoice_services.dart';
+// import 'package:materi_kas/app/modules/invoice/controllers/invoice_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../main.dart';
+// import '../../../../main.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/invoice_provider.dart';
+import '../../../data/providers/auth_services.dart';
+// import '../../../data/providers/invoice_provider.dart';
+import '../../../data/providers/product_services.dart';
 import '../../../routes/app_pages.dart';
-import '../../../widget/side_menu_controller.dart';
-import '../../customer/controllers/customer_controller.dart';
-import '../../product/controllers/product_controller.dart';
+// import '../../../widget/side_menu_controller.dart';
+// import '../../customer/controllers/customer_controller.dart';
+// import '../../product/controllers/product_controller.dart';
 
 class HomeController extends GetxController {
-  ProductController productController = Get.put(ProductController());
-  CustomerController customerController = Get.put(CustomerController());
-  InvoiceController invoiceController = Get.put(InvoiceController());
+  // ProductController productController = Get.put(ProductController());
+  final ProductService productService = Get.find();
+  final InvoiceService invoiceServices = Get.find();
+  final AuthService authService = Get.find();
+  // CustomerController customerController = Get.put(CustomerController());
+  // InvoiceController invoiceController = Get.put(InvoiceController());
 
-  late final String uuid;
-  late final productList = productController.productList;
-  late final customerList = customerController.customerList;
-  late final invoiceList = invoiceController.invoiceList;
-  final foundProducts = <Product>[].obs;
+  // late final uuid = currentUser;
+  late final products = productService.products;
+  late final foundProducts = productService.foundProducts;
+  late final invoices = invoiceServices.invoices;
+  // late final customerList = customerController.customerList;
+  // late final invoiceList = invoiceController.invoiceList;
+  // final foundProducts = <Product>[].obs;
   final customers = <Customer>[].obs;
-  final invoices = <Invoice>[].obs;
   final cartList = <Cart>[].obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
   @override
   void onInit() {
     super.onInit();
-    Get.put(SideMenuController(), permanent: true);
-    uuid = supabase.auth.currentUser!.id;
-    foundProducts.value = productList;
-    customers.value = customerList;
-    invoices.value = invoiceList;
+    filterProducts('');
+    // Get.put(SideMenuController(), permanent: true);
+    // uuid = supabase.auth.currentUser!.id;
+    // foundProducts.value = products;
+    // customers.value = customerList;
+    // invoices.value = invoiceList;
     // GetStorage cacheUuid = GetStorage(uuid);
   }
 
   void filterProducts(String productName) {
-    // var result = <Product>[];
-    productController.filterProducts(productName);
-
-    // productName.isEmpty
-    //     ? result = productList
-    //     : result = productList
-    //         .where((product) => product.productName
-    //             .toString()
-    //             .toLowerCase()
-    //             .contains(productName))
-    //         .toList();
-
-    // foundProducts.value = result;
+    if (products.isNotEmpty) {
+      productService.searchProducts(productName);
+      // foundProducts.value = productService.foundProducts;
+    }
   }
 
   ScrollController scrollController = ScrollController();
 
   void addToCart(Product product) {
     invoiceId.value = generateInvoice(selectedCustomer.value);
-    int index = cartList
-        .indexWhere((selectItem) => selectItem.product?.id == product.id);
+    int index = cartList.indexWhere(
+        (selectItem) => selectItem.product?.productId == product.productId);
 
     if (index != -1) {
       Cart productCart = Cart(
@@ -159,8 +159,8 @@ class HomeController extends GetxController {
   //! MoneyHandle
   //* quantity
   void quantityHandle(Cart productCart, String qty) {
-    int index = cartList.indexWhere(
-        (selectItem) => selectItem.product?.id == productCart.product?.id);
+    int index = cartList.indexWhere((selectItem) =>
+        selectItem.product?.productId == productCart.product?.productId);
 
     int qtyParse = qty == '' ? 0 : int.parse(qty);
     productCart.quantity = qtyParse;
@@ -183,8 +183,8 @@ class HomeController extends GetxController {
       }
     }
 
-    int index = cartList.indexWhere(
-        (selectItem) => selectItem.product?.id == productCart.product?.id);
+    int index = cartList.indexWhere((selectItem) =>
+        selectItem.product?.productId == productCart.product?.productId);
 
     int discountParse = value == '' ? 0 : int.parse(value);
     productCart.individualDiscount = discountParse;
@@ -248,18 +248,19 @@ class HomeController extends GetxController {
 
   String getLastSerialNumber(Invoice invoice) {
     String? invoiceNumber = invoice.invoiceId;
-    DateTime? invoiceDate = invoice.createdAt;
+    Timestamp? invoiceDate = invoice.createdAt;
     String serialPart = '000';
 
     if (invoiceNumber != null && invoiceDate != null) {
       List<String> parts = invoiceNumber.split('/');
 
+      DateTime invoiceDateTime = invoiceDate.toDate();
       DateTime today = DateTime.now();
 
       if (parts.length == 2 &&
-          invoiceDate.year == today.year &&
-          invoiceDate.month == today.month &&
-          invoiceDate.day == today.day) {
+          invoiceDateTime.year == today.year &&
+          invoiceDateTime.month == today.month &&
+          invoiceDateTime.day == today.day) {
         serialPart = parts[0].replaceAll('INV', '');
         serialPart = serialPart.replaceFirst(RegExp('^0+'), '');
         return serialPart;
@@ -306,6 +307,8 @@ class HomeController extends GetxController {
       selectedTime.value.minute,
     );
 
+    Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
+
     if (selectedCustomer.value != null) {
       customer = Customer(
         id: selectedCustomer.value!.id,
@@ -320,24 +323,30 @@ class HomeController extends GetxController {
         name: customerNameController.text,
         phone: customerPhoneController.text,
         address: customerAddressController.text,
-        uuid: uuid,
+        uuid: authService.uid.value,
       );
     }
 
     final invoice = Invoice(
       invoiceId: invoiceId.value,
-      createdAt: dateTime,
+      createdAt: timestampDateTime,
       customer: customer,
       productsCart: ProductsCart(cartList: cartList),
       bill: totalPrice.value,
       pay: payment,
       change: change,
       isPaid: change > 0 ? true : false,
-      uuid: uuid,
+      uuid: authService.uid.value,
     );
 
     Future success() async {
-      await InvoiceProvider.create(invoice);
+      // await InvoiceProvider.create(invoice);
+      Map<String, Map<String, dynamic>> invoicesMap = {};
+      String newInvioceId = await productService.getId();
+      invoice.id = newInvioceId;
+      // invoice.customer = invoice.customer;
+      invoicesMap[newInvioceId] = invoice.toJson();
+      await invoiceServices.addInvoices(invoicesMap);
       return Get.defaultDialog(
         title: 'Berhasil',
         middleText: 'Invoice berhasil disimpan.',
@@ -407,7 +416,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> signOut() async {
-    await supabase.auth.signOut();
+    await authService.signOut();
     Get.offNamed(Routes.LOGIN);
   }
 }

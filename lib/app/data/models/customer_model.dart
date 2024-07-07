@@ -19,9 +19,7 @@ class Customer {
   Customer.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     customerId = json['customer_id'];
-    createAt = json['create_at'] == null
-        ? DateTime.now()
-        : DateTime.parse(json['create_at']);
+    createAt = json['create_at'];
     name = json['name'];
     phone = json['phone'];
     address = json['address'];

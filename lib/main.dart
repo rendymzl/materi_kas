@@ -1,19 +1,35 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:materi_kas/app/data/providers/invoice_services.dart';
 import 'package:materi_kas/app/utils/theme/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'app/data/providers/auth_services.dart';
+import 'app/data/providers/product_services.dart';
+import 'app/widget/side_menu_controller.dart';
+import 'firebase_options.dart';
+// import 'package:window_manager/window_manager.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'app/data/providers/powersync_provider.dart';
+// import 'app/data/providers/powersync_provider.dart';
 import 'app/routes/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await GetStorage.init();
-  await openDatabase();
+  Get.put(AuthService(), permanent: true);
+  Get.put(SideMenuController(), permanent: true);
+  Get.put(ProductService(), permanent: true);
+  Get.put(InvoiceService(), permanent: true);
+  // await openDatabase();
   // WidgetsFlutterBinding.ensureInitialized();
   // await windowManager.ensureInitialized();
 
@@ -53,4 +69,6 @@ void main() async {
   );
 }
 
-final supabase = Supabase.instance.client;
+// final supabase = Supabase.instance.client;
+final db = FirebaseFirestore.instance;
+// final currentUser = FirebaseAuth.instance.currentUser;

@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
 
-import '../../main.dart';
+// import '../data/providers/auth_services.dart';
 import '../modules/customer/bindings/customer_binding.dart';
 import '../modules/customer/views/customer_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/init/bindings/init_binding.dart';
+import '../modules/init/views/init_view.dart';
 import '../modules/invoice/bindings/invoice_binding.dart';
 import '../modules/invoice/views/invoice_view.dart';
 import '../modules/login/bindings/login_binding.dart';
@@ -16,16 +18,23 @@ import '../modules/profile/views/profile_view.dart';
 import '../modules/statistic/bindings/statistic_binding.dart';
 import '../modules/statistic/views/statistic_view.dart';
 
+// import 'package:firebase_auth/firebase_auth.dart';
+
+// import '../../main.dart';
+// import '../../main.dart';
+
 part 'app_routes.dart';
 
-var init = supabase.auth.currentSession?.accessToken != null
-    ? Routes.HOME
-    : Routes.LOGIN;
+// var init = supabase.auth.currentSession?.accessToken != null
+//     ? Routes.HOME
+//     : Routes.LOGIN;
+// final AuthService authService = Get.put(AuthService());
+
+// var init = authService.isLoggedIn.value ? Routes.HOME : Routes.LOGIN;
 
 class AppPages {
   AppPages._();
-
-  static final String INITIAL = init;
+  static final String INITIAL = Routes.INIT;
 
   static final routes = [
     GetPage(
@@ -62,6 +71,11 @@ class AppPages {
       name: _Paths.STATISTIC,
       page: () => const StatisticView(),
       binding: StatisticBinding(),
+    ),
+    GetPage(
+      name: _Paths.INIT,
+      page: () => const InitView(),
+      binding: InitBinding(),
     ),
   ];
 }

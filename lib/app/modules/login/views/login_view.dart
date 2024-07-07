@@ -12,9 +12,14 @@ class LoginView extends GetView<LoginController> {
   Widget build(BuildContext context) {
     OutlineInputBorder outlineRed =
         const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
+
+    // var screenSize = MediaQuery.of(context).size;
+    // var screenWidth = screenSize.width;
+    // var screenHeight = screenSize.height;
     return Scaffold(
       body: Center(
-        child: SizedBox(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 30),
           width: 400,
           height: 500,
           child: Card(
@@ -23,13 +28,12 @@ class LoginView extends GetView<LoginController> {
             child: Padding(
               padding: const EdgeInsets.all(30),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Selamat datang',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 20),
                   Obx(
                     () => Form(
                       key: controller.formkey,
@@ -38,7 +42,7 @@ class LoginView extends GetView<LoginController> {
                       child: Column(
                         children: [
                           TextFormField(
-                            controller: controller.editingEmail,
+                            controller: controller.emailFieldC,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Symbols.email, fill: 1),
                               labelText: "Email",
@@ -62,7 +66,7 @@ class LoginView extends GetView<LoginController> {
                           ),
                           const SizedBox(height: 20),
                           TextFormField(
-                            controller: controller.editingPassword,
+                            controller: controller.passwordFieldC,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Symbols.lock, fill: 1),
                               suffixIcon: IconButton(
@@ -95,7 +99,6 @@ class LoginView extends GetView<LoginController> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
@@ -104,7 +107,6 @@ class LoginView extends GetView<LoginController> {
                               child: const Text("Masuk")))
                     ],
                   ),
-                  const SizedBox(height: 20),
                   const Row(children: [
                     Expanded(child: Divider(color: Colors.grey)),
                     Padding(
@@ -116,7 +118,6 @@ class LoginView extends GetView<LoginController> {
                     ),
                     Expanded(child: Divider(color: Colors.grey)),
                   ]),
-                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
@@ -140,7 +141,6 @@ class LoginView extends GetView<LoginController> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [

@@ -9,7 +9,7 @@ import '../../invoice/controllers/invoice_controller.dart';
 
 class StatisticController extends GetxController {
   InvoiceController invoiceController = Get.put(InvoiceController());
-  late final invoiceList = invoiceController.invoiceList;
+  late final invoiceList = invoiceController.invoices;
   late List<Invoice> filteredInvoices = <Invoice>[].obs;
   late List<ChartModel> invoiceChart = <ChartModel>[].obs;
   final maxY = 0.obs;
@@ -61,8 +61,8 @@ class StatisticController extends GetxController {
     final adjustedStartingDay = DateTime.now().subtract(Duration(days: offset));
 
     filteredInvoices = invoiceList
-        .where((invoice) =>
-            convertToLocal(invoice.createdAt!).isAfter(adjustedStartingDay))
+        .where((invoice) => convertToLocal(invoice.createdAt!.toDate())
+            .isAfter(adjustedStartingDay))
         .toList();
     getData(adjustedStartingDay);
   }
@@ -77,9 +77,9 @@ class StatisticController extends GetxController {
 
     filteredInvoices = invoiceList
         .where((invoice) =>
-            convertToLocal(invoice.createdAt!)
+            convertToLocal(invoice.createdAt!.toDate())
                 .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
-            convertToLocal(invoice.createdAt!)
+            convertToLocal(invoice.createdAt!.toDate())
                 .isBefore(endOfMonth.add(const Duration(days: 1))))
         .toList();
     getData(null);
@@ -100,9 +100,12 @@ class StatisticController extends GetxController {
 
       final invoices = filteredInvoices
           .where((invoice) =>
-              convertToLocal(invoice.createdAt!).year == currentDate.year &&
-              convertToLocal(invoice.createdAt!).month == currentDate.month &&
-              convertToLocal(invoice.createdAt!).day == currentDate.day)
+              convertToLocal(invoice.createdAt!.toDate()).year ==
+                  currentDate.year &&
+              convertToLocal(invoice.createdAt!.toDate()).month ==
+                  currentDate.month &&
+              convertToLocal(invoice.createdAt!.toDate()).day ==
+                  currentDate.day)
           .toList();
 
       final dateString = formatter.format(currentDate);

@@ -1,15 +1,16 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:materi_kas/app/routes/app_pages.dart';
 
-import '../../../../main.dart';
+// import '../../../../main.dart';
 
 class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    editingEmail.text = 'tesr@example.com';
-    editingPassword.text = 'indonesia21';
+    emailFieldC.text = 'tes@example.com';
+    passwordFieldC.text = 'Indonesi@21';
   }
 
   final formkey = GlobalKey<FormState>();
@@ -42,26 +43,33 @@ class LoginController extends GetxController {
     return null;
   }
 
-  final editingEmail = TextEditingController();
-  final editingPassword = TextEditingController();
+  final emailFieldC = TextEditingController();
+  final passwordFieldC = TextEditingController();
 
   Future<void> signInWithEmail() async {
     clicked.value = true;
     if (formkey.currentState!.validate()) {
       try {
-        await supabase.auth.signInWithPassword(
-          email: editingEmail.text.trim(),
-          password: editingPassword.text,
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailFieldC.text.trim(),
+          password: passwordFieldC.text,
         );
 
         Get.offNamed(Routes.HOME);
-      } catch (error) {
-        String errorMessage = error.toString();
-        errorMessage.contains('Invalid login credentials')
-            ? errorMessage = 'Email atau kata sandi salah.'
-            : errorMessage = 'Terjadi kesalahan saat masuk. Silakan coba lagi.';
+      } on FirebaseAuthException catch (e) {
+        debugPrint(e.code);
+        // String errorMessage = e.code;
+        // if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        String errorMessage = 'Email atau kata sandi salah.';
+        // } else {
+        //   errorMessage = 'Terjadi kesalahan saat masuk. Silakan coba lagi.';
+        // }
+
+        // errorMessage.contains('Invalid login credentials')
+        //     ? errorMessage = 'Email atau kata sandi salah.'
+        //     : errorMessage = 'Terjadi kesalahan saat masuk. Silakan coba lagi.';
         Get.defaultDialog(
-          title: 'Error',
+          title: 'Oops!',
           middleText: errorMessage,
           confirm: TextButton(
             onPressed: () => Get.back(),

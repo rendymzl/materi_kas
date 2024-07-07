@@ -1,42 +1,57 @@
 import 'dart:async';
-import 'dart:ffi';
+// import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../main.dart';
+// import '../../../../main.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/providers/auth_services.dart';
 import '../../../data/providers/invoice_provider.dart';
+import '../../../data/providers/invoice_services.dart';
 import '../../customer/controllers/customer_controller.dart';
 import '../../product/controllers/product_controller.dart';
 
 class InvoiceController extends GetxController {
+  final AuthService authService = Get.find();
+  final InvoiceService invoiceServices = Get.find();
+
+  late final invoices = invoiceServices.invoices;
+  late final foundInvoices = invoiceServices.foundInvoices;
   // HomeController homeController = Get.put(HomeController());
-  late final String uuid;
-  late final List<Invoice> invoiceList = <Invoice>[].obs;
-  final foundInvoices = <Invoice>[].obs;
+  // late final String uuid;
+  // late final List<Invoice> invoiceList = <Invoice>[].obs;
+  // final foundInvoices = <Invoice>[].obs;
 
   @override
   void onInit() async {
     super.onInit();
-    uuid = supabase.auth.currentUser!.id;
-    foundProducts.value = productList;
-    customers.value = customerList;
-    List<Invoice> newData = await InvoiceProvider.fetchData(uuid);
-    refreshFetch(newData);
+    filterInvoices('');
+    // uuid = supabase.auth.currentUser!.id;
+    // foundProducts.value = productList;
+    // customers.value = customerList;
+    // List<Invoice> newData = await InvoiceProvider.fetchData(uuid);
+    // refreshFetch(newData);
+  }
+
+  void filterInvoices(String invoiceName) {
+    if (invoices.isNotEmpty) {
+      invoiceServices.searchInvoices(invoiceName);
+      // foundProducts.value = productService.foundProducts;
+    }
   }
 
   //! Fetch
-  void refreshFetch(List<Invoice> newData) async {
-    invoiceList.clear();
-    invoiceList.assignAll(newData);
-    foundInvoices.value = invoiceList;
-  }
+  // void refreshFetch(List<Invoice> newData) async {
+  //   invoiceList.clear();
+  //   invoiceList.assignAll(newData);
+  //   foundInvoices.value = invoiceList;
+  // }
 
   // final disabledButton = true.obs;
   final numberFormat = NumberFormat("#,##0", "id_ID");
@@ -115,9 +130,9 @@ class InvoiceController extends GetxController {
         'owner_id': invoice.uuid
       };
       List<Invoice> newData =
-          await InvoiceProvider.update(data, invoice.id!, uuid);
-      refreshFetch(newData);
-      await Get.defaultDialog(
+          //     await InvoiceProvider.update(data, invoice.id!, uuid);
+          // refreshFetch(newData);
+          await Get.defaultDialog(
         title: 'Berhasil',
         middleText: 'Tagihan berhasil dibayar',
         confirm: TextButton(
@@ -143,8 +158,8 @@ class InvoiceController extends GetxController {
 
   //! Edit
   // final init = true.obs;
-  CustomerController customerController = Get.put(CustomerController());
-  late final customerList = customerController.customerList;
+  // CustomerController customerController = Get.put(CustomerController());
+  // late final customerList = customerController.customerList;
   final customers = <Customer>[].obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
   final customerNameController = TextEditingController();
@@ -232,8 +247,8 @@ class InvoiceController extends GetxController {
   }
 
   void quantityHandle(Cart productCart, String qty) {
-    int index = cartList.indexWhere(
-        (selectItem) => selectItem.product?.id == productCart.product?.id);
+    int index = cartList.indexWhere((selectItem) =>
+        selectItem.product?.productId == productCart.product?.productId);
 
     int qtyParse = qty == '' ? 0 : int.parse(qty);
     productCart.quantity = qtyParse;
@@ -254,8 +269,8 @@ class InvoiceController extends GetxController {
       }
     }
 
-    int index = cartList.indexWhere(
-        (selectItem) => selectItem.product?.id == productCart.product?.id);
+    int index = cartList.indexWhere((selectItem) =>
+        selectItem.product?.productId == productCart.product?.productId);
 
     int discountParse = value == '' ? 0 : int.parse(value);
     productCart.individualDiscount = discountParse;
@@ -310,7 +325,7 @@ class InvoiceController extends GetxController {
         name: customerNameController.text,
         phone: customerPhoneController.text,
         address: customerAddressController.text,
-        uuid: uuid,
+        uuid: authService.uid.value,
       );
     }
 
@@ -325,9 +340,9 @@ class InvoiceController extends GetxController {
     };
 
     Future success() async {
-      List<Invoice> newData =
-          await InvoiceProvider.update(data, id.value, uuid);
-      refreshFetch(newData);
+      // List<Invoice> newData =
+      //     await InvoiceProvider.update(data, id.value, uuid);
+      // refreshFetch(newData);
       return Get.defaultDialog(
         title: 'Berhasil',
         middleText: 'Invoice Edit berhasil disimpan.',
@@ -393,7 +408,7 @@ class InvoiceController extends GetxController {
   }
 
   ProductController productController = Get.put(ProductController());
-  late final productList = productController.productList;
+  // late final productList = productController.productList;
   final foundProducts = <Product>[].obs;
   void filterProducts(String productName) {
     // var result = <Product>[];
@@ -413,8 +428,8 @@ class InvoiceController extends GetxController {
 
   void addToCart(Product product) {
     // invoiceId.value = generateInvoice(selectedCustomer.value);
-    int index = cartList
-        .indexWhere((selectItem) => selectItem.product?.id == product.id);
+    int index = cartList.indexWhere(
+        (selectItem) => selectItem.product?.productId == product.productId);
 
     if (index != -1) {
       Cart productCart = Cart(
@@ -493,7 +508,8 @@ class InvoiceController extends GetxController {
         middleText: 'Hapus Invoice ini?',
         confirm: TextButton(
           onPressed: () async {
-            refreshFetch(await InvoiceProvider.destroy(invoice));
+            // refreshFetch(await InvoiceProvider.destroy(invoice));
+            invoiceServices.deleteInvoice(invoice.id!);
             Get.back();
           },
           child: const Text('OK'),

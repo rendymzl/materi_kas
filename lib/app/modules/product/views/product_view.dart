@@ -49,20 +49,22 @@ class ProductView extends GetView<ProductController> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Obx(() => Text(
-                                  'Total barang: ${controller.totalProduct.value.toString()}',
+                                  'Total barang: ${controller.products.length.toString()}',
                                   style: context.textTheme.bodySmall,
                                 )),
                             Row(
                               children: [
                                 ElevatedButton(
                                   onPressed: () {
-                                    controller.bindingEditData(Product(
+                                    controller.bindingEditData(
+                                      Product(
                                         productId: '',
                                         productName: '',
                                         sellPrice: 0,
                                         costPrice: 0,
                                         sold: 0,
-                                        uuid: ''));
+                                      ),
+                                    );
                                     addEditDialog(context, controller, null,
                                         'Tambah Barang');
                                   },
@@ -460,7 +462,7 @@ void addEditDialog(BuildContext context, ProductController controller,
       width: 160,
       child: OutlinedButton(
         style: ButtonStyle(
-          side: MaterialStateProperty.all(
+          side: WidgetStateProperty.all(
               BorderSide(color: Colors.black.withOpacity(0.5))),
         ),
         onPressed: () => Get.back(),

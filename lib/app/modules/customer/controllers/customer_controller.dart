@@ -13,13 +13,13 @@ class CustomerController extends GetxController {
 
   final foundCustomers = <Customer>[].obs;
 
-  @override
-  void onInit() async {
-    super.onInit();
-    uuid = supabase.auth.currentUser!.id;
-    List<Customer> newData = await CustomerProvider.fetchData(uuid);
-    refreshFetch(newData);
-  }
+  // @override
+  // void onInit() async {
+  // super.onInit();
+  // uuid = supabase.auth.currentUser!.id;
+  // List<Customer> newData = await CustomerProvider.fetchData(uuid);
+  // refreshFetch(newData);
+  // }
 
   void filterCustomers(String name) {
     var result = <Customer>[];
@@ -55,7 +55,7 @@ class CustomerController extends GetxController {
       );
     } else {
       try {
-        List<Customer> newData = await CustomerProvider.create(customer);
+        // List<Customer> newData = await CustomerProvider.create(customer);
         await Get.defaultDialog(
           title: 'Berhasil',
           middleText: 'Customer berhasil ditambahkan',
@@ -64,7 +64,7 @@ class CustomerController extends GetxController {
             child: const Text('OK'),
           ),
         );
-        refreshFetch(newData);
+        // refreshFetch(newData);
         Get.back();
       } on PostgrestException catch (e) {
         Get.defaultDialog(
@@ -101,8 +101,8 @@ class CustomerController extends GetxController {
           'address': newCustomer.address,
         };
         List<Customer> newData =
-            await CustomerProvider.update(data, curentid, uuid);
-        await Get.defaultDialog(
+            // await CustomerProvider.update(data, curentid, uuid);
+            await Get.defaultDialog(
           title: 'Berhasil',
           middleText: 'Customer berhasil diupdate',
           confirm: TextButton(
@@ -133,8 +133,8 @@ class CustomerController extends GetxController {
         middleText: 'Hapus Customer ini?',
         confirm: TextButton(
           onPressed: () async {
-            List<Customer> newData = await CustomerProvider.destroy(customer);
-            refreshFetch(newData);
+            // List<Customer> newData = await CustomerProvider.destroy(customer);
+            // refreshFetch(newData);
             Get.back();
           },
           child: const Text('OK'),

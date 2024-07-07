@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,44 +10,57 @@ import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../main.dart';
+// import '../../../../main.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/product_provider.dart';
+import '../../../data/providers/auth_services.dart';
+// import '../../../data/providers/product_provider.dart';
+import '../../../data/providers/product_services.dart';
 
 class ProductController extends GetxController {
-  final provider = ProductProvider();
+  final ProductService productService = Get.find();
+  final AuthService authService = Get.find();
+
+  late final products = productService.products;
+  late final foundProducts = productService.foundProducts;
+
+  // final provider = ProductProvider();
   final csvList = <Product>[].obs;
-  late final String uuid;
-  late final List<Product> productList = <Product>[].obs;
+  // late final String uuid;
+  // late final List<Product> productList = <Product>[].obs;
   final totalProduct = 0.obs;
 
-  final foundProducts = <Product>[].obs;
+  // final foundProducts = <Product>[].obs;
 
   @override
   void onInit() async {
     super.onInit();
-    uuid = supabase.auth.currentUser!.id;
-    totalProduct.value =
-        await ProductProvider.getTotalRowCount(totalProduct.value);
-    List<Product> newData = await ProductProvider.fetchData(uuid, '');
-    refreshFetch(newData);
+    filterProducts('');
+    totalProduct.value = products.length;
+    // uuid = supabase.auth.currentUser!.id;
+    // totalProduct.value =
+    //     await ProductProvider.getTotalRowCount(totalProduct.value);
+    // List<Product> newData = await ProductProvider.fetchData(uuid, '');
+    // refreshFetch(newData);
   }
 
   //! Fetch
-  void refreshFetch(List<Product> newData) async {
-    productList.clear();
-    productList.assignAll(newData);
-    foundProducts.value = productList;
-  }
+  // void refreshFetch(List<Product> newData) async {
+  //   productList.clear();
+  //   productList.assignAll(newData);
+  //   foundProducts.value = productList;
+  // }
 
   Timer? debounce;
-  void filterProducts(String productName) async {
-    if (debounce?.isActive ?? false) debounce!.cancel();
-    debounce = Timer(const Duration(milliseconds: 200), () async {
-      List<Product> newData =
-          await ProductProvider.fetchData(uuid, productName);
-      refreshFetch(newData);
-    });
+  void filterProducts(String productName) {
+    if (products.isNotEmpty) {
+      productService.searchProducts(productName);
+    }
+    // if (debounce?.isActive ?? false) debounce!.cancel();
+    // debounce = Timer(const Duration(milliseconds: 200), () async {
+    // List<Product> newData =
+    // await ProductProvider.fetchData(uuid, productName);
+    // refreshFetch(newData);
+    // });
 
     // productName.isEmpty
     //     ? result = productList
@@ -68,7 +82,6 @@ class ProductController extends GetxController {
 
   //! pickCSV
   Future<void> pickCSV(BuildContext context) async {
-    addStatus = 1;
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -79,46 +92,52 @@ class ProductController extends GetxController {
         String? filePath = result.files.single.path;
         if (filePath != null) {
           List<List<dynamic>> csvData = await readCSV(filePath);
-
+          // List<Product> productsList = [];
+          Map<String, Map<String, dynamic>> productsMap = {};
           for (var i = 1; i < csvData.length; i++) {
             var data = csvData[i];
 
-            var existingProduct = productList
+            // Lewati baris yang mengandung "-" di salah satu sel
+            if (data.any((element) => element.toString().contains('-'))) {
+              continue;
+            }
+
+            var existingProduct = products
                 .where((product) => product.productId == data[0])
                 .toList();
 
-            int sellPrice = 0;
-            int costPrice = 0;
+            if (existingProduct.isEmpty) {
+              String newProductId = await productService.getId();
 
-            if (data.length > 2 && data[2].toString().contains("Rp")) {
-              sellPrice = int.parse(data[2].replaceAll(RegExp(r'[Rp,]'), ''));
-            }
+              int sellPrice = 0;
+              int costPrice = 0;
 
-            if (data.length > 3 && data[3].toString().contains("Rp")) {
-              costPrice = int.parse(data[3].replaceAll(RegExp(r'[Rp,]'), ''));
-            }
+              if (data.length > 2 && data[2].toString().contains("Rp")) {
+                sellPrice = int.parse(data[2].replaceAll(RegExp(r'[Rp,]'), ''));
+              }
 
-            final product = Product(
-              productId: data[0],
-              featured: false,
-              productName: data[1],
-              sellPrice: sellPrice,
-              costPrice: costPrice,
-              sold: 0,
-              uuid: uuid,
-            );
+              if (data.length > 3 && data[3].toString().contains("Rp")) {
+                costPrice = int.parse(data[3].replaceAll(RegExp(r'[Rp,]'), ''));
+              }
 
-            if (existingProduct.isNotEmpty) {
-              updateProduct(product, existingProduct[0].id!,
-                  existingProduct[0].productId!);
-            } else {
-              await addProduct(product);
-            }
-            if (addStatus == 0) {
-              break;
+              final product = Product(
+                id: newProductId,
+                productId: data[0],
+                createdAt: Timestamp.now(),
+                featured: false,
+                productName: data[1],
+                sellPrice: sellPrice,
+                costPrice: costPrice,
+                sold: 0,
+                uuid: authService.uid.value,
+              );
+              // productsList.add(product);
+              productsMap[newProductId] = product.toJson();
             }
           }
-          if (addStatus == 1) {
+
+          try {
+            await productService.addProducts(productsMap);
             await Get.defaultDialog(
               title: 'Berhasil',
               middleText: 'Product berhasil ditambahkan',
@@ -127,7 +146,8 @@ class ProductController extends GetxController {
                 child: const Text('OK'),
               ),
             );
-            addStatus = 1;
+          } catch (e) {
+            debugPrint('Error while adding product: $e');
           }
         }
       }
@@ -137,12 +157,12 @@ class ProductController extends GetxController {
   }
 
   //! update
-  int updateStatus = 1;
-  Future updateProduct(
-      Product newProduct, String curentid, String curentProductId) async {
+  // int updateStatus = 1;
+  Future updateProduct(Product newProduct, Product currentProduct) async {
     bool isProductIdExists =
-        productList.any((item) => item.productId == newProduct.productId);
-    if (isProductIdExists && newProduct.productId != curentProductId) {
+        products.any((item) => item.productId == newProduct.productId);
+    if (isProductIdExists &&
+        (newProduct.productId != currentProduct.productId)) {
       await Get.defaultDialog(
         title: 'Gagal',
         middleText: 'Kode yang dimasukkan sudah ada',
@@ -151,20 +171,34 @@ class ProductController extends GetxController {
           child: const Text('OK'),
         ),
       );
+      return;
     } else {
       try {
-        Map<String, Object?> data = {
-          'product_id': newProduct.productId,
-          'featured': newProduct.featured,
-          'product_name': newProduct.productName,
-          'sell_price': newProduct.sellPrice,
-          'cost_price': newProduct.costPrice,
-          'sold': newProduct.sold,
-          'owner_id': newProduct.uuid
-        };
-        List<Product> newData =
-            await ProductProvider.update(data, curentid, uuid);
-        refreshFetch(newData);
+        // Map<String, Object?> data = {
+        //   'product_id': newProduct.productId,
+        //   'featured': newProduct.featured,
+        //   'product_name': newProduct.productName,
+        //   'sell_price': newProduct.sellPrice,
+        //   'cost_price': newProduct.costPrice,
+        //   'sold': newProduct.sold,
+        //   'owner_id': newProduct.uuid
+        // };
+
+        await productService.updateProduct(newProduct, currentProduct);
+        Get.defaultDialog(
+          title: 'Berhasil',
+          middleText: 'Product berhasil diubah',
+          confirm: TextButton(
+            onPressed: () {
+              Get.back();
+              Get.back();
+            },
+            child: const Text('OK'),
+          ),
+        );
+        // List<Product> newData =
+        //     await ProductProvider.update(data, curentid, uuid);
+        // refreshFetch(newData);
       } on PostgrestException catch (e) {
         Get.defaultDialog(
           title: 'Error',
@@ -179,26 +213,31 @@ class ProductController extends GetxController {
   }
 
   //! create
-  int addStatus = 1;
-  Future addProduct(Product product) async {
+  Future addSingleProduct(Product product) async {
     bool isProductIdExists =
-        productList.any((item) => item.productId == product.productId);
+        products.any((item) => item.productId == product.productId);
     if (isProductIdExists) {
       await Get.defaultDialog(
         title: 'Gagal',
         middleText: 'Kode yang dimasukkan sudah ada',
         confirm: TextButton(
           onPressed: () {
-            addStatus = 0;
             Get.back();
           },
           child: const Text('OK'),
         ),
       );
     } else {
+      // final productList = <Product>[];
+      // productList.add(product);
+      Map<String, Map<String, dynamic>> productsMap = {};
+      String newProductId = await productService.getId();
+      product.id = newProductId;
+      productsMap[newProductId] = product.toJson();
       try {
-        List<Product> newData = await ProductProvider.create(product);
-        refreshFetch(newData);
+        // List<Product> newData = await ProductProvider.create(product);
+        // refreshFetch(newData);
+        productService.addProducts(productsMap);
         Get.back();
       } on PostgrestException catch (e) {
         String errorMessage = e.message;
@@ -210,13 +249,20 @@ class ProductController extends GetxController {
           middleText: errorMessage,
           confirm: TextButton(
             onPressed: () {
-              addStatus = 0;
               Get.back();
             },
             child: const Text('OK'),
           ),
         );
       }
+      await Get.defaultDialog(
+        title: 'Berhasil',
+        middleText: 'Product berhasil ditambahkan',
+        confirm: TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('OK'),
+        ),
+      );
     }
   }
 
@@ -228,8 +274,9 @@ class ProductController extends GetxController {
         middleText: 'Hapus barang ini?',
         confirm: TextButton(
           onPressed: () async {
-            List<Product> newData = await ProductProvider.destroy(product);
-            refreshFetch(newData);
+            await productService.deleteProduct(product.id!);
+            // List<Product> newData = await ProductProvider.destroy(product);
+            // refreshFetch(newData);
             Get.back();
           },
           child: const Text('OK'),
@@ -336,59 +383,58 @@ class ProductController extends GetxController {
   }
 
   Future handleSave(Product? curentProduct) async {
-    addStatus = 1;
+    // addStatus = 1;
     clickedField['code'] = true;
     clickedField['productName'] = true;
     clickedField['sell'] = true;
     clickedField['cost'] = true;
     if (formkey.currentState!.validate()) {
-      final product = Product(
-        productId: codeController.text,
-        featured: false,
-        productName: productNameController.text,
-        sellPrice: int.parse(sellPriceController.text.replaceAll('.', '')),
-        costPrice: int.parse(costPriceController.text.replaceAll('.', '')),
-        sold: soldController.text == '' ? 0 : int.parse(soldController.text),
-        uuid: uuid,
-      );
+      final product = Product();
+      product.productId = codeController.text;
+
+      if (curentProduct == null) {
+        product.createdAt = Timestamp.now();
+      }
+      if (curentProduct == null) {
+        product.featured = false;
+      }
+      product.productName = productNameController.text;
+      product.sellPrice =
+          int.parse(sellPriceController.text.replaceAll('.', ''));
+      product.costPrice =
+          int.parse(costPriceController.text.replaceAll('.', ''));
+      product.sold =
+          soldController.text == '' ? 0 : int.parse(soldController.text);
+      product.uuid = authService.uid.value;
       if (curentProduct != null) {
-        await updateProduct(
-            product, curentProduct.id!, curentProduct.productId!);
-        if (updateStatus == 1) {
-          await Get.defaultDialog(
-            title: 'Berhasil',
-            middleText: 'Product berhasil diupdate',
-            confirm: TextButton(
-              onPressed: () {
-                Get.back();
-                Get.back();
-              },
-              child: const Text('OK'),
-            ),
-          );
-        }
+        await updateProduct(product, curentProduct);
+        // await updateProduct(
+        //     product, curentProduct.id!, curentProduct.productId!);
+        // if (updateStatus == 1) {
+        //   await Get.defaultDialog(
+        //     title: 'Berhasil',
+        //     middleText: 'Product berhasil diupdate',
+        //     confirm: TextButton(
+        //       onPressed: () {
+        //         Get.back();
+        //         Get.back();
+        //       },
+        //       child: const Text('OK'),
+        //     ),
+        //   );
+        // }
       } else {
-        await addProduct(product);
-        if (addStatus == 1) {
-          await Get.defaultDialog(
-            title: 'Berhasil',
-            middleText: 'Product berhasil ditambahkan',
-            confirm: TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          );
-        }
+        await addSingleProduct(product);
       }
     }
   }
 
   featuredHandle(bool value, Product product) {
-    int index =
-        productList.indexWhere((selectItem) => selectItem.id == product.id);
+    // int index =
+    //     products.indexWhere((selectItem) => selectItem.id == product.id);
 
     product.featured = value;
-    productList.replaceRange(index, index + 1, [product]);
+    // products.replaceRange(index, index + 1, [product]);
     foundProducts.sort((a, b) {
       if (a.featured == b.featured) {
         return b.sold!.compareTo(a.sold!);
