@@ -48,12 +48,26 @@ class ProductView extends GetView<ProductController> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Obx(() => Text(
-                                  'Total barang: ${controller.products.length.toString()}',
-                                  style: context.textTheme.bodySmall,
-                                )),
+                            Obx(
+                              () => Text(
+                                'Total barang: ${controller.totalProduct.value.toString()}',
+                                style: context.textTheme.bodySmall,
+                              ),
+                            ),
+                            Obx(
+                              () => Text(
+                                'Kode terakhir: ${controller.lastCode.value.toString()}',
+                                style: context.textTheme.bodySmall,
+                              ),
+                            ),
                             Row(
                               children: [
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      controller.destroyAllHandle(),
+                                  child: const Text('HAPUS SEMUA'),
+                                ),
+                                const SizedBox(width: 16),
                                 ElevatedButton(
                                   onPressed: () {
                                     controller.bindingEditData(
@@ -470,4 +484,45 @@ void addEditDialog(BuildContext context, ProductController controller,
       ),
     ),
   );
+}
+
+//! Loading Dialog
+class LoadingDialog extends StatelessWidget {
+  const LoadingDialog({
+    super.key,
+    required this.controller,
+  });
+
+  final ProductController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentProduct = controller.currentlCsvData.value;
+    final totalProduct = controller.totalCsvData.value;
+    final emptyProduct = controller.emptyCsv.value;
+    return Obx(
+      () => AlertDialog(
+        title: const Text('Menambahkan Barang'),
+        content: Column(
+          children: [
+            (currentProduct != totalProduct)
+                ? Text(
+                    'Menambahkan barang ke-$currentProduct dari $totalProduct baris Excel')
+                : Text(
+                    'Berhasil menambahkan ${totalProduct - emptyProduct} barang dari $totalProduct baris Excel'),
+            if (emptyProduct > 0) Text('Baris kosong: $emptyProduct barang'),
+            if (currentProduct != totalProduct)
+              const CircularProgressIndicator(),
+          ],
+        ),
+        actions: <Widget>[
+          if (currentProduct != totalProduct)
+            TextButton(
+              onPressed: () => controller.isLoading.value = false,
+              child: const Text('Oke'),
+            ),
+        ],
+      ),
+    );
+  }
 }

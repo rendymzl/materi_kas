@@ -9,8 +9,10 @@ class Invoice {
   Timestamp? createdAt;
   Customer? customer;
   ProductsCart? productsCart;
+  ProductsReturnCart? productsReturnCart;
   int? bill;
   int? pay;
+  int? returnFee;
   int? change;
   bool? isPaid;
   String? uuid;

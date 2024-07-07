@@ -1,3 +1,6 @@
+import 'package:date_picker_plus/date_picker_plus.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -47,150 +50,303 @@ class BarChartWidget extends GetView<StatisticController> {
         Expanded(
           flex: 5,
           child: Obx(
-            () => controller.isLoading.value
-                ? const Center(child: CircularProgressIndicator())
-                : Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  flex: 9,
-                                  child: Obx(
-                                    () => BarChart(
-                                      BarChartData(
-                                        barTouchData: barTouchData,
-                                        titlesData: titlesData,
-                                        borderData: borderData,
-                                        barGroups: barGroups,
-                                        gridData: const FlGridData(show: false),
-                                        alignment:
-                                            BarChartAlignment.spaceAround,
-                                        maxY: controller.maxY.value.toDouble(),
+            () {
+              final date = controller.selectedChart.value!.dateString;
+              final prevDate = controller.prevSelectedChart.value!.dateString;
+
+              final sell = controller.selectedChart.value!.totalSellPrice;
+              final prevSell =
+                  controller.prevSelectedChart.value!.totalSellPrice;
+
+              final profit = controller.selectedChart.value!.totalProfit;
+              final prevProfit =
+                  controller.prevSelectedChart.value!.totalProfit;
+
+              final pay = controller.selectedChart.value!.totalPaid;
+              final prevPay = controller.prevSelectedChart.value!.totalPaid;
+
+              final totalInvoice = controller.selectedChart.value!.totalInvoice;
+              final prevTotalInvoice =
+                  controller.prevSelectedChart.value!.totalInvoice;
+              return controller.isLoading.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : Row(
+                      children: [
+                        Expanded(
+                          flex: 7,
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    flex: 10,
+                                    child: Obx(
+                                      () => BarChart(
+                                        BarChartData(
+                                          barTouchData: barTouchData,
+                                          titlesData: titlesData,
+                                          borderData: borderData,
+                                          barGroups: barGroups,
+                                          gridData:
+                                              const FlGridData(show: false),
+                                          alignment:
+                                              BarChartAlignment.spaceAround,
+                                          maxY: 1.4,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Divider(color: Colors.grey[400]),
-                                Expanded(
-                                  flex: 1,
-                                  child: SizedBox(
-                                    width: 300,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Container(
-                                              height: 16,
-                                              width: 16,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                color: Colors.red,
+                                  Divider(color: Colors.grey[400]),
+                                  Expanded(
+                                    flex: 1,
+                                    child: SizedBox(
+                                      width: 300,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                height: 16,
+                                                width: 16,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  color: Colors.red,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              'Keuntungan',
-                                              style:
-                                                  context.textTheme.bodySmall,
-                                            )
-                                          ],
-                                        ),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              height: 16,
-                                              width: 16,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                color: Colors.orange,
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'Keuntungan',
+                                                style:
+                                                    context.textTheme.bodySmall,
+                                              )
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                height: 16,
+                                                width: 16,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  color: Colors.orange,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              'Jumlah Invoice',
-                                              style:
-                                                  context.textTheme.bodySmall,
-                                            )
-                                          ],
-                                        ),
-                                      ],
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'Jumlah Invoice',
+                                                style:
+                                                    context.textTheme.bodySmall,
+                                              )
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                )
-                              ],
+                                  Divider(color: Colors.grey[400]),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 35),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: '',
+                                              subtitle1: date,
+                                              subtitle2: prevDate,
+                                              subtitle3: const Text(''),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 5,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Tagihan',
+                                              subtitle1:
+                                                  'Rp.${controller.formatter.format(sell)}',
+                                              subtitle2:
+                                                  'Rp.${controller.formatter.format(prevSell)}',
+                                              subtitle3: controller.percentage(
+                                                  sell, prevSell, context),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 5,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Keuntungan',
+                                              subtitle1:
+                                                  'Rp.${controller.formatter.format(profit)}',
+                                              subtitle2:
+                                                  'Rp.${controller.formatter.format(prevProfit)}',
+                                              subtitle3: controller.percentage(
+                                                  profit, prevProfit, context),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 5,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Dibayar',
+                                              subtitle1:
+                                                  'Rp.${controller.formatter.format(pay)}',
+                                              subtitle2:
+                                                  'Rp.${controller.formatter.format(prevPay)}',
+                                              subtitle3: controller.percentage(
+                                                  profit, prevProfit, context),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 3,
+                                            child: DisplayDataListTile(
+                                              controller: controller,
+                                              title: 'Invoice',
+                                              subtitle1:
+                                                  totalInvoice.toString(),
+                                              subtitle2:
+                                                  prevTotalInvoice.toString(),
+                                              subtitle3: controller.percentage(
+                                                totalInvoice,
+                                                prevTotalInvoice,
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Card(
-                          child: Column(
-                            children: [
-                              ListTile(
-                                title: Text('data'),
-                              )
-                            ],
-                          ),
+                        Expanded(
+                          flex: 2,
+                          child: DatePickerCard(controller: controller),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    );
+            },
           ),
         ),
-        Expanded(
-          flex: 1,
-          child: Card(
-            child: SizedBox(
-              child: Row(
+        Card(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            height: 70,
+            child: Obx(
+              () => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton(
+                  Expanded(
+                    child: ElevatedButton(
                       onPressed: () {
-                        controller.isThisWeek.value = true;
-                        controller.fetchData('week');
+                        controller.rangePickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'daily';
                       },
-                      child: const Text('Hari Ini')),
-                  ElevatedButton(
-                      onPressed: () {}, child: const Text('Kemarin')),
-                  ElevatedButton(
-                      onPressed: () {}, child: const Text('Minggu Ini')),
-                  ElevatedButton(
-                      onPressed: () => controller.fetchData('month'),
-                      child: const Text('Bulan Ini')),
-                  InkWell(
-                    onTap: controller.isDateTimeNow.value
-                        ? null
-                        : () async => controller.handleDate(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: controller.isDateTimeNow.value
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(4),
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'daily'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
                       ),
                       child: Text(
-                        controller.displayDate.value == ''
-                            ? 'Pilih Tanggal'
-                            : DateFormat('dd MMMM y', 'id')
-                                .format(controller.selectedDate.value),
-                        style: controller.isDateTimeNow.value
-                            ? context.textTheme.bodySmall!.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontStyle: FontStyle.italic,
-                              )
-                            : const TextStyle(color: Colors.white),
+                        'Harian',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'daily'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.rangePickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'weekly';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'weekly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      child: Text(
+                        'Mingguan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'weekly'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.monthPickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'monthly';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'monthly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      child: Text(
+                        'Bulanan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'monthly'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.yearPickerHandle(controller.args.value);
+                        controller.selectedSection.value = 'yearly';
+                      },
+                      style: ButtonStyle(
+                        enableFeedback: true,
+                        backgroundColor: WidgetStatePropertyAll(
+                          controller.selectedSection.value == 'yearly'
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                        ),
+                      ),
+                      child: Text(
+                        'Tahunan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: controller.selectedSection.value == 'yearly'
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
                       ),
                     ),
                   ),
@@ -206,12 +362,9 @@ class BarChartWidget extends GetView<StatisticController> {
   BarTouchData get barTouchData => BarTouchData(
         enabled: false,
         touchTooltipData: BarTouchTooltipData(
-          getTooltipColor: (group) => controller.isWeekly.value
-              ? Colors.transparent
-              : Colors.grey[200]!.withOpacity(0.8),
-          tooltipPadding: controller.isWeekly.value
-              ? EdgeInsets.zero
-              : const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+          getTooltipColor: (group) => Colors.grey[200]!.withOpacity(0.8),
+          tooltipPadding:
+              const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
           tooltipMargin: 8,
           getTooltipItem: (
             BarChartGroupData group,
@@ -219,15 +372,12 @@ class BarChartWidget extends GetView<StatisticController> {
             BarChartRodData rod,
             int rodIndex,
           ) {
-            final formatter = NumberFormat('#,##0', 'id_ID');
             return BarTooltipItem(
               rodIndex == 0
-                  ? controller.isWeekly.value
-                      ? formatter.format(rod.toY)
-                      : rod.toY > 1000
-                          ? '${formatter.format(rod.toY / 1000)}K'
-                          : formatter.format(rod.toY / 1000)
-                  : (rod.toY / 50000).round().toString(),
+                  ? rod.toY == 0
+                      ? '0'
+                      : 'Rp${controller.formatter.format(controller.invoiceChart[groupIndex].totalProfit)}'
+                  : controller.invoiceChart[groupIndex].totalInvoice.toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
                 fontWeight: FontWeight.bold,
@@ -235,69 +385,35 @@ class BarChartWidget extends GetView<StatisticController> {
             );
           },
         ),
-        touchCallback: controller.isWeekly.value
-            ? null
-            : (event, response) {
-                if (event.isInterestedForInteractions &&
-                    response != null &&
-                    response.spot != null) {
-                  controller.touchedGroupIndex.value =
-                      response.spot!.touchedBarGroupIndex;
-                  controller.touchedDataIndex.value =
-                      response.spot!.touchedRodDataIndex;
-                  // debugPrint(controller.touchedGroupIndex.toString());
-                } else {
-                  controller.touchedGroupIndex.value = -1;
-                }
-              },
+        touchCallback: (event, response) {
+          if (event.isInterestedForInteractions &&
+              response != null &&
+              response.spot != null) {
+            controller.touchedGroupIndex.value =
+                response.spot!.touchedBarGroupIndex;
+            controller.touchedDataIndex.value =
+                response.spot!.touchedRodDataIndex;
+          } else {
+            controller.touchedGroupIndex.value = -1;
+          }
+        },
       );
 
   Widget getTitles(double value, TitleMeta meta) {
-    // bool isWeekDates = controller.invoiceChart.isNotEmpty;
-    List<ChartModel> chart = controller.invoiceChart;
+    List<Chart> chart = controller.invoiceChart;
     String dateString = chart[value.toInt()].dateString;
-    // debugPrint(controller.weekInvoices[value.toInt()][0].);
     const style = TextStyle(
       color: Colors.grey,
       fontWeight: FontWeight.bold,
       fontSize: 13,
     );
-    String text = '';
-    if (controller.isWeekly.value) {
-      switch (value.toInt()) {
-        case 0:
-          text = 'Sen';
-          break;
-        case 1:
-          text = 'Sel';
-          break;
-        case 2:
-          text = 'Rab';
-          break;
-        case 3:
-          text = 'Kam';
-          break;
-        case 4:
-          text = 'Jum';
-          break;
-        case 5:
-          text = 'Sab';
-          break;
-        case 6:
-          text = 'Min';
-          break;
-        default:
-          text = '';
-          break;
-      }
-    }
 
     return SideTitleWidget(
       axisSide: meta.axisSide,
       space: 4,
       child: Text(
-          controller.isWeekly.value
-              ? '$text $dateString'
+          controller.groupDate.value == 'weekly'
+              ? dateString
               : (value.toInt() + 1).toString(),
           style: style),
     );
@@ -327,40 +443,267 @@ class BarChartWidget extends GetView<StatisticController> {
         show: false,
       );
 
-  // LinearGradient get _barsGradient => const LinearGradient(
-  //       colors: [
-  //         Colors.orange,
-  //         Colors.red,
-  //       ],
-  //       begin: Alignment.bottomCenter,
-  //       end: Alignment.topCenter,
-  //     );
-
   List<BarChartGroupData> get barGroups => List.generate(
         controller.invoiceChart.length,
         (index) {
-          ChartModel chart = controller.invoiceChart[index];
+          Chart chart = controller.invoiceChart[index];
+          // debugPrint('-----');
+          // debugPrint(
+          //     'chartTotalProfit: ${chart.totalProfit == 0 ? 0 : (chart.totalProfit / controller.maxTotalProfit)}');
+          // debugPrint(
+          //     'chartTotalInvoice: ${chart.totalInvoice == 0 ? 0 : (chart.totalInvoice / controller.maxTotalInvoice)}');
+          // debugPrint('-----');
           return BarChartGroupData(
-            barsSpace: controller.isWeekly.value ? 10 : 1,
+            barsSpace: 1,
             x: index,
             barRods: [
               BarChartRodData(
-                toY: chart.totalProfit.toDouble(),
+                toY: chart.totalProfit == 0
+                    ? 0
+                    : (chart.totalProfit / controller.maxTotalProfit),
                 color: Colors.red,
+                borderRadius: BorderRadius.circular(2),
               ),
               BarChartRodData(
-                toY: chart.totalInvoice.toDouble() * 50000,
+                toY: (chart.totalInvoice == 0
+                        ? 0
+                        : chart.totalInvoice /
+                            (controller.maxTotalInvoice * (120 / 100))) *
+                    (100 / 100),
                 color: Colors.orange,
+                borderRadius: BorderRadius.circular(2),
               )
             ],
-            showingTooltipIndicators: controller.isWeekly.value
-                ? [0, 1]
-                : controller.touchedGroupIndex.value == index
+            showingTooltipIndicators:
+                controller.touchedGroupIndex.value == index
                     ? [controller.touchedDataIndex.value]
                     : [],
           );
         },
       );
+}
+
+class DatePickerCard extends StatelessWidget {
+  const DatePickerCard({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () {
+        return Card(
+          child: Column(
+            children: [
+              const Text('Pilih Data:'),
+              if (controller.selectedSection.value == 'daily')
+                Expanded(child: DatePickerDaily(controller: controller)),
+              if (controller.selectedSection.value == 'weekly')
+                Expanded(child: DatePickerWeekly(controller: controller)),
+              if (controller.selectedSection.value == 'monthly')
+                Expanded(child: DatePickerMonthly(controller: controller)),
+              if (controller.selectedSection.value == 'yearly')
+                Expanded(child: DatePickerYearly(controller: controller)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class DatePickerDaily extends StatelessWidget {
+  const DatePickerDaily({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.dailyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        enableMultiView: true,
+        initialSelectedDate: controller.initDate.value,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        selectionMode: DateRangePickerSelectionMode.single,
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          controller.rangePickerHandle(args.value);
+        },
+      ),
+    );
+  }
+}
+
+class DatePickerWeekly extends StatelessWidget {
+  const DatePickerWeekly({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.weeklyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        enableMultiView: true,
+        initialSelectedRange: controller.selectedWeeklyRange.value,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        selectionMode: DateRangePickerSelectionMode.range,
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          PickerDateRange value = args.value;
+          if (value.endDate == null) {
+            controller.rangePickerHandle(value.startDate!);
+          }
+        },
+      ),
+    );
+  }
+}
+
+class DatePickerMonthly extends StatelessWidget {
+  const DatePickerMonthly({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.monthlyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        // enableMultiView: true,
+        view: DateRangePickerView.year,
+        allowViewNavigation: false,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          controller.monthPickerHandle(args.value);
+        },
+      ),
+    );
+  }
+}
+
+class DatePickerYearly extends StatelessWidget {
+  const DatePickerYearly({
+    super.key,
+    required this.controller,
+  });
+
+  final StatisticController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      height: 480,
+      child: SfDateRangePicker(
+        controller: controller.yearlyRangeController.value,
+        navigationDirection: DateRangePickerNavigationDirection.vertical,
+        navigationMode: DateRangePickerNavigationMode.scroll,
+        headerStyle: DateRangePickerHeaderStyle(
+            backgroundColor: Colors.white,
+            textStyle: context.textTheme.bodyLarge),
+        backgroundColor: Colors.white,
+        view: DateRangePickerView.decade,
+        allowViewNavigation: false,
+        monthViewSettings: const DateRangePickerMonthViewSettings(
+          firstDayOfWeek: 1,
+        ),
+        minDate: DateTime(2000),
+        maxDate: DateTime.now(),
+        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+          controller.yearPickerHandle(args.value);
+        },
+      ),
+    );
+  }
+}
+
+class DisplayDataListTile extends StatelessWidget {
+  const DisplayDataListTile({
+    super.key,
+    required this.controller,
+    required this.title,
+    required this.subtitle1,
+    required this.subtitle2,
+    required this.subtitle3,
+  });
+
+  final StatisticController controller;
+  final String title;
+  final String subtitle1;
+  final String subtitle2;
+  final Widget subtitle3;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      title: Text(title, style: context.textTheme.bodySmall),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(subtitle1,
+                  style: context.textTheme.bodyLarge!
+                      .copyWith(color: Theme.of(context).colorScheme.primary)),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(subtitle2, style: context.textTheme.bodySmall),
+          const SizedBox(height: 2),
+          subtitle3,
+        ],
+      ),
+    );
+  }
 }
 
 class BarChartSample3 extends StatefulWidget {
