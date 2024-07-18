@@ -48,7 +48,7 @@ class CustomerView extends GetView<CustomerController> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Obx(() => Text(
-                                  'Total Pelanggan: ${controller.customerList.length.toString()}',
+                                  'Total Pelanggan: ${controller.customers.length.toString()}',
                                   style: context.textTheme.bodySmall,
                                 )),
                             Row(
@@ -269,7 +269,7 @@ class TableContent extends StatelessWidget {
 //* addEditDialog ==================================================================
 void addEditDialog(BuildContext context, CustomerController controller,
     Customer? foundCustomer, String title) {
-  controller.maxNameLenght.value = 0;
+  // controller.minNameLenght.value = 0;
   controller.clickedField['name'] = false;
   controller.clickedField['phone'] = false;
   controller.clickedField['address'] = false;
@@ -292,7 +292,7 @@ void addEditDialog(BuildContext context, CustomerController controller,
                 controller: controller.nameController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: 'Nama Customer',
+                  labelText: 'Nama Pelanggan',
                   labelStyle: const TextStyle(color: Colors.grey),
                   floatingLabelStyle:
                       TextStyle(color: Theme.of(context).colorScheme.primary),
@@ -359,7 +359,7 @@ void addEditDialog(BuildContext context, CustomerController controller,
       width: 160,
       child: OutlinedButton(
         style: ButtonStyle(
-          side: MaterialStateProperty.all(
+          side: WidgetStateProperty.all(
               BorderSide(color: Colors.black.withOpacity(0.5))),
         ),
         onPressed: () => Get.back(),

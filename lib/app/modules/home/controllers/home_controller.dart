@@ -1,96 +1,62 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
 import 'package:materi_kas/app/data/providers/invoice_services.dart';
-// import 'package:materi_kas/app/modules/invoice/controllers/invoice_controller.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
-// import '../../../../main.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/providers/auth_services.dart';
-// import '../../../data/providers/invoice_provider.dart';
 import '../../../data/providers/product_services.dart';
 import '../../../routes/app_pages.dart';
-// import '../../../widget/side_menu_controller.dart';
-// import '../../customer/controllers/customer_controller.dart';
-// import '../../product/controllers/product_controller.dart';
 
 class HomeController extends GetxController {
-  // ProductController productController = Get.put(ProductController());
-  final ProductService productService = Get.find();
-  final InvoiceService invoiceServices = Get.find();
-  final AuthService authService = Get.find();
-  // CustomerController customerController = Get.put(CustomerController());
-  // InvoiceController invoiceController = Get.put(InvoiceController());
+  late AuthService authService = Get.find();
+  late ProductService productService = Get.find();
+  late InvoiceService invoiceServices = Get.find();
 
-  // late final uuid = currentUser;
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
   late final invoices = invoiceServices.invoices;
-  // late final customerList = customerController.customerList;
-  // late final invoiceList = invoiceController.invoiceList;
-  // final foundProducts = <Product>[].obs;
-  final customers = <Customer>[].obs;
-  final cartList = <Cart>[].obs;
+  final purchaseList = <Cart>[].obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
   @override
   void onInit() {
     super.onInit();
     filterProducts('');
-    // Get.put(SideMenuController(), permanent: true);
-    // uuid = supabase.auth.currentUser!.id;
-    // foundProducts.value = products;
-    // customers.value = customerList;
-    // invoices.value = invoiceList;
-    // GetStorage cacheUuid = GetStorage(uuid);
   }
 
   void filterProducts(String productName) {
-    // var result = <Product>[];
-    productController.filterProducts(productName);
-
-    // productName.isEmpty
-    //     ? result = productList
-    //     : result = productList
-    //         .where((product) => product.productName
-    //             .toString()
-    //             .toLowerCase()
-    //             .contains(productName))
-    //         .toList();
-
-    // foundProducts.value = result;
+    productService.searchProducts(productName);
   }
 
   late ScrollController scrollController = ScrollController();
 
-  void addToCart(Product product) {
-    invoiceId.value = generateInvoice(selectedCustomer.value);
-    int index = cartList.indexWhere(
+  void addToCart(Product product) async {
+    // invoiceId.value = await generateInvoice(selectedCustomer.value);
+    int index = purchaseList.indexWhere(
         (selectItem) => selectItem.product?.productId == product.productId);
 
     if (index != -1) {
       Cart productCart = Cart(
           product: product,
-          quantity: cartList[index].quantity! + 1,
+          quantity: purchaseList[index].quantity! + 1,
           individualDiscount: 0,
           bundleDiscount: 0);
 
-      cartList.replaceRange(index, index + 1, [productCart]);
+      purchaseList.replaceRange(index, index + 1, [productCart]);
 
       Future.delayed(const Duration(milliseconds: 1), () {
         scrollController.animateTo(
           index * 80.0,
-          // scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
         );
@@ -102,12 +68,11 @@ class HomeController extends GetxController {
           individualDiscount: 0,
           bundleDiscount: 0);
 
-      cartList.add(productCart);
+      purchaseList.add(productCart);
 
       Future.delayed(const Duration(milliseconds: 10), () {
         if (scrollController.hasClients) {
           scrollController.animateTo(
-            // index * 80.0,
             scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
@@ -119,7 +84,7 @@ class HomeController extends GetxController {
 
   void removeFromCart(Cart productCart) {
     productCart.quantity = 1;
-    cartList.remove(productCart);
+    purchaseList.remove(productCart);
   }
 
   //! dateTime
@@ -130,7 +95,6 @@ class HomeController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   void handleDate(BuildContext context) async {
-    // displayDate.value = selectedDate.value.toString();
     Get.defaultDialog(
       title: 'Pilih Tanggal',
       backgroundColor: Colors.white,
@@ -152,27 +116,15 @@ class HomeController extends GetxController {
           showActionButtons: true,
           cancelText: 'Batal',
           onCancel: () => Get.back(),
-          onSubmit: (p0) {
+          onSubmit: (p0) async {
             selectedDate.value = p0 as DateTime;
             displayDate.value = p0.toString();
+            // invoiceId.value = await generateInvoice(selectedCustomer.value);
             Get.back();
           },
         ),
       ),
     );
-
-    // DateTime? pickedDate = await showDatePickerDialog(
-    //   context: context,
-    //   height: 400,
-    //   width: 400,
-    //   initialDate: selectedDate.value,
-    //   selectedDate: selectedDate.value,
-    //   minDate: DateTime(2000),
-    //   maxDate: DateTime.now(),
-    // );
-
-    // selectedDate.value = pickedDate ?? DateTime.now();
-    // displayDate.value = pickedDate.toString();
   }
 
   void handleTime(BuildContext context) async {
@@ -183,6 +135,7 @@ class HomeController extends GetxController {
 
     selectedTime.value = pickedTime ?? TimeOfDay.now();
     displayTime.value = pickedTime.toString();
+    // invoiceId.value = await generateInvoice(selectedCustomer.value);
   }
 
   void dateTimeCheckBox() async {
@@ -206,8 +159,7 @@ class HomeController extends GetxController {
         middleText: 'Hapus barang ini?',
         confirm: TextButton(
           onPressed: () async {
-            List<Invoice> newData = await InvoiceProvider.destroy(invoice);
-            invoiceController.refreshFetch(newData);
+            await productService.deleteProduct(invoice.id!);
             Get.back();
           },
           child: const Text('OK'),
@@ -232,12 +184,12 @@ class HomeController extends GetxController {
   //! MoneyHandle
   //* quantity
   void quantityHandle(Cart productCart, String qty) {
-    int index = cartList.indexWhere((selectItem) =>
+    int index = purchaseList.indexWhere((selectItem) =>
         selectItem.product?.productId == productCart.product?.productId);
 
     int qtyParse = qty == '' ? 0 : int.parse(qty);
     productCart.quantity = qtyParse;
-    cartList.replaceRange(index, index + 1, [productCart]);
+    purchaseList.replaceRange(index, index + 1, [productCart]);
   }
 
   //* discount
@@ -256,12 +208,12 @@ class HomeController extends GetxController {
       }
     }
 
-    int index = cartList.indexWhere((selectItem) =>
+    int index = purchaseList.indexWhere((selectItem) =>
         selectItem.product?.productId == productCart.product?.productId);
 
     int discountParse = value == '' ? 0 : int.parse(value);
     productCart.individualDiscount = discountParse;
-    cartList.replaceRange(index, index + 1, [productCart]);
+    purchaseList.replaceRange(index, index + 1, [productCart]);
   }
 
   //* calculating
@@ -296,62 +248,36 @@ class HomeController extends GetxController {
     super.dispose();
   }
 
-  final customerNameController = TextEditingController();
   final displayName = ''.obs;
+  final customerNameController = TextEditingController();
   final customerPhoneController = TextEditingController();
   final customerAddressController = TextEditingController();
-  final isRegisteredCustomer = false.obs;
 
-  void handleCustomer(String value) {
-    isRegisteredCustomer.value = false;
-    selectedCustomer.value = null;
-  }
+  // final invoiceId = ''.obs;
 
-  void handleCheckBox(bool? value) {
-    isRegisteredCustomer.value = !isRegisteredCustomer.value;
+  // String getLastSerialNumber(Invoice invoice) {
+  //   String? invoiceNumber = invoice.invoiceId;
+  //   Timestamp? invoiceDate = invoice.createdAt!;
+  //   String serialPart = '000';
+  //   if (invoiceNumber != null) {
+  //     List<String> parts = invoiceNumber.split('/');
+  //     DateTime invoiceDateTime = invoiceDate.toDate();
+  //     DateTime selected = selectedDate.value;
+  //     if (parts.length == 2 &&
+  //         invoiceDateTime.year == selected.year &&
+  //         invoiceDateTime.month == selected.month &&
+  //         invoiceDateTime.day == selected.day) {
+  //       serialPart = parts[0].replaceAll('INV', '');
+  //       serialPart = serialPart.replaceFirst(RegExp('^0+'), '');
 
-    customerNameController.text = '';
-    customerPhoneController.text = '';
-    customerAddressController.text = '';
-    selectedCustomer.value = null;
-    displayName.value = '';
-  }
+  //       return serialPart;
+  //     }
+  //   }
 
-  final invoiceId = ''.obs;
-
-  String getLastSerialNumber(Invoice invoice) {
-    String? invoiceNumber = invoice.invoiceId;
-    Timestamp? invoiceDate = invoice.createdAt!.add(const Duration(hours: 7));
-    String serialPart = '000';
-    if (invoiceNumber != null) {
-      List<String> parts = invoiceNumber.split('/');
-      DateTime invoiceDateTime = invoiceDate.toDate();
-      DateTime selected = selectedDate.value;
-      if (parts.length == 2 &&
-          invoiceDateTime.year == selected.year &&
-          invoiceDateTime.month == selected.month &&
-          invoiceDateTime.day == selected.day) {
-        serialPart = parts[0].replaceAll('INV', '');
-        serialPart = serialPart.replaceFirst(RegExp('^0+'), '');
-
-        return serialPart;
-      }
-    }
-
-    return serialPart;
-  }
+  //   return serialPart;
+  // }
 
   Future<String> generateInvoice(Customer? customer) async {
-    Invoice inv = invoices.lastWhere(
-      (invData) => invData.createdAt! == invoices.first.createdAt,
-      orElse: () => Invoice(),
-    );
-
-    int lastSerialNumber = int.parse(getLastSerialNumber(inv));
-    lastSerialNumber++;
-
-    String serialNumber = lastSerialNumber.toString().padLeft(3, '0');
-
     String clientCode =
         (customer != null) ? customer.customerId!.toUpperCase() : 'G';
 
@@ -360,13 +286,24 @@ class HomeController extends GetxController {
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
 
-    String invoiceNumber = 'INV$serialNumber/$clientCode$month$day$year';
+    String dateCode = '$clientCode$month$day$year';
+
+    List<Invoice> result = invoices
+        .where((element) => element.invoiceId!.contains(dateCode))
+        .toList();
+
+    int lastSerialNumber = result.length;
+    lastSerialNumber++;
+
+    String serialNumber = lastSerialNumber.toString().padLeft(3, '0');
+
+    String invoiceNumber = 'INV$serialNumber/$dateCode';
 
     return invoiceNumber;
   }
 
   Future saveInvoice() async {
-    invoiceId.value = await generateInvoice(selectedCustomer.value);
+    // invoiceId.value = await generateInvoice(selectedCustomer.value);
     final payment =
         pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
     final change = moneyChange.value - totalPrice.value;
@@ -377,7 +314,7 @@ class HomeController extends GetxController {
       selectedDate.value.day,
       selectedTime.value.hour,
       selectedTime.value.minute,
-    ).subtract(const Duration(hours: 7));
+    );
 
     Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
 
@@ -400,46 +337,63 @@ class HomeController extends GetxController {
     }
 
     final invoice = Invoice(
-      invoiceId: invoiceId.value,
+      invoiceId: await generateInvoice(selectedCustomer.value),
       createdAt: timestampDateTime,
       customer: customer,
-      productsCart: ProductsCart(cartList: cartList),
+      cartList: CartList(purchaseCart: purchaseList),
       bill: totalPrice.value,
       pay: payment,
       change: change,
-      isPaid: change > 0 ? true : false,
+      isPaid: change >= 0,
       uuid: authService.uid.value,
     );
 
     Future success() async {
-      // await InvoiceProvider.create(invoice);
       Map<String, Map<String, dynamic>> invoicesMap = {};
       String newInvioceId = await productService.getId();
       invoice.id = newInvioceId;
-      // invoice.customer = invoice.customer;
       invoicesMap[newInvioceId] = invoice.toJson();
-      await invoiceServices.addInvoices(invoicesMap);
-      return Get.defaultDialog(
-        title: 'Berhasil',
-        middleText: 'Invoice berhasil disimpan.',
-        confirm: TextButton(
-          onPressed: () {
-            cartList.clear();
-            pay.text = '';
-            moneyChange.value = 0;
-            totalPrice.value = 0;
-            totalDiscount.value = 0;
-
-            displayDate.value = DateTime.now().toString();
-            displayTime.value = TimeOfDay.now().toString();
-
-            selectedDate.value = DateTime.now();
-            selectedTime.value = TimeOfDay.now();
-            Get.back();
-          },
-          child: const Text('OK'),
-        ),
+      Get.defaultDialog(
+        title: 'Menyimpan Invoice...',
+        content: const CircularProgressIndicator(),
+        barrierDismissible: false,
       );
+      try {
+        await invoiceServices.addInvoices(invoicesMap);
+        Get.back();
+        return Get.defaultDialog(
+          title: 'Berhasil',
+          middleText: 'Invoice berhasil disimpan.',
+          confirm: TextButton(
+            onPressed: () {
+              purchaseList.clear();
+              pay.text = '';
+              moneyChange.value = 0;
+              totalPrice.value = 0;
+              totalDiscount.value = 0;
+
+              customerNameController.text = '';
+              customerPhoneController.text = '';
+              customerAddressController.text = '';
+
+              displayDate.value = DateTime.now().toString();
+              displayTime.value = TimeOfDay.now().toString();
+
+              selectedDate.value = DateTime.now();
+              selectedTime.value = TimeOfDay.now();
+              Get.back();
+            },
+            child: const Text('OK'),
+          ),
+        );
+      } catch (e) {
+        Get.back();
+        Get.defaultDialog(
+          title: 'Gagal Menyimpan Invoice!',
+          middleText: e.toString(),
+          barrierDismissible: false,
+        );
+      }
     }
 
     Future validate(String validateCode) async {

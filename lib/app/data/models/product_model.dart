@@ -6,6 +6,7 @@ class Product {
   Timestamp? createdAt;
   bool? featured;
   String? productName;
+  String? unit;
   int? sellPrice;
   int? costPrice;
   int? sold;
@@ -18,6 +19,7 @@ class Product {
     this.createdAt,
     this.featured,
     this.productName,
+    this.unit,
     this.sellPrice,
     this.costPrice,
     this.sold,
@@ -31,6 +33,7 @@ class Product {
         createdAt = json['created_at'],
         featured = json['featured'],
         productName = json['product_name'],
+        unit = json['unit'],
         sellPrice = json['sell_price'],
         costPrice = json['cost_price'],
         sold = json['sold'],
@@ -43,6 +46,7 @@ class Product {
         'created_at': createdAt,
         'featured': featured,
         'product_name': productName,
+        'unit': unit,
         'sell_price': sellPrice,
         'cost_price': costPrice,
         'sold': sold,

@@ -16,9 +16,15 @@ class InitView extends GetView<InitController> {
       // ),
       body: Obx(
         () => Center(
-            child: controller.isLogin.value
-                ? const CircularProgressIndicator()
-                : const CircularProgressIndicator()),
+          child: controller.loading.value
+              ? const CircularProgressIndicator()
+              : ElevatedButton(
+                  onPressed: () async {
+                    controller.handleAuthChanged();
+                  },
+                  child: const Text('Mulai Aplikasi'),
+                ),
+        ),
       ),
     );
   }

@@ -71,4 +71,5 @@ class DefaultFirebaseOptions {
     authDomain: 'materikas-e152b.firebaseapp.com',
     storageBucket: 'materikas-e152b.appspot.com',
   );
+
 }

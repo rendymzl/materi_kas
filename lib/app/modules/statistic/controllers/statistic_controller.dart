@@ -5,17 +5,23 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
-import '../../../../main.dart';
+// import '../../../../main.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/providers/invoice_provider.dart';
+// import '../../../data/providers/invoice_provider.dart';
+import '../../../data/providers/auth_services.dart';
+import '../../../data/providers/invoice_services.dart';
 import '../../../widget/model/chart_model.dart';
-import '../../invoice/controllers/invoice_controller.dart';
+// import '../../invoice/controllers/invoice_controller.dart';
 
 class StatisticController extends GetxController {
-  InvoiceController invoiceController = Get.put(InvoiceController());
-  late final String uuid;
+  final AuthService authService = Get.find();
+  final InvoiceService invoiceServices = Get.find();
+
+  late final invoices = invoiceServices.invoices;
+  // InvoiceController invoiceController = Get.put(InvoiceController());
+  // late final String uuid;
   final formatter = NumberFormat('#,##0', 'id_ID');
-  late final RxList<Invoice> invoiceList = RxList<Invoice>();
+  // late final RxList<Invoice> invoiceList = RxList<Invoice>();
   final isDaily = true.obs;
   final selectedSection = 'daily'.obs;
 
@@ -47,6 +53,7 @@ class StatisticController extends GetxController {
         totalPaid: 0,
         totalInvoice: 0),
   );
+  int maxTotalPurchase = 0;
   int maxTotalProfit = 0;
   int maxTotalInvoice = 0;
   // final maxY = 1.4.obs;
@@ -65,9 +72,9 @@ class StatisticController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    uuid = supabase.auth.currentUser!.id;
-    List<Invoice> newData = await InvoiceProvider.fetchData(uuid, null);
-    invoiceList.assignAll(newData);
+    // uuid = supabase.auth.currentUser!.id;
+    // List<Invoice> newData = await InvoiceProvider.fetchData(uuid, null);
+    // invoiceList.assignAll(newData);
     await fetchData(DateTime.now(), 'weekly');
   }
 
@@ -126,8 +133,8 @@ class StatisticController extends GetxController {
     DateTime currentStartOfWeek = await getStartofWeek(selectedDate);
     DateTime prevStartOfWeek = await getStartofWeek(prevWeekPickedDay);
 
-    currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
-      return convertToLocal(invoice.createdAt!).isAfter(prevStartOfWeek);
+    currentAndPrevFilteredInvoices = invoices.where((invoice) {
+      return invoice.createdAt!.toDate().isAfter(prevStartOfWeek);
     }).toList();
 
     selectedWeeklyRange.value = PickerDateRange(
@@ -168,10 +175,12 @@ class StatisticController extends GetxController {
     final startOfPrevMonth = DateTime(currentYear, prevMonth, 1);
     final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
 
-    currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
-      return convertToLocal(invoice.createdAt!)
+    currentAndPrevFilteredInvoices = invoices.where((invoice) {
+      return invoice.createdAt!
+              .toDate()
               .isAfter(startOfPrevMonth.subtract(const Duration(days: 1))) &&
-          convertToLocal(invoice.createdAt!)
+          invoice.createdAt!
+              .toDate()
               .isBefore(endOfMonth.add(const Duration(days: 1)));
     }).toList();
 
@@ -202,10 +211,12 @@ class StatisticController extends GetxController {
     final startOfPrevYear = DateTime(prevYear, 1);
     final endOfYear = DateTime(currentYear, 12);
 
-    currentAndPrevFilteredInvoices = invoiceList.where((invoice) {
-      return convertToLocal(invoice.createdAt!)
+    currentAndPrevFilteredInvoices = invoices.where((invoice) {
+      return invoice.createdAt!
+              .toDate()
               .isAfter(startOfPrevYear.subtract(const Duration(days: 1))) &&
-          convertToLocal(invoice.createdAt!)
+          invoice.createdAt!
+              .toDate()
               .isBefore(endOfYear.add(const Duration(days: 1)));
     }).toList();
 
@@ -235,12 +246,14 @@ class StatisticController extends GetxController {
 
       final invoices = groupDate.value == 'yearly'
           ? currentAndPrevFilteredInvoices.where((invoice) {
-              DateTime localDate = convertToLocal(invoice.createdAt!);
+              // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
+              DateTime localDate = invoice.createdAt!.toDate();
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month;
             }).toList()
           : currentAndPrevFilteredInvoices.where((invoice) {
-              DateTime localDate = convertToLocal(invoice.createdAt!);
+              // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
+              DateTime localDate = invoice.createdAt!.toDate();
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month &&
                   localDate.day == currentDate.day;
@@ -256,21 +269,35 @@ class StatisticController extends GetxController {
       scale = 0;
 
       for (var invoice in invoices) {
-        int sellPrice = invoice.productsCart!.cartList!.map((cart) {
-          return (cart.product!.sellPrice! * cart.quantity!);
-        }).reduce((value, element) => value + element);
-        int costPrice = invoice.productsCart!.cartList!.map((cart) {
-          return (cart.product!.costPrice! * cart.quantity!);
-        }).reduce((value, element) => value + element);
-        int paid = invoice.change! > 0 ? invoice.pay! - invoice.change! : 0;
+        int sellPrice = invoice.cartList!.purchaseCart!.fold(
+          0,
+          (prev, cart) => prev + (cart.product!.sellPrice! * cart.quantity!),
+        );
+        int costPrice = invoice.cartList!.purchaseCart!.fold(
+          0,
+          (prev, cart) => prev + (cart.product!.costPrice! * cart.quantity!),
+        );
+        // int paid = invoice.pay!;
+        // int costPrice = invoice.cartList!.purchaseCart!.map((cart) {
+        //   return (cart.product!.costPrice! * cart.quantity!);
+        // }).reduce((value, element) => value + element);
+        // int paid = invoice.change! > 0 ? invoice.pay! - invoice.change! : 0;
+        // int sellPrice = invoice.cartList!.purchaseCart!.map((cart) {
+        //   return (cart.product!.sellPrice! * cart.quantity!);
+        // }).reduce((value, element) => value + element);
+        // int costPrice = invoice.cartList!.purchaseCart!.map((cart) {
+        //   return (cart.product!.costPrice! * cart.quantity!);
+        // }).reduce((value, element) => value + element);
+        // int paid = invoice.change! > 0 ? invoice.pay! - invoice.change! : 0;
 
         totalSellPrice += sellPrice;
         totalCostPrice += costPrice;
         totalProfit += invoice.bill! - costPrice;
-        totalPaid += paid;
+        totalPaid += invoice.isPaid! ? invoice.bill! : invoice.pay!;
       }
 
       if (isCurrentSelected) {
+        maxTotalPurchase = max(maxTotalPurchase, totalSellPrice);
         maxTotalProfit = max(maxTotalProfit, totalProfit);
         maxTotalInvoice = max(maxTotalInvoice, totalInvoice);
       }
@@ -289,6 +316,7 @@ class StatisticController extends GetxController {
     }
 
     if (isCurrentSelected) {
+      maxTotalPurchase = 0;
       maxTotalProfit = 0;
       maxTotalInvoice = 0;
     }
@@ -315,6 +343,7 @@ class StatisticController extends GetxController {
       //     ? 0
       //     : (maxTotalInvoice / maxTotalInvoice) + 0.40);
       debugPrint('=== start');
+      debugPrint('maxTotalPurchase $maxTotalPurchase');
       debugPrint('maxTotalProfit $maxTotalProfit');
       debugPrint('maxTotalInvoice $maxTotalInvoice');
       debugPrint('==== end');
@@ -491,7 +520,7 @@ class StatisticController extends GetxController {
   final displayDate = DateTime.now().toString().obs;
   final displayTime = TimeOfDay.now().toString().obs;
 
-  DateTime convertToLocal(DateTime utcTime) {
-    return utcTime.add(const Duration(hours: 7));
-  }
+  // DateTime convertToLocal(DateTime utcTime) {
+  //   return utcTime.add(const Duration(hours: 7));
+  // }
 }

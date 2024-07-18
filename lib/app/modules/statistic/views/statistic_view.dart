@@ -1,13 +1,13 @@
-import 'package:date_picker_plus/date_picker_plus.dart';
-import 'package:material_symbols_icons/symbols.dart';
+// import 'package:date_picker_plus/date_picker_plus.dart';
+// import 'package:material_symbols_icons/symbols.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 
-import '../../../data/models/invoice_model.dart';
+// import '../../../data/models/invoice_model.dart';
 import '../../../widget/model/chart_model.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/statistic_controller.dart';
@@ -18,7 +18,7 @@ class StatisticView extends GetView<StatisticController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Statistik'),
+        title: const Text('Laporan'),
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -376,7 +376,7 @@ class BarChartWidget extends GetView<StatisticController> {
               rodIndex == 0
                   ? rod.toY == 0
                       ? '0'
-                      : 'Rp${controller.formatter.format(controller.invoiceChart[groupIndex].totalProfit)}'
+                      : 'Rp${controller.formatter.format(controller.invoiceChart[groupIndex].totalSellPrice)}'
                   : controller.invoiceChart[groupIndex].totalInvoice.toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
@@ -440,7 +440,12 @@ class BarChartWidget extends GetView<StatisticController> {
       );
 
   FlBorderData get borderData => FlBorderData(
-        show: false,
+        show: true,
+        border: Border.symmetric(
+          horizontal: BorderSide(
+            color: Colors.grey[300]!,
+          ),
+        ),
       );
 
   List<BarChartGroupData> get barGroups => List.generate(
@@ -453,15 +458,29 @@ class BarChartWidget extends GetView<StatisticController> {
           // debugPrint(
           //     'chartTotalInvoice: ${chart.totalInvoice == 0 ? 0 : (chart.totalInvoice / controller.maxTotalInvoice)}');
           // debugPrint('-----');
+          double totalPurchase =
+              chart.totalSellPrice / controller.maxTotalPurchase;
+          double totalProfit = chart.totalProfit / controller.maxTotalPurchase;
+          double totalPaid = chart.totalPaid / controller.maxTotalPurchase;
           return BarChartGroupData(
             barsSpace: 1,
             x: index,
             barRods: [
               BarChartRodData(
-                toY: chart.totalProfit == 0
-                    ? 0
-                    : (chart.totalProfit / controller.maxTotalProfit),
-                color: Colors.red,
+                toY: chart.totalProfit == 0 ? 0 : totalPurchase,
+                rodStackItems: [
+                  BarChartRodStackItem(
+                    0,
+                    totalProfit,
+                    Colors.red,
+                  ),
+                  BarChartRodStackItem(
+                    totalProfit,
+                    totalPaid,
+                    Colors.orange,
+                  ),
+                ],
+                color: Colors.amber,
                 borderRadius: BorderRadius.circular(2),
               ),
               BarChartRodData(

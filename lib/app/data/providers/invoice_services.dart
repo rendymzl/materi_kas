@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+// import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 import '../models/invoice_model.dart';
 import 'auth_services.dart';
@@ -12,7 +14,7 @@ class InvoiceService extends GetxController {
 
   var invoices = <Invoice>[].obs;
   var foundInvoices = <Invoice>[].obs;
-  var recentInvoices = <Invoice>[].obs;
+  // var recentInvoices = <Invoice>[].obs;
 
   // @override
   // void onInit() {
@@ -21,7 +23,6 @@ class InvoiceService extends GetxController {
   // }
 
   Future<void> fetchInvoices() async {
-    debugPrint(authService.uid.value);
     try {
       DocumentSnapshot docSnapshot =
           await _invoicesCollection.doc(authService.uid.value).get();
@@ -30,7 +31,7 @@ class InvoiceService extends GetxController {
         invoices.value = invoiceData.values
             .map((invoiceJson) => Invoice.fromJson(invoiceJson))
             .toList();
-        searchInvoices('');
+        searchInvoicesByName('');
       } else {
         // Handle case where the document does not exist
         invoices.value = [];
@@ -118,9 +119,9 @@ class InvoiceService extends GetxController {
   //   return chunks;
   // }
 
-  Future<void> updateInvoice(Invoice newInvoice, Invoice currentInvoice) async {
+  Future<void> updateInvoice(Invoice newInvoice) async {
     // debugPrint(currentProduct.id);
-    if (currentInvoice.id == null) {
+    if (newInvoice.id == null) {
       debugPrint('Invoice ID is null');
       return;
     }
@@ -128,7 +129,7 @@ class InvoiceService extends GetxController {
     try {
       await _invoicesCollection
           .doc(authService.uid.value)
-          .update({currentInvoice.id!: newInvoice.toJson()});
+          .update({newInvoice.id!: newInvoice.toJson()});
       await fetchInvoices();
     } catch (e) {
       debugPrint(e.toString());
@@ -147,30 +148,61 @@ class InvoiceService extends GetxController {
     }
   }
 
-  void searchInvoices(String invoiceId) {
+  void searchInvoicesByName(String invoiceName) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (invoiceId.isEmpty) {
-        List<Invoice> productsList = [];
-        productsList.addAll(invoices);
-        productsList.sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+      if (invoiceName == '') {
+        // invoicesList.addAll(invoices);
 
         Timestamp sevenDaysAgo = Timestamp.fromDate(
             DateTime.now().subtract(const Duration(days: 7)));
-        recentInvoices.value = invoices.where((invoice) {
+
+        List<Invoice> subList = invoices.where((invoice) {
           return invoice.createdAt != null &&
               invoice.createdAt!.toDate().isAfter(sevenDaysAgo.toDate());
         }).toList();
-
+        List<Invoice> sortInvoice = sortByDate(subList);
         // List<Invoice> subList = productsList.take(50).toList();
         foundInvoices.clear();
-        foundInvoices.addAll(recentInvoices);
+        foundInvoices.addAll(sortInvoice);
       } else {
-        foundInvoices.value = invoices.where((invoice) {
+        List<Invoice> sortList = invoices.where((invoice) {
           return invoice.invoiceId!
               .toLowerCase()
-              .contains(invoiceId.toLowerCase());
+              .contains(invoiceName.toLowerCase());
         }).toList();
+        List<Invoice> sortInvoice = sortByDate(sortList);
+        foundInvoices.addAll(sortInvoice);
       }
     });
+  }
+
+  void searchInvoicesByPickerDateRange(PickerDateRange? invoiceCreatedAt) {
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    // debugPrint(invoiceCreatedAt.toString());
+    // debugPrint('invoice DateTime $invoiceCreatedAt');
+    if (invoiceCreatedAt != null) {
+      // final formattedStartDate = DateFormat('yyyy-MM-dd HH:mm:ss')
+      //     .format(invoiceCreatedAt.startDate!);
+      // final formattedEndDate =
+      //     DateFormat('yyyy-MM-dd HH:mm:ss').format(invoiceCreatedAt.endDate!);
+      foundInvoices.clear();
+      foundInvoices.value = invoices.where((invoice) {
+        if (invoice.createdAt != null) {
+          DateTime invoiceDate = invoice.createdAt!.toDate();
+          return invoiceDate.isAfter(invoiceCreatedAt.startDate!) &&
+              invoiceDate.isBefore(invoiceCreatedAt.endDate!);
+        }
+        return false;
+      }).toList();
+      // sortByDate();
+    } else {
+      searchInvoicesByName('');
+    }
+    // });
+  }
+
+  List<Invoice> sortByDate(List<Invoice> invoicesList) {
+    invoicesList.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+    return invoicesList;
   }
 }

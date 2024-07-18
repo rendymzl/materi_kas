@@ -11,6 +11,8 @@ class ProductService extends GetxController {
       FirebaseFirestore.instance.collection('products');
 
   var products = <Product>[].obs;
+  var productsLenght = 0.obs;
+  var lastProductCode = ''.obs;
   var foundProducts = <Product>[].obs;
 
   // @override
@@ -20,7 +22,6 @@ class ProductService extends GetxController {
   // }
 
   Future<void> fetchProducts() async {
-    debugPrint(authService.uid.value);
     try {
       DocumentSnapshot docSnapshot =
           await _productsCollection.doc(authService.uid.value).get();
@@ -29,6 +30,7 @@ class ProductService extends GetxController {
         products.value = productData.values
             .map((productJson) => Product.fromJson(productJson))
             .toList();
+        products.sort((a, b) => a.productName!.compareTo(b.productName!));
         searchProducts('');
       } else {
         // Handle case where the document does not exist
@@ -43,49 +45,6 @@ class ProductService extends GetxController {
   Future<String> getId() async {
     return _productsCollection.doc().id;
   }
-
-  // Future<void> addProducts(Map<String?, Map<String, dynamic>> data,
-  //     List<Product> productsList) async {
-  //   try {
-  //     DocumentReference docRef = _productsCollection.doc(authService.uid.value);
-  //     // product.id = await getId();
-  //     // product.createdAt = Timestamp.now();
-  //     await docRef.set(data, SetOptions(merge: true));
-  //     products.addAll(productsList);
-  //     // foundProducts.add(product);
-  //   } catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
-
-  // Future<void> addProducts(List<Product> productsList) async {
-  //   List<List<Product>> productChunks = _chunkProducts(productsList, 500);
-
-  //   for (List<Product> chunk in productChunks) {
-  //     WriteBatch batch = FirebaseFirestore.instance.batch();
-  //     DocumentReference userDocRef =
-  //         _productsCollection.doc(authService.uid.value);
-
-  //     for (Product product in chunk) {
-  //       String newProductId = _productsCollection.doc().id;
-  //       product.id = newProductId;
-  //       product.createdAt = Timestamp.now();
-  //       batch.set(userDocRef, {newProductId: product.toJson()},
-  //           SetOptions(merge: true));
-  //     }
-
-  //     try {
-  //       debugPrint(chunk.length.toString());
-  //       await batch.commit();
-  //       debugPrint("commited");
-  //       // products.addAll(productsList);
-  //       // foundProducts.addAll(productsList);
-  //       await fetchProducts();
-  //     } catch (e) {
-  //       debugPrint(e.toString());
-  //     }
-  //   }
-  // }
 
   Future<void> addProducts(
       Map<String, Map<String, dynamic>> productsMap) async {
@@ -132,8 +91,19 @@ class ProductService extends GetxController {
       await _productsCollection
           .doc(authService.uid.value)
           .update({productId: FieldValue.delete()});
-      products.removeWhere((product) => product.id == productId);
-      foundProducts.removeWhere((product) => product.id == productId);
+      fetchProducts();
+      // searchProducts('');
+      // products.removeWhere((product) => product.id == productId);
+      // foundProducts.removeWhere((product) => product.id == productId);
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> deleteAllProduct() async {
+    try {
+      await _productsCollection.doc(authService.uid.value).delete();
+      await fetchProducts();
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -143,11 +113,18 @@ class ProductService extends GetxController {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (productName.isEmpty) {
         List<Product> productsList = [];
-        productsList.addAll(products);
-        productsList.sort((a, b) => a.sold!.compareTo(b.sold!));
-        List<Product> subList = productsList.take(50).toList();
         foundProducts.clear();
-        foundProducts.addAll(subList);
+        foundProducts.addAll(products);
+
+        productsLenght.value = products.length;
+
+        productsList.addAll(products);
+        productsList.sort((a, b) => a.productId!.compareTo(b.productId!));
+        // List<Product> subList = productsList.take(50).toList();
+
+        lastProductCode.value = products.isEmpty
+            ? 'Tidak ada barang'
+            : productsList[products.length - 1].productId!;
       } else {
         foundProducts.value = products.where((product) {
           return product.productName!

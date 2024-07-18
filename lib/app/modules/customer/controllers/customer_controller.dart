@@ -1,17 +1,25 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../main.dart';
+// import '../../../../main.dart';
 import '../../../data/models/customer_model.dart';
-import '../../../data/providers/customer_provider.dart';
+import '../../../data/providers/auth_services.dart';
+import '../../../data/providers/customer_services.dart';
+// import '../../../data/providers/customer_provider.dart';
 
 class CustomerController extends GetxController {
-  late final String uuid;
-  late final List<Customer> customerList = <Customer>[].obs;
+  final AuthService authService = Get.find();
+  final CustomerServices customerServices = Get.find();
 
-  final foundCustomers = <Customer>[].obs;
+  late final customers = customerServices.customers;
+  late final foundCustomers = customerServices.foundCustomers;
+  // late final String uuid;
+  // late final List<Customer> customerList = <Customer>[].obs;
+
+  // final foundCustomers = <Customer>[].obs;
 
   // @override
   // void onInit() async {
@@ -21,29 +29,31 @@ class CustomerController extends GetxController {
   // refreshFetch(newData);
   // }
 
-  void filterCustomers(String name) {
-    var result = <Customer>[];
-    name.isEmpty
-        ? result = customerList
-        : result = customerList
-            .where((customer) =>
-                customer.name.toString().toLowerCase().contains(name))
-            .toList();
+  void filterCustomers(String customerName) {
+    customerServices.searchCustomers(customerName);
+    // var result = <Customer>[];
+    // name.isEmpty
+    //     ? result = customers
+    //     : result = customers
+    //         .where((customer) =>
+    //             customer.name.toString().toLowerCase().contains(name))
+    //         .toList();
 
-    foundCustomers.value = result;
+    // customers.value = result;
   }
 
   //! Fetch
-  void refreshFetch(List<Customer> newData) async {
-    customerList.clear();
-    customerList.assignAll(newData);
-    foundCustomers.value = customerList;
-  }
+  // void refreshFetch(List<Customer> newData) async {
+  //   customers.clear();
+  //   customers.assignAll(newData);
+  //   foundCustomers.value = customers;
+  // }
 
   //! create
-  void addCustomer(Customer customer) async {
+  void addCustomer(
+      Customer customer, Map<String, Map<String, dynamic>> customerData) async {
     bool isCustomerExists =
-        customerList.any((item) => item.customerId == customer.customerId);
+        customers.any((item) => item.customerId == customer.customerId);
     if (isCustomerExists) {
       await Get.defaultDialog(
         title: 'Gagal',
@@ -55,6 +65,7 @@ class CustomerController extends GetxController {
       );
     } else {
       try {
+        await customerServices.addCustomers(customerData);
         // List<Customer> newData = await CustomerProvider.create(customer);
         await Get.defaultDialog(
           title: 'Berhasil',
@@ -81,10 +92,14 @@ class CustomerController extends GetxController {
 
   //! update
   Future updateCustomer(
-      Customer newCustomer, String curentid, String curentCustomerId) async {
+    Customer newCustomer,
+    String curentid,
+    Customer curentCustomer,
+    Map<String, Map<String, dynamic>> customerData,
+  ) async {
     bool isCustomerIdExists =
-        customerList.any((item) => item.customerId == newCustomer.customerId);
-    if (isCustomerIdExists && newCustomer.customerId != curentCustomerId) {
+        customers.any((item) => item.customerId == newCustomer.customerId);
+    if (isCustomerIdExists && newCustomer.customerId != curentCustomer.id) {
       await Get.defaultDialog(
         title: 'Gagal',
         middleText: 'Kode yang dimasukkan sudah ada',
@@ -95,14 +110,15 @@ class CustomerController extends GetxController {
       );
     } else {
       try {
-        Map<String, Object?> data = {
-          'name': newCustomer.name,
-          'phone': newCustomer.phone,
-          'address': newCustomer.address,
-        };
-        List<Customer> newData =
-            // await CustomerProvider.update(data, curentid, uuid);
-            await Get.defaultDialog(
+        // Map<String, Object?> data = {
+        //   'name': newCustomer.name,
+        //   'phone': newCustomer.phone,
+        //   'address': newCustomer.address,
+        // };
+        customerServices.updateCustomer(newCustomer, curentCustomer);
+        // List<Customer> newData =
+        // await CustomerProvider.update(data, curentid, uuid);
+        await Get.defaultDialog(
           title: 'Berhasil',
           middleText: 'Customer berhasil diupdate',
           confirm: TextButton(
@@ -110,7 +126,7 @@ class CustomerController extends GetxController {
             child: const Text('OK'),
           ),
         );
-        refreshFetch(newData);
+        // refreshFetch(newData);
         Get.back();
       } on PostgrestException catch (e) {
         Get.defaultDialog(
@@ -190,16 +206,14 @@ class CustomerController extends GetxController {
     'address': false,
   }.obs;
 
-  final maxNameLenght = 0.obs;
+  // final minNameLenght = 0.obs;
 
   String? nameValidator(String value) {
     value = value.trim();
-    if (value.length > maxNameLenght.value) maxNameLenght.value = value.length;
+    // if (value.length > minNameLenght.value) minNameLenght.value = value.length;
     if (value.isEmpty && clickedField['name'] == true) {
       return 'Nama tidak boleh kosong';
-    } else if (value.length < 3 &&
-        maxNameLenght >= 3 &&
-        clickedField['name'] == true) {
+    } else if (value.length < 3 && clickedField['name'] == true) {
       return 'Nama harus di isi minimal 3 karakter';
     }
     return null;
@@ -214,12 +228,17 @@ class CustomerController extends GetxController {
         name: nameController.text,
         phone: phoneController.text,
         address: addressController.text,
-        uuid: uuid,
+        createdAt: Timestamp.now(),
+        uuid: authService.uid.value,
       );
+      Map<String, Map<String, dynamic>> customersMap = {};
+      String newCustomerId = await customerServices.getId();
+      customer.id = newCustomerId;
+      customersMap[newCustomerId] = customer.toJson();
       curentCustomer != null
           ? await updateCustomer(
-              customer, curentCustomer.id!, curentCustomer.customerId!)
-          : addCustomer(customer);
+              customer, curentCustomer.id!, curentCustomer, customersMap)
+          : addCustomer(customer, customersMap);
     }
   }
 }

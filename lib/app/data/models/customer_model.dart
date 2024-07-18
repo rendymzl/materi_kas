@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Customer {
   String? id;
   String? customerId;
-  DateTime? createAt;
+  Timestamp? createdAt;
   String? name;
   String? phone;
   String? address;
@@ -10,7 +12,7 @@ class Customer {
   Customer(
       {this.id,
       this.customerId,
-      this.createAt,
+      this.createdAt,
       this.name,
       this.phone,
       this.address,
@@ -19,7 +21,7 @@ class Customer {
   Customer.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     customerId = json['customer_id'];
-    createAt = json['create_at'];
+    createdAt = json['created_at'];
     name = json['name'];
     phone = json['phone'];
     address = json['address'];
@@ -30,7 +32,7 @@ class Customer {
     final data = <String, dynamic>{};
     data['id'] = id;
     data['customer_id'] = customerId;
-    data['create_at'] = createAt;
+    data['created_at'] = createdAt;
     data['name'] = name;
     data['phone'] = phone;
     data['address'] = address;

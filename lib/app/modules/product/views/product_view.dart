@@ -72,8 +72,10 @@ class ProductView extends GetView<ProductController> {
                                   onPressed: () {
                                     controller.bindingEditData(
                                       Product(
-                                        productId: '',
+                                        productId:
+                                            controller.getNumberAfterChar(),
                                         productName: '',
+                                        unit: '',
                                         sellPrice: 0,
                                         costPrice: 0,
                                         sold: 0,
@@ -340,6 +342,7 @@ void addEditDialog(BuildContext context, ProductController controller,
     Product? foundProduct, String title) {
   controller.clickedField['code'] = false;
   controller.clickedField['productName'] = false;
+  controller.clickedField['unit'] = false;
   controller.clickedField['sell'] = false;
   controller.clickedField['cost'] = false;
   OutlineInputBorder outlineRed =
@@ -358,11 +361,12 @@ void addEditDialog(BuildContext context, ProductController controller,
           onChanged: () => Form.of(primaryFocus!.context!).save(),
           child: ListView(
             children: <Widget>[
+              const SizedBox(height: 20),
               TextFormField(
-                controller: controller.codeController,
+                controller: controller.codeTextC,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: 'Kode',
+                  labelText: 'Kode Barang',
                   labelStyle: const TextStyle(color: Colors.grey),
                   floatingLabelStyle:
                       TextStyle(color: Theme.of(context).colorScheme.primary),
@@ -375,7 +379,7 @@ void addEditDialog(BuildContext context, ProductController controller,
               ),
               const SizedBox(height: 20),
               TextFormField(
-                controller: controller.productNameController,
+                controller: controller.productNameTextC,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: 'Nama Barang',
@@ -392,7 +396,23 @@ void addEditDialog(BuildContext context, ProductController controller,
               ),
               const SizedBox(height: 20),
               TextFormField(
-                controller: controller.sellPriceController,
+                controller: controller.unitTextC,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: 'Satuan',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  floatingLabelStyle:
+                      TextStyle(color: Theme.of(context).colorScheme.primary),
+                  focusedErrorBorder: outlineRed,
+                  errorBorder: outlineRed,
+                ),
+                onChanged: (value) => controller.onTextChange(value, 'unit'),
+                validator: (value) => controller.productUnitValidator(value!),
+                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: controller.sellPriceTextC,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: 'Harga Jual',
@@ -416,7 +436,7 @@ void addEditDialog(BuildContext context, ProductController controller,
               ),
               const SizedBox(height: 20),
               TextFormField(
-                controller: controller.costPriceController,
+                controller: controller.costPriceTextC,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: 'Harga Modal',
@@ -440,7 +460,7 @@ void addEditDialog(BuildContext context, ProductController controller,
               ),
               const SizedBox(height: 20),
               TextFormField(
-                controller: controller.soldController,
+                controller: controller.soldTextC,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: 'Terjual',
@@ -497,26 +517,25 @@ class LoadingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentProduct = controller.currentlCsvData.value;
-    final totalProduct = controller.totalCsvData.value;
-    final emptyProduct = controller.emptyCsv.value;
+    final currentCsv = controller.currentCsvData.value;
+    final totalCsv = controller.totalCsvData.value;
+    final emptyCsv = controller.emptyCsv.value;
     return Obx(
       () => AlertDialog(
         title: const Text('Menambahkan Barang'),
         content: Column(
           children: [
-            (currentProduct != totalProduct)
+            (currentCsv != totalCsv)
                 ? Text(
-                    'Menambahkan barang ke-$currentProduct dari $totalProduct baris Excel')
+                    'Menambahkan barang ke-$currentCsv dari $totalCsv baris Excel')
                 : Text(
-                    'Berhasil menambahkan ${totalProduct - emptyProduct} barang dari $totalProduct baris Excel'),
-            if (emptyProduct > 0) Text('Baris kosong: $emptyProduct barang'),
-            if (currentProduct != totalProduct)
-              const CircularProgressIndicator(),
+                    'Berhasil menambahkan ${totalCsv - emptyCsv} barang dari $totalCsv baris Excel'),
+            if (emptyCsv > 0) Text('Baris kosong: $emptyCsv barang'),
+            if (currentCsv != totalCsv) const CircularProgressIndicator(),
           ],
         ),
         actions: <Widget>[
-          if (currentProduct != totalProduct)
+          if (currentCsv != totalCsv)
             TextButton(
               onPressed: () => controller.isLoading.value = false,
               child: const Text('Oke'),

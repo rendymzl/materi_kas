@@ -3,14 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:materi_kas/app/routes/app_pages.dart';
 
+import '../../../data/providers/customer_services.dart';
+import '../../../data/providers/invoice_services.dart';
+import '../../../data/providers/product_services.dart';
+
 // import '../../../../main.dart';
 
 class LoginController extends GetxController {
+  late ProductService productService = Get.find();
+  late InvoiceService invoiceService = Get.find();
+  late CustomerServices customerServices = Get.find();
+
   @override
   void onInit() {
     super.onInit();
-    emailFieldC.text = 'tes@example.com';
-    passwordFieldC.text = 'Indonesi@21';
+    emailFieldC.text = '';
+    passwordFieldC.text = '';
   }
 
   final formkey = GlobalKey<FormState>();
@@ -54,7 +62,9 @@ class LoginController extends GetxController {
           email: emailFieldC.text.trim(),
           password: passwordFieldC.text,
         );
-
+        await productService.fetchProducts();
+        await invoiceService.fetchInvoices();
+        await customerServices.fetchCustomers();
         Get.offNamed(Routes.HOME);
       } on FirebaseAuthException catch (e) {
         debugPrint(e.code);
