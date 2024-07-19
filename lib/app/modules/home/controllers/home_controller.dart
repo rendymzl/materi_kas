@@ -10,6 +10,7 @@ import 'package:materi_kas/app/data/providers/invoice_services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
+import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
@@ -25,7 +26,8 @@ class HomeController extends GetxController {
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
   late final invoices = invoiceServices.invoices;
-  final purchaseList = <Cart>[].obs;
+  // final cart = <Cart>[].obs;
+  final cart = Cart(items: []).obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
   final currency = NumberFormat('#,##0', 'id_ID');
@@ -43,34 +45,37 @@ class HomeController extends GetxController {
   late ScrollController scrollController = ScrollController();
 
   void addToCart(Product product) async {
-    // invoiceId.value = await generateInvoice(selectedCustomer.value);
-    int index = purchaseList.indexWhere(
-        (selectItem) => selectItem.product?.productId == product.productId);
+    // int index = cart.indexWhere(
+    //     (selectItem) => selectItem.product?.productId == product.productId);
 
-    if (index != -1) {
-      Cart productCart = Cart(
-          product: product,
-          quantity: purchaseList[index].quantity! + 1,
-          individualDiscount: 0,
-          bundleDiscount: 0);
+    // if (index != -1) {
+    //   Cart productCart = Cart(
+    //       product: product,
+    //       quantity: cart[index].quantity! + 1,
+    //       individualDiscount: 0,
+    //       bundleDiscount: 0);
 
-      purchaseList.replaceRange(index, index + 1, [productCart]);
+    //   cart.replaceRange(index, index + 1, [productCart]);
 
-      Future.delayed(const Duration(milliseconds: 1), () {
-        scrollController.animateTo(
-          index * 80.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-        );
-      });
-    } else {
-      Cart productCart = Cart(
-          product: product,
-          quantity: 1,
-          individualDiscount: 0,
-          bundleDiscount: 0);
+    //   Future.delayed(const Duration(milliseconds: 1), () {
+    //     scrollController.animateTo(
+    //       index * 80.0,
+    //       duration: const Duration(milliseconds: 200),
+    //       curve: Curves.easeInOut,
+    //     );
+    //   });
+    // } else {
+    //   Cart productCart = Cart(
+    //       product: product,
+    //       quantity: 1,
+    //       individualDiscount: 0,
+    //       bundleDiscount: 0);
 
-      purchaseList.add(productCart);
+    //   cart.add(productCart);
+
+    CartItem newItem = CartItem(product: product);
+
+    cart.value.addItem(newItem)
 
       Future.delayed(const Duration(milliseconds: 10), () {
         if (scrollController.hasClients) {
@@ -86,7 +91,7 @@ class HomeController extends GetxController {
 
   void removeFromCart(Cart productCart) {
     productCart.quantity = 1;
-    purchaseList.remove(productCart);
+    cart.remove(productCart);
   }
 
   //! dateTime
@@ -186,12 +191,12 @@ class HomeController extends GetxController {
   //! MoneyHandle
   //* quantity
   void quantityHandle(Cart productCart, String qty) {
-    int index = purchaseList.indexWhere((selectItem) =>
+    int index = cart.indexWhere((selectItem) =>
         selectItem.product?.productId == productCart.product?.productId);
 
     int qtyParse = qty == '' ? 0 : int.parse(qty);
     productCart.quantity = qtyParse;
-    purchaseList.replaceRange(index, index + 1, [productCart]);
+    cart.replaceRange(index, index + 1, [productCart]);
   }
 
   //* discount
@@ -210,12 +215,12 @@ class HomeController extends GetxController {
       }
     }
 
-    int index = purchaseList.indexWhere((selectItem) =>
+    int index = cart.indexWhere((selectItem) =>
         selectItem.product?.productId == productCart.product?.productId);
 
     int discountParse = value == '' ? 0 : int.parse(value);
     productCart.individualDiscount = discountParse;
-    purchaseList.replaceRange(index, index + 1, [productCart]);
+    cart.replaceRange(index, index + 1, [productCart]);
   }
 
   //* calculating
@@ -352,7 +357,7 @@ class HomeController extends GetxController {
       invoiceId: await generateInvoice(selectedCustomer.value),
       createdAt: timestampDateTime,
       customer: customer,
-      cartList: CartList(purchaseCart: purchaseList),
+      cartList: CartList(purchaseCart: cart),
       payment: Payment(
         totalBill: totalBill.value,
         totalDiscount: totalDiscount.value,
@@ -382,7 +387,7 @@ class HomeController extends GetxController {
           middleText: 'Invoice berhasil disimpan.',
           confirm: TextButton(
             onPressed: () {
-              purchaseList.clear();
+              cart.clear();
               pay.text = '';
               moneyChange.value = 0;
               totalBill.value = 0;

@@ -28,7 +28,6 @@ class Cart {
   }
 
   void addItem(CartItem newItem) {
-    // Cek apakah item sudah ada di keranjang
     final existingItem = items.firstWhere(
       (item) => item.product.id == newItem.product.id,
       orElse: () => CartItem(
