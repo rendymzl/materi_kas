@@ -52,11 +52,11 @@ class AppPages {
       page: () => const ProductView(),
       binding: ProductBinding(),
     ),
-    GetPage(
-      name: _Paths.INVOICE,
-      page: () => const InvoiceView(),
-      binding: InvoiceBinding(),
-    ),
+    // GetPage(
+    //   name: _Paths.INVOICE,
+    //   page: () => const InvoiceView(),
+    //   binding: InvoiceBinding(),
+    // ),
     GetPage(
       name: _Paths.CUSTOMER,
       page: () => const CustomerView(),
@@ -67,11 +67,11 @@ class AppPages {
       page: () => const ProfileView(),
       binding: ProfileBinding(),
     ),
-    GetPage(
-      name: _Paths.STATISTIC,
-      page: () => const StatisticView(),
-      binding: StatisticBinding(),
-    ),
+    // GetPage(
+    //   name: _Paths.STATISTIC,
+    //   page: () => const StatisticView(),
+    //   binding: StatisticBinding(),
+    // ),
     GetPage(
       name: _Paths.INIT,
       page: () => const InitView(),

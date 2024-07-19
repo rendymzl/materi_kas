@@ -76,8 +76,11 @@ class ProductView extends GetView<ProductController> {
                                             controller.getNumberAfterChar(),
                                         productName: '',
                                         unit: '',
-                                        sellPrice: 0,
                                         costPrice: 0,
+                                        sellPrice1: 0,
+                                        sellPrice2: 0,
+                                        sellPrice3: 0,
+                                        stock: 0,
                                         sold: 0,
                                       ),
                                     );
@@ -276,7 +279,7 @@ class TableContent extends StatelessWidget {
             flex: 4,
             child: SizedBox(
               child: Text(
-                'Rp. ${formatter.format(foundProduct.sellPrice)}',
+                'Rp. ${formatter.format(foundProduct.sellPrice1)}',
                 style: context.textTheme.titleMedium,
               ),
             ),
@@ -300,7 +303,7 @@ class TableContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  'Rp. ${formatter.format(foundProduct.sellPrice! - foundProduct.costPrice!)}',
+                  'Rp. ${formatter.format(foundProduct.sellPrice1! - foundProduct.costPrice!)}',
                   style: context.textTheme.titleLarge!
                       .copyWith(color: Colors.white),
                 ),
@@ -343,10 +346,15 @@ void addEditDialog(BuildContext context, ProductController controller,
   controller.clickedField['code'] = false;
   controller.clickedField['productName'] = false;
   controller.clickedField['unit'] = false;
-  controller.clickedField['sell'] = false;
+  controller.clickedField['sell1'] = false;
+  controller.clickedField['sell2'] = false;
+  controller.clickedField['sell3'] = false;
+  controller.clickedField['stock'] = false;
   controller.clickedField['cost'] = false;
-  OutlineInputBorder outlineRed =
-      const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
+
+  // OutlineInputBorder outlineRed =
+  //     const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
+
   Get.defaultDialog(
     title: title,
     content: SingleChildScrollView(
@@ -362,120 +370,101 @@ void addEditDialog(BuildContext context, ProductController controller,
           child: ListView(
             children: <Widget>[
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
                 controller: controller.codeTextC,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Kode Barang',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
+                context: context,
+                labelText: 'Kode Barang',
                 onChanged: (value) => controller.onTextChange(value, 'code'),
-                validator: (value) => controller.codeValidator(value!),
+                validator: (value) => controller.fieldValidator(
+                    value!, 'code', 'Kode tidak boleh kosong'),
                 onFieldSubmitted: (_) => controller.handleSave(foundProduct),
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
                 controller: controller.productNameTextC,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Nama Barang',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
+                context: context,
+                labelText: 'Nama Barang',
                 onChanged: (value) =>
                     controller.onTextChange(value, 'productName'),
-                validator: (value) => controller.productNameValidator(value!),
+                validator: (value) => controller.fieldValidator(
+                    value!, 'productName', 'Nama barang tidak boleh kosong'),
                 onFieldSubmitted: (_) => controller.handleSave(foundProduct),
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
                 controller: controller.unitTextC,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Satuan',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
+                context: context,
+                labelText: 'Satuan',
                 onChanged: (value) => controller.onTextChange(value, 'unit'),
-                validator: (value) => controller.productUnitValidator(value!),
+                validator: (value) => controller.fieldValidator(
+                    value!, 'unit', 'Satuan tidak boleh kosong'),
                 onFieldSubmitted: (_) => controller.handleSave(foundProduct),
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                controller: controller.sellPriceTextC,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Harga Jual',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                  prefixText: 'Rp. ',
-                  prefixStyle: context.textTheme.bodyLarge,
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
-                ],
-                onChanged: (value) =>
-                    controller.onCurrencyChanged(value, 'sell'),
-                validator: (value) => controller.sellValidator(value!),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
                 controller: controller.costPriceTextC,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Harga Modal',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                  prefixText: 'Rp. ',
-                  prefixStyle: context.textTheme.bodyLarge,
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
-                ],
+                context: context,
+                labelText: 'Harga Modal',
+                prefixText: 'Rp. ',
                 onChanged: (value) =>
                     controller.onCurrencyChanged(value, 'cost'),
-                validator: (value) => controller.costValidator(value!),
+                validator: (value) => controller.fieldValidator(
+                    value!, 'cost', 'Harga modal tidak boleh kosong'),
                 onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+                isCurrency: true,
               ),
               const SizedBox(height: 20),
-              TextFormField(
+              buildTextFormField(
+                controller: controller.sellPriceTextC1,
+                context: context,
+                labelText: 'Harga Jual 1',
+                prefixText: 'Rp. ',
+                onChanged: (value) =>
+                    controller.onCurrencyChanged(value, 'sell1'),
+                validator: (value) => controller.fieldValidator(
+                    value!, 'sell1', 'Harga jual 1 tidak boleh kosong'),
+                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+                isCurrency: true,
+              ),
+              const SizedBox(height: 20),
+              buildTextFormField(
+                controller: controller.sellPriceTextC2,
+                context: context,
+                labelText: 'Harga Jual 2',
+                prefixText: 'Rp. ',
+                onChanged: (value) =>
+                    controller.onCurrencyChanged(value, 'sell2'),
+                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+                isCurrency: true,
+              ),
+              const SizedBox(height: 20),
+              buildTextFormField(
+                controller: controller.sellPriceTextC3,
+                context: context,
+                labelText: 'Harga Jual 3',
+                prefixText: 'Rp. ',
+                onChanged: (value) =>
+                    controller.onCurrencyChanged(value, 'sell3'),
+                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+                isCurrency: true,
+              ),
+              const SizedBox(height: 20),
+              buildTextFormField(
+                controller: controller.stockTextC,
+                context: context,
+                labelText: 'Stok',
+                onChanged: (value) => controller.onTextChange(value, 'stock'),
+                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+                isNumeric: true,
+              ),
+              const SizedBox(height: 20),
+              buildTextFormField(
                 controller: controller.soldTextC,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Terjual',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
-                ],
+                context: context,
+                labelText: 'Terjual',
                 onChanged: (value) => controller.onTextChange(value, 'sold'),
+                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
+                isNumeric: true,
               ),
             ],
           ),
@@ -503,6 +492,44 @@ void addEditDialog(BuildContext context, ProductController controller,
         child: const Text('Batal'),
       ),
     ),
+  );
+}
+
+Widget buildTextFormField({
+  required TextEditingController controller,
+  required String labelText,
+  required BuildContext context,
+  required Function(String) onChanged,
+  String? Function(String?)? validator,
+  required Function(String) onFieldSubmitted,
+  String prefixText = '',
+  bool isCurrency = false,
+  bool isNumeric = false,
+}) {
+  return TextFormField(
+    controller: controller,
+    decoration: InputDecoration(
+      border: const OutlineInputBorder(),
+      labelText: labelText,
+      labelStyle: const TextStyle(color: Colors.grey),
+      floatingLabelStyle:
+          TextStyle(color: Theme.of(context).colorScheme.primary),
+      focusedErrorBorder:
+          const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+      errorBorder:
+          const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+      prefixText: prefixText,
+      prefixStyle: prefixText.isNotEmpty ? const TextStyle() : null,
+    ),
+    keyboardType: isNumeric || isCurrency
+        ? const TextInputType.numberWithOptions(decimal: true)
+        : TextInputType.text,
+    inputFormatters: isNumeric || isCurrency
+        ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))]
+        : [],
+    onChanged: onChanged,
+    validator: validator,
+    onFieldSubmitted: onFieldSubmitted,
   );
 }
 
