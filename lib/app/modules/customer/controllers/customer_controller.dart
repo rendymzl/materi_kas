@@ -229,7 +229,6 @@ class CustomerController extends GetxController {
         phone: phoneController.text,
         address: addressController.text,
         createdAt: Timestamp.now(),
-        uuid: authService.uid.value,
       );
       Map<String, Map<String, dynamic>> customersMap = {};
       String newCustomerId = await customerServices.getId();

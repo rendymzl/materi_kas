@@ -28,6 +28,8 @@ class HomeController extends GetxController {
   final purchaseList = <Cart>[].obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
+  final currency = NumberFormat('#,##0', 'id_ID');
+
   @override
   void onInit() {
     super.onInit();
@@ -218,8 +220,12 @@ class HomeController extends GetxController {
 
   //* calculating
   final moneyChange = 0.obs;
-  final totalPrice = 0.obs;
+  final totalBill = 0.obs;
   final totalDiscount = 0.obs;
+  final isCash = true.obs;
+  final cash = 0.obs;
+  final transfer = 0.obs;
+  final totalPay = 0.obs;
 
   Timer? debounce;
 
@@ -306,7 +312,9 @@ class HomeController extends GetxController {
     // invoiceId.value = await generateInvoice(selectedCustomer.value);
     final payment =
         pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
-    final change = moneyChange.value - totalPrice.value;
+
+    isCash.value ? cash.value = payment : transfer.value = payment;
+
     late final Customer customer;
     DateTime dateTime = DateTime(
       selectedDate.value.year,
@@ -336,15 +344,23 @@ class HomeController extends GetxController {
       );
     }
 
+    totalPay.value = cash.value + transfer.value;
+    bool isDebt = totalPay.value < totalBill.value;
+    int debt = isDebt ? totalBill.value - totalPay.value : 0;
+
     final invoice = Invoice(
       invoiceId: await generateInvoice(selectedCustomer.value),
       createdAt: timestampDateTime,
       customer: customer,
       cartList: CartList(purchaseCart: purchaseList),
-      bill: totalPrice.value,
-      pay: payment,
-      change: change,
-      isPaid: change >= 0,
+      payment: Payment(
+        totalBill: totalBill.value,
+        totalDiscount: totalDiscount.value,
+        cash: cash.value,
+        transfer: transfer.value,
+        totalPay: totalPay.value,
+        debt: debt,
+      ),
       uuid: authService.uid.value,
     );
 
@@ -369,8 +385,11 @@ class HomeController extends GetxController {
               purchaseList.clear();
               pay.text = '';
               moneyChange.value = 0;
-              totalPrice.value = 0;
+              totalBill.value = 0;
               totalDiscount.value = 0;
+              cash.value = 0;
+              transfer.value = 0;
+              totalPay.value = 0;
 
               customerNameController.text = '';
               customerPhoneController.text = '';
@@ -426,7 +445,7 @@ class HomeController extends GetxController {
               customerPhoneController.text == '' ||
               customerAddressController.text == '')
           ? validate('Customer')
-          : change < 0
+          : moneyChange.value < 0
               ? validate('debt')
               : success();
     } on PostgrestException catch (e) {

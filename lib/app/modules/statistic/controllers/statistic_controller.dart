@@ -292,8 +292,10 @@ class StatisticController extends GetxController {
 
         totalSellPrice += sellPrice;
         totalCostPrice += costPrice;
-        totalProfit += invoice.bill! - costPrice;
-        totalPaid += invoice.isPaid! ? invoice.bill! : invoice.pay!;
+        totalProfit += invoice.payment!.totalBill! - costPrice;
+        totalPaid += invoice.payment!.debt! > 0
+            ? invoice.payment!.totalBill!
+            : invoice.payment!.totalPay!;
       }
 
       if (isCurrentSelected) {

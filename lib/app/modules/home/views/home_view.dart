@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../data/models/cart_model.dart';
 // import '../../../data/models/customer_model.dart';
 import '../../../widget/customer_input_field_widget.dart';
+import '../../../widget/properties_row_widget.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/home_controller.dart';
 
@@ -146,7 +147,7 @@ class ProductListCard extends StatelessWidget {
                           style: context.textTheme.titleLarge,
                         ),
                         trailing: Text(
-                          'Rp. ${controller.numberFormat.format(foundProducts.sellPrice)}',
+                          'Rp. ${controller.numberFormat.format(foundProducts.sellPrice1)}',
                           style: const TextStyle(fontSize: 14),
                         ),
                         onTap: () => controller.addToCart(foundProducts),
@@ -357,15 +358,15 @@ class SelectedProductCard extends StatelessWidget {
               child: Obx(
                 () {
                   final cartList = controller.purchaseList;
-                  controller.totalPrice.value = 0;
+                  controller.totalBill.value = 0;
                   controller.totalDiscount.value = 0;
-                  for (var item in cartList) {
-                    controller.totalPrice.value +=
-                        (item.product!.sellPrice! * item.quantity! -
-                            item.individualDiscount!);
+                  // for (var item in cartList) {
+                  //   controller.totalBill.value +=
+                  //       (item.product!.sellPrice! * item.quantity! -
+                  //           item.individualDiscount!);
 
-                    controller.totalDiscount.value += item.individualDiscount!;
-                  }
+                  //   controller.totalDiscount.value += item.individualDiscount!;
+                  // }
 
                   TimeOfDay selectedTime = controller.selectedTime.value;
                   DateTime convertedTime = DateTime(
@@ -543,7 +544,6 @@ class SelectedProductCard extends StatelessWidget {
                                             borderRadius: BorderRadius.all(
                                                 Radius.circular(10))),
                                         child: CalculatePrice(
-                                            formatter: formatter,
                                             controller: controller),
                                       ),
                                     ],
@@ -643,7 +643,7 @@ class SelectedProductList extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  flex: 3,
+                  flex: 6,
                   child: SizedBox(
                     child: Row(
                       children: [
@@ -727,6 +727,7 @@ class QuantityTextField extends StatelessWidget {
         decoration: InputDecoration(
           prefixText: 'x',
           counterText: '',
+          suffixText: '${productCart.product!.unit}',
           filled: true,
           fillColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
           contentPadding: const EdgeInsets.all(10),
@@ -787,12 +788,10 @@ class DiscountTextfield extends StatelessWidget {
 class CalculatePrice extends StatelessWidget {
   const CalculatePrice({
     super.key,
-    required this.formatter,
     required this.controller,
   });
 
   final HomeController controller;
-  final NumberFormat formatter;
 
   @override
   Widget build(BuildContext context) {
@@ -807,14 +806,27 @@ class CalculatePrice extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  PropertiesRowWidget(
+                    title:
+                        'Total Harga (${controller.purchaseList.length} Barang)',
+                    value: controller.currency.format(
+                        controller.totalBill.value +
+                            controller.totalDiscount.value),
+                  ),
+                  if (controller.totalDiscount.value > 0)
+                    PropertiesRowWidget(
+                      title: 'Total Diskon',
+                      value:
+                          '-${controller.currency.format(controller.totalDiscount.value)}',
+                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       const SizedBox(
-                        width: 150,
-                        child: Text('TAGIHAN:',
+                        width: 200,
+                        child: Text('Total Belanja:',
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                             )),
                       ),
@@ -824,14 +836,14 @@ class CalculatePrice extends StatelessWidget {
                           children: [
                             if (controller.totalDiscount.value > 0)
                               Text(
-                                'Rp.${formatter.format(controller.totalDiscount.value + controller.totalPrice.value)}',
+                                'Rp${controller.currency.format(controller.totalDiscount.value + controller.totalBill.value)}',
                                 style: context.textTheme.bodySmall!.copyWith(
                                     fontStyle: FontStyle.italic,
                                     decoration: TextDecoration.lineThrough),
                               ),
                             const SizedBox(width: 16),
                             Text(
-                              'Rp.${formatter.format(controller.totalPrice.value)}',
+                              'Rp${controller.currency.format(controller.totalBill.value)}',
                               style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
@@ -888,7 +900,7 @@ class CalculatePrice extends StatelessWidget {
                   Obx(
                     () {
                       int change = controller.moneyChange.value -
-                          controller.totalPrice.value;
+                          controller.totalBill.value;
                       // String formattedChange =
                       //     change > 0 ? formatter.format(change) : '0';
                       return Row(
@@ -918,7 +930,7 @@ class CalculatePrice extends StatelessWidget {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 3),
                                   child: Text(
-                                    formatter.format(change),
+                                    controller.currency.format(change),
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -939,7 +951,7 @@ class CalculatePrice extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton(
                             onPressed: () async {
-                              if (controller.totalPrice > 0) {
+                              if (controller.totalBill > 0) {
                                 await controller.saveInvoice();
                               } else {
                                 Get.defaultDialog(

@@ -7,16 +7,17 @@ class Customer {
   String? name;
   String? phone;
   String? address;
-  late String uuid;
+  // late String uuid;
 
-  Customer(
-      {this.id,
-      this.customerId,
-      this.createdAt,
-      this.name,
-      this.phone,
-      this.address,
-      required this.uuid});
+  Customer({
+    this.id,
+    this.customerId,
+    this.createdAt,
+    this.name,
+    this.phone,
+    this.address,
+    // required this.uuid,
+  });
 
   Customer.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -25,7 +26,7 @@ class Customer {
     name = json['name'];
     phone = json['phone'];
     address = json['address'];
-    uuid = json['owner_id'];
+    // uuid = json['owner_id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -36,7 +37,7 @@ class Customer {
     data['name'] = name;
     data['phone'] = phone;
     data['address'] = address;
-    data['owner_id'] = uuid;
+    // data['owner_id'] = uuid;
     return data;
   }
 }

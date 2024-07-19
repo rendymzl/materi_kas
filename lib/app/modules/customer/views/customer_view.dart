@@ -60,7 +60,6 @@ class CustomerView extends GetView<CustomerController> {
                                         name: '',
                                         phone: '',
                                         address: '',
-                                        uuid: '',
                                       ),
                                     );
                                     addEditDialog(context, controller, null,

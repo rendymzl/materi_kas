@@ -7,11 +7,12 @@ class Product {
   bool? featured;
   String? productName;
   String? unit;
-  int? sellPrice;
-  int? costPrice;
-  int? sold;
+  double? costPrice;
+  double? sellPrice1;
+  double? sellPrice2;
+  double? sellPrice3;
   int? stock;
-  String? uuid;
+  int? sold;
 
   Product({
     this.id,
@@ -20,11 +21,12 @@ class Product {
     this.featured,
     this.productName,
     this.unit,
-    this.sellPrice,
     this.costPrice,
-    this.sold,
+    this.sellPrice1,
+    this.sellPrice2,
+    this.sellPrice3,
     this.stock,
-    this.uuid,
+    this.sold,
   });
 
   Product.fromJson(Map<String, dynamic> json)
@@ -34,11 +36,12 @@ class Product {
         featured = json['featured'],
         productName = json['product_name'],
         unit = json['unit'],
-        sellPrice = json['sell_price'],
         costPrice = json['cost_price'],
-        sold = json['sold'],
+        sellPrice1 = json['sell_price1'],
+        sellPrice2 = json['sell_price2'],
+        sellPrice3 = json['sell_price3'],
         stock = json['stock'],
-        uuid = json['owner_id'];
+        sold = json['sold'];
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -47,10 +50,24 @@ class Product {
         'featured': featured,
         'product_name': productName,
         'unit': unit,
-        'sell_price': sellPrice,
         'cost_price': costPrice,
-        'sold': sold,
+        'sell_price1': sellPrice1,
+        'sell_price2': sellPrice2,
+        'sell_price3': sellPrice3,
         'stock': stock,
-        'owner_id': uuid,
+        'sold': sold,
       };
+
+  double getPrice(int priceType) {
+    switch (priceType) {
+      case 1:
+        return sellPrice1 ?? 0;
+      case 2:
+        return sellPrice2 ?? 0;
+      case 3:
+        return sellPrice3 ?? 0;
+      default:
+        return sellPrice1 ?? 0;
+    }
+  }
 }
