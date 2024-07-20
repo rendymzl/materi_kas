@@ -117,7 +117,7 @@ class Invoice {
     return purchaseList.fold(
         0,
         (prev, item) =>
-            prev + (item.individualDiscount ?? 0) * (item.quantity ?? 0));
+            prev + (item.individualDiscount.value) * (item.quantity.value));
   }
 
   double get totalDiscount {

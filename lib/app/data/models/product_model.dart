@@ -1,28 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product {
-  String? id;
-  String? productId;
+  String id;
+  String productId;
   Timestamp? createdAt;
   bool? featured;
-  String? productName;
-  String? unit;
-  double? costPrice;
-  double? sellPrice1;
+  String productName;
+  String unit;
+  double costPrice;
+  double sellPrice1;
   double? sellPrice2;
   double? sellPrice3;
   int? stock;
   int? sold;
 
   Product({
-    this.id,
-    this.productId,
+    required this.id,
+    required this.productId,
     this.createdAt,
     this.featured,
-    this.productName,
-    this.unit,
-    this.costPrice,
-    this.sellPrice1,
+    required this.productName,
+    required this.unit,
+    required this.costPrice,
+    required this.sellPrice1,
     this.sellPrice2,
     this.sellPrice3,
     this.stock,
@@ -61,13 +61,13 @@ class Product {
   double getPrice(int priceType) {
     switch (priceType) {
       case 1:
-        return sellPrice1 ?? 0;
+        return sellPrice1;
       case 2:
         return sellPrice2 ?? 0;
       case 3:
         return sellPrice3 ?? 0;
       default:
-        return sellPrice1 ?? 0;
+        return sellPrice1;
     }
   }
 }

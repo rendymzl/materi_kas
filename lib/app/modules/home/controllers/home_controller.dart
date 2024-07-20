@@ -27,10 +27,13 @@ class HomeController extends GetxController {
   late final foundProducts = productService.foundProducts;
   late final invoices = invoiceServices.invoices;
   // final cart = <Cart>[].obs;
-  final cart = Cart(items: []).obs;
+  final cart = Cart(items: <CartItem>[].obs).obs;
+  final priceType = 1.obs;
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
   final currency = NumberFormat('#,##0', 'id_ID');
+
+  // final reload = 0.obs;
 
   @override
   void onInit() {
@@ -45,9 +48,6 @@ class HomeController extends GetxController {
   late ScrollController scrollController = ScrollController();
 
   void addToCart(Product product) async {
-    // int index = cart.indexWhere(
-    //     (selectItem) => selectItem.product?.productId == product.productId);
-
     // if (index != -1) {
     //   Cart productCart = Cart(
     //       product: product,
@@ -57,13 +57,6 @@ class HomeController extends GetxController {
 
     //   cart.replaceRange(index, index + 1, [productCart]);
 
-    //   Future.delayed(const Duration(milliseconds: 1), () {
-    //     scrollController.animateTo(
-    //       index * 80.0,
-    //       duration: const Duration(milliseconds: 200),
-    //       curve: Curves.easeInOut,
-    //     );
-    //   });
     // } else {
     //   Cart productCart = Cart(
     //       product: product,
@@ -73,25 +66,39 @@ class HomeController extends GetxController {
 
     //   cart.add(productCart);
 
-    CartItem newItem = CartItem(product: product);
+    CartItem newItem = CartItem(product: product, quantity: 1);
 
-    cart.value.addItem(newItem)
+    cart.value.addItem(newItem);
 
-      Future.delayed(const Duration(milliseconds: 10), () {
-        if (scrollController.hasClients) {
-          scrollController.animateTo(
-            scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-    }
+    int index = cart.value.items
+        .indexWhere((selectItem) => selectItem.product.id == product.id);
+
+    debugPrint(index.toString());
+    Future.delayed(const Duration(milliseconds: 50), () {
+      scrollController.animateTo(
+        index * 80.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeInOut,
+      );
+    });
+
+    totalBill.value = cart.value.getTotal(priceType.value).toInt();
+    // Future.delayed(const Duration(milliseconds: 10), () {
+    //   if (scrollController.hasClients) {
+    //     scrollController.animateTo(
+    //       scrollController.position.maxScrollExtent,
+    //       duration: const Duration(milliseconds: 200),
+    //       curve: Curves.easeInOut,
+    //     );
+    //   }
+    // });
+
+    // }
   }
 
-  void removeFromCart(Cart productCart) {
-    productCart.quantity = 1;
-    cart.remove(productCart);
+  void removeFromCart(String productCart) {
+    cart.value.removeItem(productCart);
+    totalBill.value = cart.value.getTotal(priceType.value).toInt();
   }
 
   //! dateTime
@@ -158,6 +165,19 @@ class HomeController extends GetxController {
     selectedTime.value = TimeOfDay.now();
   }
 
+  void priceTypeHandle(int type) async {
+    isDateTimeNow.value = !isDateTimeNow.value;
+    if (!isDateTimeNow.value) {
+      displayDate.value = '';
+      displayTime.value = '';
+    } else {
+      displayDate.value = DateTime.now().toString();
+      displayTime.value = TimeOfDay.now().toString();
+    }
+    selectedDate.value = DateTime.now();
+    selectedTime.value = TimeOfDay.now();
+  }
+
   //! delete
   destroyHandle(Invoice invoice) async {
     try {
@@ -190,19 +210,24 @@ class HomeController extends GetxController {
 
   //! MoneyHandle
   //* quantity
-  void quantityHandle(Cart productCart, String qty) {
-    int index = cart.indexWhere((selectItem) =>
-        selectItem.product?.productId == productCart.product?.productId);
-
-    int qtyParse = qty == '' ? 0 : int.parse(qty);
-    productCart.quantity = qtyParse;
-    cart.replaceRange(index, index + 1, [productCart]);
+  void quantityHandle(String productId, String quantity) {
+    int qty = int.tryParse(quantity) ?? 0;
+    cart.value.updateQuantity(productId, qty);
+    totalBill.value = cart.value.getTotal(priceType.value).toInt();
   }
+  // void quantityHandle(Cart productCart, String qty) {
+  //   int index = cart.indexWhere((selectItem) =>
+  //       selectItem.product?.productId == productCart.product?.productId);
+
+  //   int qtyParse = qty == '' ? 0 : int.parse(qty);
+  //   productCart.quantity = qtyParse;
+  //   cart.replaceRange(index, index + 1, [productCart]);
+  // }
 
   //* discount
   final pay = TextEditingController();
   final numberFormat = NumberFormat("#,##0", "id_ID");
-  void discountHandle(Cart productCart,
+  void discountHandle(String productId,
       TextEditingController discountController, String value) {
     if (value.isNotEmpty) {
       String newValue =
@@ -215,12 +240,18 @@ class HomeController extends GetxController {
       }
     }
 
-    int index = cart.indexWhere((selectItem) =>
-        selectItem.product?.productId == productCart.product?.productId);
+    int valueInt = value == '' ? 0 : int.parse(value);
 
-    int discountParse = value == '' ? 0 : int.parse(value);
-    productCart.individualDiscount = discountParse;
-    cart.replaceRange(index, index + 1, [productCart]);
+    cart.value.updateDiscount(productId, valueInt);
+    totalDiscount.value = cart.value.getTotalIndividualDiscount().toInt();
+    totalBill.value = cart.value.getTotal(priceType.value).toInt();
+
+    // int index = cart.indexWhere((selectItem) =>
+    //     selectItem.product?.productId == productCart.product?.productId);
+
+    // int discountParse = value == '' ? 0 : int.parse(value);
+    // productCart.individualDiscount = discountParse;
+    // cart.replaceRange(index, index + 1, [productCart]);
   }
 
   //* calculating
@@ -313,157 +344,157 @@ class HomeController extends GetxController {
     return invoiceNumber;
   }
 
-  Future saveInvoice() async {
-    // invoiceId.value = await generateInvoice(selectedCustomer.value);
-    final payment =
-        pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
+  // Future saveInvoice() async {
+  //   // invoiceId.value = await generateInvoice(selectedCustomer.value);
+  //   final payment =
+  //       pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
 
-    isCash.value ? cash.value = payment : transfer.value = payment;
+  //   isCash.value ? cash.value = payment : transfer.value = payment;
 
-    late final Customer customer;
-    DateTime dateTime = DateTime(
-      selectedDate.value.year,
-      selectedDate.value.month,
-      selectedDate.value.day,
-      selectedTime.value.hour,
-      selectedTime.value.minute,
-    );
+  //   late final Customer customer;
+  //   DateTime dateTime = DateTime(
+  //     selectedDate.value.year,
+  //     selectedDate.value.month,
+  //     selectedDate.value.day,
+  //     selectedTime.value.hour,
+  //     selectedTime.value.minute,
+  //   );
 
-    Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
+  //   Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
 
-    if (selectedCustomer.value != null) {
-      customer = Customer(
-        id: selectedCustomer.value!.id,
-        customerId: selectedCustomer.value!.customerId,
-        name: selectedCustomer.value!.name,
-        phone: selectedCustomer.value!.phone,
-        address: selectedCustomer.value!.address,
-        uuid: selectedCustomer.value!.uuid,
-      );
-    } else {
-      customer = Customer(
-        name: customerNameController.text,
-        phone: customerPhoneController.text,
-        address: customerAddressController.text,
-        uuid: authService.uid.value,
-      );
-    }
+  //   if (selectedCustomer.value != null) {
+  //     customer = Customer(
+  //       id: selectedCustomer.value!.id,
+  //       customerId: selectedCustomer.value!.customerId,
+  //       name: selectedCustomer.value!.name,
+  //       phone: selectedCustomer.value!.phone,
+  //       address: selectedCustomer.value!.address,
+  //       // uuid: selectedCustomer.value!.uuid,
+  //     );
+  //   } else {
+  //     customer = Customer(
+  //       name: customerNameController.text,
+  //       phone: customerPhoneController.text,
+  //       address: customerAddressController.text,
+  //       // uuid: authService.uid.value,
+  //     );
+  //   }
 
-    totalPay.value = cash.value + transfer.value;
-    bool isDebt = totalPay.value < totalBill.value;
-    int debt = isDebt ? totalBill.value - totalPay.value : 0;
+  //   totalPay.value = cash.value + transfer.value;
+  //   bool isDebt = totalPay.value < totalBill.value;
+  //   int debt = isDebt ? totalBill.value - totalPay.value : 0;
 
-    final invoice = Invoice(
-      invoiceId: await generateInvoice(selectedCustomer.value),
-      createdAt: timestampDateTime,
-      customer: customer,
-      cartList: CartList(purchaseCart: cart),
-      payment: Payment(
-        totalBill: totalBill.value,
-        totalDiscount: totalDiscount.value,
-        cash: cash.value,
-        transfer: transfer.value,
-        totalPay: totalPay.value,
-        debt: debt,
-      ),
-      uuid: authService.uid.value,
-    );
+  //   final invoice = Invoice(
+  //     invoiceId: await generateInvoice(selectedCustomer.value),
+  //     createdAt: timestampDateTime,
+  //     customer: customer,
+  //     cartList: CartList(purchaseCart: cart),
+  //     payment: Payment(
+  //       totalBill: totalBill.value,
+  //       totalDiscount: totalDiscount.value,
+  //       cash: cash.value,
+  //       transfer: transfer.value,
+  //       totalPay: totalPay.value,
+  //       debt: debt,
+  //     ),
+  //     // uuid: authService.uid.value,
+  //   );
 
-    Future success() async {
-      Map<String, Map<String, dynamic>> invoicesMap = {};
-      String newInvioceId = await productService.getId();
-      invoice.id = newInvioceId;
-      invoicesMap[newInvioceId] = invoice.toJson();
-      Get.defaultDialog(
-        title: 'Menyimpan Invoice...',
-        content: const CircularProgressIndicator(),
-        barrierDismissible: false,
-      );
-      try {
-        await invoiceServices.addInvoices(invoicesMap);
-        Get.back();
-        return Get.defaultDialog(
-          title: 'Berhasil',
-          middleText: 'Invoice berhasil disimpan.',
-          confirm: TextButton(
-            onPressed: () {
-              cart.clear();
-              pay.text = '';
-              moneyChange.value = 0;
-              totalBill.value = 0;
-              totalDiscount.value = 0;
-              cash.value = 0;
-              transfer.value = 0;
-              totalPay.value = 0;
+  //   Future success() async {
+  //     Map<String, Map<String, dynamic>> invoicesMap = {};
+  //     String newInvioceId = await productService.getId();
+  //     invoice.id = newInvioceId;
+  //     invoicesMap[newInvioceId] = invoice.toJson();
+  //     Get.defaultDialog(
+  //       title: 'Menyimpan Invoice...',
+  //       content: const CircularProgressIndicator(),
+  //       barrierDismissible: false,
+  //     );
+  //     try {
+  //       await invoiceServices.addInvoices(invoicesMap);
+  //       Get.back();
+  //       return Get.defaultDialog(
+  //         title: 'Berhasil',
+  //         middleText: 'Invoice berhasil disimpan.',
+  //         confirm: TextButton(
+  //           onPressed: () {
+  //             cart.clear();
+  //             pay.text = '';
+  //             moneyChange.value = 0;
+  //             totalBill.value = 0;
+  //             totalDiscount.value = 0;
+  //             cash.value = 0;
+  //             transfer.value = 0;
+  //             totalPay.value = 0;
 
-              customerNameController.text = '';
-              customerPhoneController.text = '';
-              customerAddressController.text = '';
+  //             customerNameController.text = '';
+  //             customerPhoneController.text = '';
+  //             customerAddressController.text = '';
 
-              displayDate.value = DateTime.now().toString();
-              displayTime.value = TimeOfDay.now().toString();
+  //             displayDate.value = DateTime.now().toString();
+  //             displayTime.value = TimeOfDay.now().toString();
 
-              selectedDate.value = DateTime.now();
-              selectedTime.value = TimeOfDay.now();
-              Get.back();
-            },
-            child: const Text('OK'),
-          ),
-        );
-      } catch (e) {
-        Get.back();
-        Get.defaultDialog(
-          title: 'Gagal Menyimpan Invoice!',
-          middleText: e.toString(),
-          barrierDismissible: false,
-        );
-      }
-    }
+  //             selectedDate.value = DateTime.now();
+  //             selectedTime.value = TimeOfDay.now();
+  //             Get.back();
+  //           },
+  //           child: const Text('OK'),
+  //         ),
+  //       );
+  //     } catch (e) {
+  //       Get.back();
+  //       Get.defaultDialog(
+  //         title: 'Gagal Menyimpan Invoice!',
+  //         middleText: e.toString(),
+  //         barrierDismissible: false,
+  //       );
+  //     }
+  //   }
 
-    Future validate(String validateCode) async {
-      Get.defaultDialog(
-        title: 'Ups',
-        middleText: validateCode == 'debt'
-            ? 'Total tagihan belum terpenuhi. lanjutkan?'
-            : 'Data Customer tidak lengkap. lanjutkan?',
-        confirm: TextButton(
-          onPressed: () async {
-            await success();
-            Get.back();
-          },
-          child: const Text('Simpan'),
-        ),
-        cancel: TextButton(
-          onPressed: () {
-            Get.back();
-          },
-          child: Text(
-            'Batal',
-            style: TextStyle(color: Colors.black.withOpacity(0.5)),
-          ),
-        ),
-      );
-    }
+  //   Future validate(String validateCode) async {
+  //     Get.defaultDialog(
+  //       title: 'Ups',
+  //       middleText: validateCode == 'debt'
+  //           ? 'Total tagihan belum terpenuhi. lanjutkan?'
+  //           : 'Data Customer tidak lengkap. lanjutkan?',
+  //       confirm: TextButton(
+  //         onPressed: () async {
+  //           await success();
+  //           Get.back();
+  //         },
+  //         child: const Text('Simpan'),
+  //       ),
+  //       cancel: TextButton(
+  //         onPressed: () {
+  //           Get.back();
+  //         },
+  //         child: Text(
+  //           'Batal',
+  //           style: TextStyle(color: Colors.black.withOpacity(0.5)),
+  //         ),
+  //       ),
+  //     );
+  //   }
 
-    try {
-      (customerNameController.text == '' ||
-              customerPhoneController.text == '' ||
-              customerAddressController.text == '')
-          ? validate('Customer')
-          : moneyChange.value < 0
-              ? validate('debt')
-              : success();
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
-  }
+  //   try {
+  //     (customerNameController.text == '' ||
+  //             customerPhoneController.text == '' ||
+  //             customerAddressController.text == '')
+  //         ? validate('Customer')
+  //         : moneyChange.value < 0
+  //             ? validate('debt')
+  //             : success();
+  //   } on PostgrestException catch (e) {
+  //     Get.defaultDialog(
+  //       title: 'Error',
+  //       middleText: e.message,
+  //       confirm: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   }
+  // }
 
   Future<void> signOut() async {
     await authService.signOut();

@@ -72,6 +72,7 @@ class ProductView extends GetView<ProductController> {
                                   onPressed: () {
                                     controller.bindingEditData(
                                       Product(
+                                        id: '',
                                         productId:
                                             controller.getNumberAfterChar(),
                                         productName: '',
@@ -176,7 +177,7 @@ class TableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: SizedBox(
-        width: 50,
+        width: 100,
         child: Text(
           'Kode',
           style: context.textTheme.headlineSmall,
@@ -185,7 +186,7 @@ class TableHeader extends StatelessWidget {
       title: Row(
         children: [
           Expanded(
-            flex: 11,
+            flex: 10,
             child: SizedBox(
               child: Text(
                 'Nama Barang',
@@ -194,16 +195,7 @@ class TableHeader extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 4,
-            child: SizedBox(
-              child: Text(
-                'Harga Jual',
-                style: context.textTheme.headlineSmall,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 4,
+            flex: 5,
             child: SizedBox(
               child: Text(
                 'Harga Modal',
@@ -212,19 +204,47 @@ class TableHeader extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 4,
+            flex: 5,
             child: SizedBox(
               child: Text(
-                'Selisih',
+                'Harga Jual 1',
                 style: context.textTheme.headlineSmall,
               ),
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 5,
             child: SizedBox(
               child: Text(
-                'Terjual',
+                'Harga Jual 2',
+                style: context.textTheme.headlineSmall,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: SizedBox(
+              child: Text(
+                'Harga Jual 3',
+                style: context.textTheme.headlineSmall,
+              ),
+            ),
+          ),
+          // Expanded(
+          //   flex: 4,
+          //   child: Container(
+          // color: Colors.amber,
+          //     child: Text(
+          //       'Selisih',
+          //       style: context.textTheme.headlineSmall,
+          //     ),
+          //   ),
+          // ),
+          Expanded(
+            flex: 4,
+            child: SizedBox(
+              child: Text(
+                'Stok',
                 style: context.textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
@@ -257,35 +277,25 @@ class TableContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: SizedBox(
-        width: 50,
+        width: 100,
         child: Text(
-          foundProduct.productId!,
+          foundProduct.productId,
           style: context.textTheme.bodySmall,
         ),
       ),
       title: Row(
         children: [
           Expanded(
-            flex: 11,
-            child: Container(
-              padding: const EdgeInsets.only(right: 30),
-              child: Text(
-                '${foundProduct.productName}',
-                style: context.textTheme.titleMedium,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 4,
+            flex: 10,
             child: SizedBox(
               child: Text(
-                'Rp. ${formatter.format(foundProduct.sellPrice1)}',
+                foundProduct.productName,
                 style: context.textTheme.titleMedium,
               ),
             ),
           ),
           Expanded(
-            flex: 4,
+            flex: 5,
             child: SizedBox(
               child: Text(
                 'Rp. ${formatter.format(foundProduct.costPrice)}',
@@ -294,27 +304,75 @@ class TableContent extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 4,
-            child: SizedBox(
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Rp. ${formatter.format(foundProduct.sellPrice1! - foundProduct.costPrice!)}',
-                  style: context.textTheme.titleLarge!
-                      .copyWith(color: Colors.white),
-                ),
+            flex: 5,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green[600],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Rp. ${formatter.format(foundProduct.sellPrice1)}',
+                style:
+                    context.textTheme.titleLarge!.copyWith(color: Colors.white),
               ),
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 5,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green[500],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Rp. ${formatter.format(foundProduct.sellPrice2)}',
+                style:
+                    context.textTheme.titleLarge!.copyWith(color: Colors.white),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green[400],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Rp. ${formatter.format(foundProduct.sellPrice3)}',
+                style:
+                    context.textTheme.titleLarge!.copyWith(color: Colors.white),
+              ),
+            ),
+          ),
+          // Expanded(
+          //   flex: 4,
+          //   child: SizedBox(
+          //     child: Container(
+          //       padding: const EdgeInsets.all(8),
+          //       decoration: BoxDecoration(
+          //         color: Theme.of(context).colorScheme.primary,
+          //         borderRadius: BorderRadius.circular(10),
+          //       ),
+          //       child: Text(
+          //         'Rp. ${formatter.format(foundProduct.sellPrice1 - foundProduct.costPrice)}',
+          //         style: context.textTheme.titleLarge!
+          //             .copyWith(color: Colors.white),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          Expanded(
+            flex: 4,
             child: SizedBox(
               child: Text(
-                '${foundProduct.sold}',
+                '${foundProduct.stock}',
                 style: context.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
@@ -414,39 +472,52 @@ void addEditDialog(BuildContext context, ProductController controller,
                 isCurrency: true,
               ),
               const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.sellPriceTextC1,
-                context: context,
-                labelText: 'Harga Jual 1',
-                prefixText: 'Rp. ',
-                onChanged: (value) =>
-                    controller.onCurrencyChanged(value, 'sell1'),
-                validator: (value) => controller.fieldValidator(
-                    value!, 'sell1', 'Harga jual 1 tidak boleh kosong'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-                isCurrency: true,
-              ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.sellPriceTextC2,
-                context: context,
-                labelText: 'Harga Jual 2',
-                prefixText: 'Rp. ',
-                onChanged: (value) =>
-                    controller.onCurrencyChanged(value, 'sell2'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-                isCurrency: true,
-              ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.sellPriceTextC3,
-                context: context,
-                labelText: 'Harga Jual 3',
-                prefixText: 'Rp. ',
-                onChanged: (value) =>
-                    controller.onCurrencyChanged(value, 'sell3'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-                isCurrency: true,
+              Row(
+                children: [
+                  Expanded(
+                    child: buildTextFormField(
+                      controller: controller.sellPriceTextC1,
+                      context: context,
+                      labelText: 'Harga Jual 1',
+                      prefixText: 'Rp. ',
+                      onChanged: (value) =>
+                          controller.onCurrencyChanged(value, 'sell1'),
+                      validator: (value) => controller.fieldValidator(
+                          value!, 'sell1', 'Harga jual 1 tidak boleh kosong'),
+                      onFieldSubmitted: (_) =>
+                          controller.handleSave(foundProduct),
+                      isCurrency: true,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: buildTextFormField(
+                      controller: controller.sellPriceTextC2,
+                      context: context,
+                      labelText: 'Harga Jual 2',
+                      prefixText: 'Rp. ',
+                      onChanged: (value) =>
+                          controller.onCurrencyChanged(value, 'sell2'),
+                      onFieldSubmitted: (_) =>
+                          controller.handleSave(foundProduct),
+                      isCurrency: true,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: buildTextFormField(
+                      controller: controller.sellPriceTextC3,
+                      context: context,
+                      labelText: 'Harga Jual 3',
+                      prefixText: 'Rp. ',
+                      onChanged: (value) =>
+                          controller.onCurrencyChanged(value, 'sell3'),
+                      onFieldSubmitted: (_) =>
+                          controller.handleSave(foundProduct),
+                      isCurrency: true,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               buildTextFormField(

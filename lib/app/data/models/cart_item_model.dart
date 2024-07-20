@@ -1,41 +1,45 @@
+import 'package:get/get.dart';
+import 'package:get/get_rx/get_rx.dart';
 import 'product_model.dart';
 
 class CartItem {
   final Product product;
-  int? quantity;
-  double? individualDiscount;
-  double? bundleDiscount;
+  RxInt quantity;
+  RxDouble individualDiscount;
+  RxDouble bundleDiscount;
 
   CartItem({
     required this.product,
-    required this.quantity,
-    this.individualDiscount = 0,
-    this.bundleDiscount = 0,
-  });
+    required int quantity,
+    double individualDiscount = 0,
+    double bundleDiscount = 0,
+  })  : quantity = quantity.obs,
+        individualDiscount = individualDiscount.obs,
+        bundleDiscount = bundleDiscount.obs;
 
   CartItem.fromJson(Map<String, dynamic> json)
       : product = Product.fromJson(json['product']),
-        quantity = json['quantity'],
-        individualDiscount = json['individual_discount'],
-        bundleDiscount = json['bundle_discount'];
+        quantity = (json['quantity'] as int).obs,
+        individualDiscount = (json['individual_discount'] as double).obs,
+        bundleDiscount = (json['bundle_discount'] as double).obs;
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['product'] = product.toJson();
-    data['quantity'] = quantity;
-    data['individual_discount'] = individualDiscount;
-    data['bundle_discount'] = bundleDiscount;
+    data['quantity'] = quantity.value;
+    data['individual_discount'] = individualDiscount.value;
+    data['bundle_discount'] = bundleDiscount.value;
     return data;
   }
 
   double getPrice(int priceType) {
     switch (priceType) {
       case 1:
-        return product.sellPrice1 ?? 0.0;
+        return product.sellPrice1.toDouble();
       case 2:
-        return product.sellPrice2 ?? 0.0;
+        return product.sellPrice2?.toDouble() ?? 0.0;
       case 3:
-        return product.sellPrice3 ?? 0.0;
+        return product.sellPrice3?.toDouble() ?? 0.0;
       default:
         return 0.0;
     }
@@ -43,28 +47,25 @@ class CartItem {
 
   double getTotal(int priceType) {
     double price = getPrice(priceType);
-    int quantityValue = quantity ?? 0;
-    return price * quantityValue;
+    return price * quantity.value;
   }
 
-  double getTotalDiscount(int priceType) {
-    // double price = getPrice(priceType);
-    int quantityValue = quantity ?? 0;
-    // double totalPrice = price * quantityValue;
+  // double getTotalDiscount() {
+  // double price = getPrice(priceType);
+  // double totalPrice = price * quantity.value;
+  // double totalDiscount = individualDiscount.value * quantity.value;
+  // return totalDiscount;
+  // return individualDiscount.value;
+  // }
 
-    double totalDiscount = (individualDiscount ?? 0) * quantityValue;
-
-    return totalDiscount;
-  }
-
-  double getTotalAfterDiscount(int priceType) {
-    double total = getTotal(priceType);
-    double totalDiscount = getTotalDiscount(priceType);
-    return total - totalDiscount;
-  }
+  // double getTotalAfterDiscount(int priceType) {
+  //   double total = getTotal(priceType);
+  //   double totalDiscount = getTotalDiscount();
+  //   return total - totalDiscount;
+  // }
 
   @override
   String toString() {
-    return 'CartItem(product: $product, quantity: $quantity, individualDiscount: $individualDiscount, bundleDiscount: $bundleDiscount)';
+    return 'CartItem(product: $product, quantity: ${quantity.value}, individualDiscount: ${individualDiscount.value}, bundleDiscount: ${bundleDiscount.value})';
   }
 }

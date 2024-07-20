@@ -1,13 +1,17 @@
+import 'package:get/get.dart';
 import 'cart_item_model.dart';
 
 class Cart {
-  List<CartItem> items;
+  var items = <CartItem>[].obs;
+
+  // List<CartItem> items;
 
   Cart({required this.items});
 
-  Cart.fromJson(Map<String, dynamic> json)
-      : items =
-            (json['items'] as List).map((i) => CartItem.fromJson(i)).toList();
+  Cart.fromJson(Map<String, dynamic> json) {
+    items.value =
+        (json['items'] as List).map((i) => CartItem.fromJson(i)).toList();
+  }
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -19,44 +23,39 @@ class Cart {
     return items.fold(0, (sum, item) => sum + item.getTotal(priceType));
   }
 
-  double getTotalIndividualDiscount(int priceType) {
-    return items.fold(0, (sum, item) => sum + item.getTotalDiscount(priceType));
+  double getTotalIndividualDiscount() {
+    return items.fold(0, (sum, item) => sum + item.individualDiscount.value);
   }
 
   double getTotal(int priceType) {
-    return getSubtotal(priceType) - getTotalIndividualDiscount(priceType);
+    return getSubtotal(priceType) - getTotalIndividualDiscount();
   }
 
   void addItem(CartItem newItem) {
-    final existingItem = items.firstWhere(
-      (item) => item.product.id == newItem.product.id,
-      orElse: () => CartItem(
-        product: newItem.product,
-        quantity: 0,
-        individualDiscount: 0,
-        bundleDiscount: 0,
-      ),
-    );
-
-    if (existingItem.quantity == 0) {
-      // Jika item belum ada, tambahkan item baru
-      items.add(newItem);
+    final existingItem =
+        items.firstWhereOrNull((item) => item.product.id == newItem.product.id);
+    if (existingItem != null) {
+      existingItem.quantity.value += newItem.quantity.value;
+      existingItem.individualDiscount.value = newItem.individualDiscount.value;
+      existingItem.bundleDiscount.value = newItem.bundleDiscount.value;
     } else {
-      // Jika item sudah ada, tambahkan jumlahnya
-      existingItem.quantity =
-          (existingItem.quantity ?? 0) + (newItem.quantity ?? 0);
-      existingItem.individualDiscount = newItem.individualDiscount ?? 0;
-      existingItem.bundleDiscount = newItem.bundleDiscount ?? 0;
+      items.add(newItem);
     }
   }
 
-  void removeItem(String productId) {
-    // Hapus item berdasarkan ID produk
-    items.removeWhere((item) => item.product.id == productId);
+  void updateQuantity(String productId, int quantity) {
+    final existingItem =
+        items.firstWhere((item) => item.product.id == productId);
+    existingItem.quantity.value = quantity;
   }
 
-  @override
-  String toString() {
-    return 'Cart(items: $items, subtotal: ${getSubtotal(1)}, total: ${getTotal(1)})';
+  void updateDiscount(String productId, int discount) {
+    final existingItem =
+        items.firstWhere((item) => item.product.id == productId);
+    existingItem.individualDiscount.value = discount.toDouble();
+  }
+
+  void removeItem(String productId) {
+    items.removeWhere((item) => item.product.id == productId);
   }
 }

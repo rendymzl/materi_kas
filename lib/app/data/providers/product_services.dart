@@ -30,7 +30,7 @@ class ProductService extends GetxController {
         products.value = productData.values
             .map((productJson) => Product.fromJson(productJson))
             .toList();
-        products.sort((a, b) => a.productName!.compareTo(b.productName!));
+        products.sort((a, b) => a.productName.compareTo(b.productName));
         searchProducts('');
       } else {
         // Handle case where the document does not exist
@@ -70,16 +70,10 @@ class ProductService extends GetxController {
   // }
 
   Future<void> updateProduct(Product newProduct, Product currentProduct) async {
-    // debugPrint(currentProduct.id);
-    if (currentProduct.id == null) {
-      debugPrint('Product ID is null');
-      return;
-    }
-
     try {
       await _productsCollection
           .doc(authService.uid.value)
-          .update({currentProduct.id!: newProduct.toJson()});
+          .update({currentProduct.id: newProduct.toJson()});
       await fetchProducts();
     } catch (e) {
       debugPrint(e.toString());
@@ -119,15 +113,15 @@ class ProductService extends GetxController {
         productsLenght.value = products.length;
 
         productsList.addAll(products);
-        productsList.sort((a, b) => a.productId!.compareTo(b.productId!));
+        productsList.sort((a, b) => a.productId.compareTo(b.productId));
         // List<Product> subList = productsList.take(50).toList();
 
         lastProductCode.value = products.isEmpty
             ? 'Tidak ada barang'
-            : productsList[products.length - 1].productId!;
+            : productsList[products.length - 1].productId;
       } else {
         foundProducts.value = products.where((product) {
-          return product.productName!
+          return product.productName
               .toLowerCase()
               .contains(productName.toLowerCase());
         }).toList();

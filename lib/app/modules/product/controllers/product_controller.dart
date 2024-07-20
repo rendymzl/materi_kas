@@ -214,7 +214,7 @@ class ProductController extends GetxController {
   }
 
   String getNumberAfterChar() {
-    RegExp regExp = RegExp(r'([A-Z])(\d+)');
+    RegExp regExp = RegExp(r'(\D+)(\d+)');
     Match? match = regExp.firstMatch(lastCode.value.toUpperCase());
 
     if (match != null) {
@@ -275,7 +275,7 @@ class ProductController extends GetxController {
         middleText: 'Hapus barang ini?',
         confirm: TextButton(
           onPressed: () async {
-            productService.deleteProduct(product.id!);
+            productService.deleteProduct(product.id);
             Get.back();
           },
           child: const Text('OK'),
@@ -329,14 +329,15 @@ class ProductController extends GetxController {
 
   //! edit form
   void bindingEditData(Product foundProduct) {
-    codeTextC.text = foundProduct.productId ?? '';
-    productNameTextC.text = foundProduct.productName ?? '';
-    unitTextC.text = foundProduct.unit ?? '';
-    costPriceTextC.text = numberFormat.format(foundProduct.costPrice ?? 0.0);
-    sellPriceTextC1.text = numberFormat.format(foundProduct.sellPrice1 ?? 0.0);
+    codeTextC.text = foundProduct.productId;
+    productNameTextC.text = foundProduct.productName;
+    unitTextC.text = foundProduct.unit;
+    costPriceTextC.text = numberFormat.format(foundProduct.costPrice);
+    sellPriceTextC1.text = numberFormat.format(foundProduct.sellPrice1);
     sellPriceTextC2.text = numberFormat.format(foundProduct.sellPrice2 ?? 0.0);
     sellPriceTextC3.text = numberFormat.format(foundProduct.sellPrice3 ?? 0.0);
-    stockTextC.text = foundProduct.stock?.toString() ?? '';
+    stockTextC.text =
+        foundProduct.stock == 0 ? '' : foundProduct.stock?.toString() ?? '';
     soldTextC.text =
         foundProduct.sold == 0 ? '' : foundProduct.sold?.toString() ?? '';
   }
@@ -389,20 +390,27 @@ class ProductController extends GetxController {
       final newProduct = Product(
         id: await productService.getId(),
         productId: codeTextC.text.toUpperCase(),
+        createdAt: Timestamp.now(),
         featured: false,
         productName: productNameTextC.text,
         unit: unitTextC.text,
-        sellPrice1:
-            sellPriceTextC1.text == '' ? 0 : double.parse(sellPriceTextC1.text),
-        sellPrice2:
-            sellPriceTextC2.text == '' ? 0 : double.parse(sellPriceTextC2.text),
-        sellPrice3:
-            sellPriceTextC3.text == '' ? 0 : double.parse(sellPriceTextC3.text),
+        costPrice: costPriceTextC.text == ''
+            ? 0
+            : double.parse(costPriceTextC.text.replaceAll('.', '')),
+        sellPrice1: sellPriceTextC1.text == ''
+            ? 0
+            : double.parse(sellPriceTextC1.text.replaceAll('.', '')),
+        sellPrice2: sellPriceTextC2.text == ''
+            ? 0
+            : double.parse(sellPriceTextC2.text.replaceAll('.', '')),
+        sellPrice3: sellPriceTextC3.text == ''
+            ? 0
+            : double.parse(sellPriceTextC3.text.replaceAll('.', '')),
         stock: stockTextC.text == '' ? 0 : int.parse(stockTextC.text),
         sold: soldTextC.text == '' ? 0 : int.parse(soldTextC.text),
       );
 
-      List existingProduct = checkexistingProduct(newProduct.productId!);
+      List existingProduct = checkexistingProduct(newProduct.productId);
 
       if (currentProduct != null) {
         if (existingProduct.isNotEmpty &&
@@ -416,7 +424,7 @@ class ProductController extends GetxController {
             ),
           );
         } else {
-          newProduct.id = currentProduct.id!.toUpperCase();
+          newProduct.id = currentProduct.id.toUpperCase();
           Get.defaultDialog(
             title: 'Menyimpan Perubahan Barang...',
             content: const CircularProgressIndicator(),
@@ -437,7 +445,7 @@ class ProductController extends GetxController {
             ),
           );
         } else {
-          productsMap[newProduct.id!] = newProduct.toJson();
+          productsMap[newProduct.id] = newProduct.toJson();
           await productService.addProducts(productsMap);
           addSuccessDialog();
         }
