@@ -69,7 +69,7 @@ class HomeView extends GetView<HomeController> {
                 child: Column(
                   children: [
                     Expanded(child: ProductListCard(controller: controller)),
-                    const CustomerInputField(),
+                    // const CustomerInputField(),
                   ],
                 ), //! 1 ProductListCard
               ),
@@ -129,6 +129,11 @@ class ProductListCard extends StatelessWidget {
                   itemCount: controller.foundProducts.length,
                   itemBuilder: (BuildContext context, int index) {
                     final foundProducts = controller.foundProducts[index];
+                    double getPrice =
+                        foundProducts.getPrice(controller.priceType.value);
+                    double sellPrice = getPrice.toInt() != 0
+                        ? getPrice
+                        : foundProducts.sellPrice1;
                     return Container(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
@@ -149,7 +154,7 @@ class ProductListCard extends StatelessWidget {
                           style: context.textTheme.titleLarge,
                         ),
                         trailing: Text(
-                          'Rp. ${controller.numberFormat.format(foundProducts.sellPrice1)}',
+                          'Rp. ${controller.numberFormat.format(sellPrice)}',
                           style: const TextStyle(fontSize: 14),
                         ),
                         onTap: () => controller.addToCart(foundProducts),
@@ -544,221 +549,93 @@ class SelectedProductCard extends StatelessWidget {
                               ),
                             ),
                       cartItems.isNotEmpty
-                          ? SizedBox(
-                              height: 300,
-                              child: Obx(
-                                () => Container(
-                                  color: Colors.red,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          InkWell(
-                                            onTap: () =>
-                                                controller.priceTypeHandle(2),
-                                            child: SizedBox(
-                                              child: Row(
-                                                children: [
-                                                  Checkbox(
-                                                    value: controller
-                                                        .isDateTimeNow.value,
-                                                    onChanged: (value) =>
-                                                        controller
-                                                            .priceTypeHandle(2),
-                                                  ),
-                                                  Text(
-                                                    'Harga masuk gang',
-                                                    style: controller.priceType
-                                                                .value ==
-                                                            2
-                                                        ? context.textTheme
-                                                            .bodySmall!
-                                                            .copyWith(
-                                                                color: Theme.of(
-                                                                        context)
-                                                                    .colorScheme
-                                                                    .primary)
-                                                        : context.textTheme
-                                                            .bodySmall,
-                                                  ),
-                                                ],
-                                              ),
+                          ? Obx(
+                              () => Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                // color: Colors.amber,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        InkWell(
+                                          onTap: () => controller
+                                              .priceTypeHandleCheckBox(2),
+                                          child: SizedBox(
+                                            child: Row(
+                                              children: [
+                                                Checkbox(
+                                                  value: controller
+                                                          .priceType.value ==
+                                                      2,
+                                                  onChanged: (value) => controller
+                                                      .priceTypeHandleCheckBox(
+                                                          2),
+                                                ),
+                                                Text(
+                                                  'Harga masuk gang',
+                                                  style: controller.priceType
+                                                              .value ==
+                                                          2
+                                                      ? context
+                                                          .textTheme.bodySmall!
+                                                          .copyWith(
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .colorScheme
+                                                                  .primary)
+                                                      : context
+                                                          .textTheme.bodySmall,
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          InkWell(
-                                            onTap: () =>
-                                                controller.priceTypeHandle(3),
-                                            child: SizedBox(
-                                              child: Row(
-                                                children: [
-                                                  Checkbox(
-                                                    value: controller
-                                                        .isDateTimeNow.value,
-                                                    onChanged: (value) =>
-                                                        controller
-                                                            .priceTypeHandle(3),
-                                                  ),
-                                                  Text(
-                                                    'Harga grosir',
-                                                    style: controller.priceType
-                                                                .value ==
-                                                            3
-                                                        ? context.textTheme
-                                                            .bodySmall!
-                                                            .copyWith(
-                                                                color: Theme.of(
-                                                                        context)
-                                                                    .colorScheme
-                                                                    .primary)
-                                                        : context.textTheme
-                                                            .bodySmall,
-                                                  ),
-                                                ],
-                                              ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                        InkWell(
+                                          onTap: () => controller
+                                              .priceTypeHandleCheckBox(3),
+                                          child: SizedBox(
+                                            child: Row(
+                                              children: [
+                                                Checkbox(
+                                                  value: controller
+                                                          .priceType.value ==
+                                                      3,
+                                                  onChanged: (value) => controller
+                                                      .priceTypeHandleCheckBox(
+                                                          3),
+                                                ),
+                                                Text(
+                                                  'Harga grosir',
+                                                  style: controller.priceType
+                                                              .value ==
+                                                          3
+                                                      ? context
+                                                          .textTheme.bodySmall!
+                                                          .copyWith(
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .colorScheme
+                                                                  .primary)
+                                                      : context
+                                                          .textTheme.bodySmall,
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          // Row(
-                                          //   children: [
-                                          //     InkWell(
-                                          //       onTap: controller
-                                          //               .isDateTimeNow.value
-                                          //           ? null
-                                          //           : () async => controller
-                                          //               .handleDate(context),
-                                          //       child: Container(
-                                          //         padding: const EdgeInsets
-                                          //             .symmetric(
-                                          //             vertical: 4,
-                                          //             horizontal: 8),
-                                          //         decoration: BoxDecoration(
-                                          //           color: controller
-                                          //                   .isDateTimeNow.value
-                                          //               ? Colors.white
-                                          //               : Theme.of(context)
-                                          //                   .colorScheme
-                                          //                   .primary,
-                                          //           borderRadius:
-                                          //               BorderRadius.circular(
-                                          //                   4),
-                                          //         ),
-                                          //         child: Text(
-                                          //           controller.displayDate
-                                          //                       .value ==
-                                          //                   ''
-                                          //               ? 'Pilih Tanggal'
-                                          //               : DateFormat(
-                                          //                       'dd MMMM y',
-                                          //                       'id')
-                                          //                   .format(controller
-                                          //                       .selectedDate
-                                          //                       .value),
-                                          //           style: controller
-                                          //                   .isDateTimeNow.value
-                                          //               ? context.textTheme
-                                          //                   .bodySmall!
-                                          //                   .copyWith(
-                                          //                   color: Theme.of(
-                                          //                           context)
-                                          //                       .colorScheme
-                                          //                       .primary,
-                                          //                   fontStyle: FontStyle
-                                          //                       .italic,
-                                          //                 )
-                                          //               : const TextStyle(
-                                          //                   color:
-                                          //                       Colors.white),
-                                          //         ),
-                                          //       ),
-                                          //     ),
-                                          //     const SizedBox(width: 20),
-                                          //     InkWell(
-                                          //       onTap: controller
-                                          //               .isDateTimeNow.value
-                                          //           ? null
-                                          //           : () async => controller
-                                          //               .handleTime(context),
-                                          //       child: Container(
-                                          //         padding: const EdgeInsets
-                                          //             .symmetric(
-                                          //             vertical: 4,
-                                          //             horizontal: 8),
-                                          //         decoration: BoxDecoration(
-                                          //           color: controller
-                                          //                   .isDateTimeNow.value
-                                          //               ? Colors.white
-                                          //               : Theme.of(context)
-                                          //                   .colorScheme
-                                          //                   .primary,
-                                          //           borderRadius:
-                                          //               BorderRadius.circular(
-                                          //                   4),
-                                          //         ),
-                                          //         child: Text(
-                                          //           controller.displayTime
-                                          //                       .value ==
-                                          //                   ''
-                                          //               ? 'Pilih Jam'
-                                          //               : DateFormat(
-                                          //                       'HH:mm', 'id')
-                                          //                   .format(
-                                          //                       convertedTime),
-                                          //           style: controller
-                                          //                   .isDateTimeNow.value
-                                          //               ? context.textTheme
-                                          //                   .bodySmall!
-                                          //                   .copyWith(
-                                          //                   color: Theme.of(
-                                          //                           context)
-                                          //                       .colorScheme
-                                          //                       .primary,
-                                          //                   fontStyle: FontStyle
-                                          //                       .italic,
-                                          //                 )
-                                          //               : const TextStyle(
-                                          //                   color:
-                                          //                       Colors.white),
-                                          //         ),
-                                          //       ),
-                                          //     ),
-                                          //   ],
-                                          // ),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            controller.displayName.value
-                                                .toUpperCase(),
-                                            style: context.textTheme.bodySmall!
-                                                .copyWith(
-                                                    fontStyle:
-                                                        FontStyle.italic),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          // Text(
-                                          //   controller.invoiceId.value,
-                                          //   style: context
-                                          //       .textTheme.bodySmall!
-                                          //       .copyWith(
-                                          //           fontStyle:
-                                          //               FontStyle.italic),
-                                          // ),
-                                        ],
-                                      ),
-                                      Container(
-                                        decoration: const BoxDecoration(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(10))),
-                                        child: CalculatePrice(
-                                            controller: controller),
-                                      ),
-                                    ],
-                                  ),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10))),
+                                      child: CalculatePrice(
+                                          controller: controller),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ) //* 2.0 CalculatePrice
@@ -839,6 +716,10 @@ class CartItemWidget extends StatelessWidget {
         qtyTextC.selection = TextSelection.fromPosition(
           TextPosition(offset: qtyTextC.text.length),
         );
+
+        double getPrice = item.getPrice(controller.priceType.value);
+        double sellPrice =
+            getPrice.toInt() != 0 ? getPrice : item.product.sellPrice1;
         return ListTile(
           tileColor: index.isEven ? Colors.white : Colors.grey[100],
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
@@ -846,11 +727,25 @@ class CartItemWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: SizedBox(
-                  child: Text(
-                    '${index + 1}. ${item.product.productName}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.titleMedium,
+                  child: Row(
+                    children: [
+                      Text(
+                        '${index + 1}. ${item.product.productName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.titleMedium,
+                      ),
+                      const SizedBox(width: 20),
+                      if (controller.priceType.value != 1 &&
+                          sellPrice != item.product.sellPrice1)
+                        Text(
+                          'Rp${controller.currency.format(item.product.sellPrice1)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.bodySmall!
+                              .copyWith(decoration: TextDecoration.lineThrough),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -878,7 +773,7 @@ class CartItemWidget extends StatelessWidget {
                 flex: 5,
                 child: SizedBox(
                   child: Text(
-                    'Rp. ${controller.currency.format(item.product.sellPrice1)}',
+                    'Rp${controller.currency.format(sellPrice)}',
                     style: context.textTheme.bodyMedium,
                   ),
                 ),
@@ -923,12 +818,12 @@ class CartItemWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'Rp. ${controller.currency.format(item.product.sellPrice1 * item.quantity.value - item.individualDiscount.value)}',
+                        'Rp. ${controller.currency.format(sellPrice * item.quantity.value - item.individualDiscount.value)}',
                         style: context.textTheme.titleMedium,
                       ),
                       if (item.individualDiscount.value > 0)
                         Text(
-                          'Rp. ${controller.currency.format(item.product.sellPrice1 * item.quantity.value)}',
+                          'Rp. ${controller.currency.format(sellPrice * item.quantity.value)}',
                           style: context.textTheme.bodySmall!.copyWith(
                               fontStyle: FontStyle.italic,
                               decoration: TextDecoration.lineThrough),
@@ -1049,8 +944,8 @@ class CalculatePrice extends StatelessWidget {
               () {
                 final cart = controller.cart.value;
                 final cartItems = cart.items;
-                return Container(
-                  color: Colors.amber,
+                return SizedBox(
+                  // color: Colors.amber,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -1209,6 +1104,7 @@ class CalculatePrice extends StatelessWidget {
                                 onPressed: () async {
                                   if (controller.totalBill > 0) {
                                     // await controller.saveInvoice();
+                                    controller.selectedPaymentMethod.value = '';
                                     paymentDialog(context, controller);
                                   } else {
                                     Get.defaultDialog(

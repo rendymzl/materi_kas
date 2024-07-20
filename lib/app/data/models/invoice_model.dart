@@ -6,7 +6,7 @@ import 'customer_model.dart';
 class PaymentTransaction {
   String? method; // Metode pembayaran, misalnya 'Credit Card', 'Bank Transfer'
   double amountPaid;
-  DateTime? date;
+  Timestamp? date;
 
   PaymentTransaction({
     this.method,
@@ -17,13 +17,13 @@ class PaymentTransaction {
   PaymentTransaction.fromJson(Map<String, dynamic> json)
       : method = json['method'],
         amountPaid = json['amount_paid'],
-        date = json['date'] != null ? DateTime.parse(json['date']) : null;
+        date = json['created_at'];
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['method'] = method;
     data['amount_paid'] = amountPaid;
-    data['date'] = date?.toIso8601String();
+    data['date'] = date;
     return data;
   }
 }
@@ -140,7 +140,7 @@ class Invoice {
     return debtAmount - totalPaid;
   }
 
-  void addPayment(double amount, {String? method, DateTime? date}) {
+  void addPayment(double amount, {String? method, Timestamp? date}) {
     payments.add(PaymentTransaction(
       method: method,
       amountPaid: amount,

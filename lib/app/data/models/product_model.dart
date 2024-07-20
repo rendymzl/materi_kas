@@ -63,9 +63,13 @@ class Product {
       case 1:
         return sellPrice1;
       case 2:
-        return sellPrice2 ?? 0;
+        return (sellPrice2 != null && sellPrice2 != 0)
+            ? sellPrice2!
+            : sellPrice1;
       case 3:
-        return sellPrice3 ?? 0;
+        return (sellPrice3 != null && sellPrice3 != 0)
+            ? sellPrice3!
+            : sellPrice1;
       default:
         return sellPrice1;
     }

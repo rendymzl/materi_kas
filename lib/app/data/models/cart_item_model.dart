@@ -35,13 +35,17 @@ class CartItem {
   double getPrice(int priceType) {
     switch (priceType) {
       case 1:
-        return product.sellPrice1.toDouble();
+        return product.sellPrice1;
       case 2:
-        return product.sellPrice2?.toDouble() ?? 0.0;
+        return (product.sellPrice2 != null && product.sellPrice2 != 0)
+            ? product.sellPrice2!
+            : product.sellPrice1;
       case 3:
-        return product.sellPrice3?.toDouble() ?? 0.0;
+        return (product.sellPrice3 != null && product.sellPrice3 != 0)
+            ? product.sellPrice3!
+            : product.sellPrice1;
       default:
-        return 0.0;
+        return product.sellPrice1;
     }
   }
 

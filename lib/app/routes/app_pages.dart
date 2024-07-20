@@ -52,11 +52,11 @@ class AppPages {
       page: () => const ProductView(),
       binding: ProductBinding(),
     ),
-    // GetPage(
-    //   name: _Paths.INVOICE,
-    //   page: () => const InvoiceView(),
-    //   binding: InvoiceBinding(),
-    // ),
+    GetPage(
+      name: _Paths.INVOICE,
+      page: () => const InvoiceView(),
+      binding: InvoiceBinding(),
+    ),
     GetPage(
       name: _Paths.CUSTOMER,
       page: () => const CustomerView(),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
+import 'package:materi_kas/app/data/providers/customer_services.dart';
 import 'package:materi_kas/app/data/providers/invoice_services.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,17 +19,20 @@ import '../../../data/providers/auth_services.dart';
 import '../../../data/providers/product_services.dart';
 import '../../../routes/app_pages.dart';
 
+// enum PaymentMethod { cash, transfer }
+
 class HomeController extends GetxController {
   late AuthService authService = Get.find();
   late ProductService productService = Get.find();
   late InvoiceService invoiceServices = Get.find();
+  late CustomerServices customerServices = Get.find(); //! HAPUS NANTI
 
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
   late final invoices = invoiceServices.invoices;
   // final cart = <Cart>[].obs;
   final cart = Cart(items: <CartItem>[].obs).obs;
-  final priceType = 1.obs;
+
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
   final currency = NumberFormat('#,##0', 'id_ID');
@@ -38,6 +42,8 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    productService.fetchProducts(); //! HAPUS NANTI
+    customerServices.fetchCustomers(); //! HAPUS NANTI
     filterProducts('');
   }
 
@@ -82,7 +88,7 @@ class HomeController extends GetxController {
       );
     });
 
-    totalBill.value = cart.value.getTotal(priceType.value).toInt();
+    totalBill.value = cart.value.getTotal(priceType.value);
     // Future.delayed(const Duration(milliseconds: 10), () {
     //   if (scrollController.hasClients) {
     //     scrollController.animateTo(
@@ -98,7 +104,7 @@ class HomeController extends GetxController {
 
   void removeFromCart(String productCart) {
     cart.value.removeItem(productCart);
-    totalBill.value = cart.value.getTotal(priceType.value).toInt();
+    totalBill.value = cart.value.getTotal(priceType.value);
   }
 
   //! dateTime
@@ -165,17 +171,17 @@ class HomeController extends GetxController {
     selectedTime.value = TimeOfDay.now();
   }
 
-  void priceTypeHandle(int type) async {
-    isDateTimeNow.value = !isDateTimeNow.value;
-    if (!isDateTimeNow.value) {
-      displayDate.value = '';
-      displayTime.value = '';
-    } else {
-      displayDate.value = DateTime.now().toString();
-      displayTime.value = TimeOfDay.now().toString();
-    }
-    selectedDate.value = DateTime.now();
-    selectedTime.value = TimeOfDay.now();
+  void priceTypeHandleCheckBox(int type) async {
+    priceType.value == type ? priceType.value = 1 : priceType.value = type;
+    totalBill.value = cart.value.getTotal(priceType.value);
+  }
+
+  final paymentMethod = ['cash', 'transfer'].obs;
+  final selectedPaymentMethod = ''.obs;
+
+  void setPaymentMethod(String method) {
+    selectedPaymentMethod.value = method;
+    debugPrint(selectedPaymentMethod.value);
   }
 
   //! delete
@@ -213,7 +219,7 @@ class HomeController extends GetxController {
   void quantityHandle(String productId, String quantity) {
     int qty = int.tryParse(quantity) ?? 0;
     cart.value.updateQuantity(productId, qty);
-    totalBill.value = cart.value.getTotal(priceType.value).toInt();
+    totalBill.value = cart.value.getTotal(priceType.value);
   }
   // void quantityHandle(Cart productCart, String qty) {
   //   int index = cart.indexWhere((selectItem) =>
@@ -225,7 +231,7 @@ class HomeController extends GetxController {
   // }
 
   //* discount
-  final pay = TextEditingController();
+  final payTextC = TextEditingController();
   final numberFormat = NumberFormat("#,##0", "id_ID");
   void discountHandle(String productId,
       TextEditingController discountController, String value) {
@@ -243,8 +249,8 @@ class HomeController extends GetxController {
     int valueInt = value == '' ? 0 : int.parse(value);
 
     cart.value.updateDiscount(productId, valueInt);
-    totalDiscount.value = cart.value.getTotalIndividualDiscount().toInt();
-    totalBill.value = cart.value.getTotal(priceType.value).toInt();
+    totalDiscount.value = cart.value.getTotalIndividualDiscount();
+    totalBill.value = cart.value.getTotal(priceType.value);
 
     // int index = cart.indexWhere((selectItem) =>
     //     selectItem.product?.productId == productCart.product?.productId);
@@ -255,13 +261,14 @@ class HomeController extends GetxController {
   }
 
   //* calculating
-  final moneyChange = 0.obs;
-  final totalBill = 0.obs;
-  final totalDiscount = 0.obs;
-  final isCash = true.obs;
-  final cash = 0.obs;
-  final transfer = 0.obs;
-  final totalPay = 0.obs;
+  final priceType = 1.obs;
+  final moneyChange = 0.0.obs;
+  final totalBill = 0.0.obs;
+  final totalDiscount = 0.0.obs;
+  // final isCash = true.obs;
+  // final cash = 0.0.obs;
+  // final transfer = 0.0.obs;
+  // final totalPay = 0.0.obs;
 
   Timer? debounce;
 
@@ -269,8 +276,8 @@ class HomeController extends GetxController {
     if (value.isNotEmpty) {
       String newValue =
           numberFormat.format(int.parse(value.replaceAll('.', '')));
-      if (newValue != pay.text) {
-        pay.value = TextEditingValue(
+      if (newValue != payTextC.text) {
+        payTextC.value = TextEditingValue(
           text: newValue,
           selection: TextSelection.collapsed(offset: newValue.length),
         );
@@ -280,7 +287,7 @@ class HomeController extends GetxController {
     if (debounce?.isActive ?? false) debounce!.cancel();
     debounce = Timer(const Duration(milliseconds: 500), () {
       moneyChange.value =
-          value == '' ? 0 : int.parse(value.replaceAll('.', ''));
+          value == '' ? 0.0 : double.parse(value.replaceAll('.', ''));
     });
   }
 
@@ -344,157 +351,168 @@ class HomeController extends GetxController {
     return invoiceNumber;
   }
 
-  // Future saveInvoice() async {
-  //   // invoiceId.value = await generateInvoice(selectedCustomer.value);
-  //   final payment =
-  //       pay.text == '' ? 0 : int.parse(pay.text.replaceAll('.', ''));
+  Future saveInvoice() async {
+    // invoiceId.value = await generateInvoice(selectedCustomer.value);
+    final payment = payTextC.text == ''
+        ? 0.0
+        : double.parse(payTextC.text.replaceAll('.', ''));
 
-  //   isCash.value ? cash.value = payment : transfer.value = payment;
+    // isCash.value ? cash.value = payment : transfer.value = payment;
 
-  //   late final Customer customer;
-  //   DateTime dateTime = DateTime(
-  //     selectedDate.value.year,
-  //     selectedDate.value.month,
-  //     selectedDate.value.day,
-  //     selectedTime.value.hour,
-  //     selectedTime.value.minute,
-  //   );
+    late final Customer customer;
+    DateTime dateTime = DateTime(
+      selectedDate.value.year,
+      selectedDate.value.month,
+      selectedDate.value.day,
+      selectedTime.value.hour,
+      selectedTime.value.minute,
+    );
 
-  //   Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
+    Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
 
-  //   if (selectedCustomer.value != null) {
-  //     customer = Customer(
-  //       id: selectedCustomer.value!.id,
-  //       customerId: selectedCustomer.value!.customerId,
-  //       name: selectedCustomer.value!.name,
-  //       phone: selectedCustomer.value!.phone,
-  //       address: selectedCustomer.value!.address,
-  //       // uuid: selectedCustomer.value!.uuid,
-  //     );
-  //   } else {
-  //     customer = Customer(
-  //       name: customerNameController.text,
-  //       phone: customerPhoneController.text,
-  //       address: customerAddressController.text,
-  //       // uuid: authService.uid.value,
-  //     );
-  //   }
+    if (selectedCustomer.value != null) {
+      customer = Customer(
+        id: selectedCustomer.value!.id,
+        customerId: selectedCustomer.value!.customerId,
+        name: selectedCustomer.value!.name,
+        phone: selectedCustomer.value!.phone,
+        address: selectedCustomer.value!.address,
+        // uuid: selectedCustomer.value!.uuid,
+      );
+    } else {
+      customer = Customer(
+        name: customerNameController.text,
+        phone: customerPhoneController.text,
+        address: customerAddressController.text,
+        // uuid: authService.uid.value,
+      );
+    }
 
-  //   totalPay.value = cash.value + transfer.value;
-  //   bool isDebt = totalPay.value < totalBill.value;
-  //   int debt = isDebt ? totalBill.value - totalPay.value : 0;
+    // totalPay.value = cash.value + transfer.value;
+    // bool isDebt = totalPay.value < totalBill.value;
+    // double debt = isDebt ? totalBill.value - totalPay.value : 0.0;
 
-  //   final invoice = Invoice(
-  //     invoiceId: await generateInvoice(selectedCustomer.value),
-  //     createdAt: timestampDateTime,
-  //     customer: customer,
-  //     cartList: CartList(purchaseCart: cart),
-  //     payment: Payment(
-  //       totalBill: totalBill.value,
-  //       totalDiscount: totalDiscount.value,
-  //       cash: cash.value,
-  //       transfer: transfer.value,
-  //       totalPay: totalPay.value,
-  //       debt: debt,
-  //     ),
-  //     // uuid: authService.uid.value,
-  //   );
+    PaymentTransaction payment1 = PaymentTransaction(
+      method: selectedPaymentMethod.value,
+      amountPaid: payment,
+      date: Timestamp.now(),
+    );
 
-  //   Future success() async {
-  //     Map<String, Map<String, dynamic>> invoicesMap = {};
-  //     String newInvioceId = await productService.getId();
-  //     invoice.id = newInvioceId;
-  //     invoicesMap[newInvioceId] = invoice.toJson();
-  //     Get.defaultDialog(
-  //       title: 'Menyimpan Invoice...',
-  //       content: const CircularProgressIndicator(),
-  //       barrierDismissible: false,
-  //     );
-  //     try {
-  //       await invoiceServices.addInvoices(invoicesMap);
-  //       Get.back();
-  //       return Get.defaultDialog(
-  //         title: 'Berhasil',
-  //         middleText: 'Invoice berhasil disimpan.',
-  //         confirm: TextButton(
-  //           onPressed: () {
-  //             cart.clear();
-  //             pay.text = '';
-  //             moneyChange.value = 0;
-  //             totalBill.value = 0;
-  //             totalDiscount.value = 0;
-  //             cash.value = 0;
-  //             transfer.value = 0;
-  //             totalPay.value = 0;
+    final invoice = Invoice(
+      invoiceId: await generateInvoice(selectedCustomer.value),
+      createdAt: timestampDateTime,
+      customer: customer,
+      purchaseList: cart.value.items,
+      priceType: priceType.value,
+      discount: totalDiscount.value,
+      payments: [payment1],
+      // payment: Payment(
+      //   totalBill: totalBill.value,
+      //   totalDiscount: totalDiscount.value,
+      //   cash: cash.value,
+      //   transfer: transfer.value,
+      //   totalPay: totalPay.value,
+      //   debt: debt,
+      // ),
+      // uuid: authService.uid.value,
+    );
 
-  //             customerNameController.text = '';
-  //             customerPhoneController.text = '';
-  //             customerAddressController.text = '';
+    Future success() async {
+      Map<String, Map<String, dynamic>> invoicesMap = {};
+      String newInvioceId = await productService.getId();
+      invoice.id = newInvioceId;
+      invoicesMap[newInvioceId] = invoice.toJson();
+      Get.defaultDialog(
+        title: 'Menyimpan Invoice...',
+        content: const CircularProgressIndicator(),
+        barrierDismissible: false,
+      );
+      try {
+        await invoiceServices.addInvoices(invoicesMap);
+        Get.back();
+        return Get.defaultDialog(
+          title: 'Berhasil',
+          middleText: 'Invoice berhasil disimpan.',
+          confirm: TextButton(
+            onPressed: () {
+              cart.value.items.clear();
+              payTextC.text = '';
+              moneyChange.value = 0;
+              totalBill.value = 0;
+              totalDiscount.value = 0;
+              // cash.value = 0;
+              // transfer.value = 0;
+              // totalPay.value = 0;
 
-  //             displayDate.value = DateTime.now().toString();
-  //             displayTime.value = TimeOfDay.now().toString();
+              customerNameController.text = '';
+              customerPhoneController.text = '';
+              customerAddressController.text = '';
 
-  //             selectedDate.value = DateTime.now();
-  //             selectedTime.value = TimeOfDay.now();
-  //             Get.back();
-  //           },
-  //           child: const Text('OK'),
-  //         ),
-  //       );
-  //     } catch (e) {
-  //       Get.back();
-  //       Get.defaultDialog(
-  //         title: 'Gagal Menyimpan Invoice!',
-  //         middleText: e.toString(),
-  //         barrierDismissible: false,
-  //       );
-  //     }
-  //   }
+              displayDate.value = DateTime.now().toString();
+              displayTime.value = TimeOfDay.now().toString();
 
-  //   Future validate(String validateCode) async {
-  //     Get.defaultDialog(
-  //       title: 'Ups',
-  //       middleText: validateCode == 'debt'
-  //           ? 'Total tagihan belum terpenuhi. lanjutkan?'
-  //           : 'Data Customer tidak lengkap. lanjutkan?',
-  //       confirm: TextButton(
-  //         onPressed: () async {
-  //           await success();
-  //           Get.back();
-  //         },
-  //         child: const Text('Simpan'),
-  //       ),
-  //       cancel: TextButton(
-  //         onPressed: () {
-  //           Get.back();
-  //         },
-  //         child: Text(
-  //           'Batal',
-  //           style: TextStyle(color: Colors.black.withOpacity(0.5)),
-  //         ),
-  //       ),
-  //     );
-  //   }
+              selectedDate.value = DateTime.now();
+              selectedTime.value = TimeOfDay.now();
+              Get.back();
+              Get.back();
+            },
+            child: const Text('OK'),
+          ),
+        );
+      } catch (e) {
+        Get.back();
+        Get.defaultDialog(
+          title: 'Gagal Menyimpan Invoice!',
+          middleText: e.toString(),
+          barrierDismissible: false,
+        );
+      }
+    }
 
-  //   try {
-  //     (customerNameController.text == '' ||
-  //             customerPhoneController.text == '' ||
-  //             customerAddressController.text == '')
-  //         ? validate('Customer')
-  //         : moneyChange.value < 0
-  //             ? validate('debt')
-  //             : success();
-  //   } on PostgrestException catch (e) {
-  //     Get.defaultDialog(
-  //       title: 'Error',
-  //       middleText: e.message,
-  //       confirm: TextButton(
-  //         onPressed: () => Get.back(),
-  //         child: const Text('OK'),
-  //       ),
-  //     );
-  //   }
-  // }
+    Future validate(String validateCode) async {
+      Get.defaultDialog(
+        title: 'Ups',
+        middleText: validateCode == 'debt'
+            ? 'Total tagihan belum terpenuhi. lanjutkan?'
+            : 'Data Customer tidak lengkap. lanjutkan?',
+        confirm: TextButton(
+          onPressed: () async {
+            await success();
+            Get.back();
+          },
+          child: const Text('Simpan'),
+        ),
+        cancel: TextButton(
+          onPressed: () {
+            Get.back();
+          },
+          child: Text(
+            'Batal',
+            style: TextStyle(color: Colors.black.withOpacity(0.5)),
+          ),
+        ),
+      );
+    }
+
+    try {
+      (customerNameController.text == '' ||
+              customerPhoneController.text == '' ||
+              customerAddressController.text == '')
+          ? validate('Customer')
+          : moneyChange.value < 0
+              ? validate('debt')
+              : success();
+    } on PostgrestException catch (e) {
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: e.message,
+        confirm: TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('OK'),
+        ),
+      );
+    }
+  }
 
   Future<void> signOut() async {
     await authService.signOut();

@@ -77,7 +77,7 @@ class CustomerInputField extends StatelessWidget {
                     child: Material(
                       elevation: 4.0,
                       child: SizedBox(
-                        width: 400.0,
+                        width: MediaQuery.of(context).size.width * (1 / 4),
                         height: maxHeight > 150 ? 150 : maxHeight,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(8.0),
