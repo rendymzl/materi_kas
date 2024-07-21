@@ -171,6 +171,7 @@ class InvoiceService extends GetxController {
               .contains(invoiceName.toLowerCase());
         }).toList();
         List<Invoice> sortInvoice = sortByDate(sortList);
+        foundInvoices.clear();
         foundInvoices.addAll(sortInvoice);
       }
     });

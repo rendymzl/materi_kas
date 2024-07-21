@@ -44,6 +44,7 @@ class PaymentCard extends StatelessWidget {
             () => Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -80,6 +81,7 @@ class PaymentCard extends StatelessWidget {
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(
                         width: 200,
@@ -91,16 +93,9 @@ class PaymentCard extends StatelessWidget {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(right: 3),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            if (controller.totalDiscount.value > 0)
-                              Text(
-                                'Rp${controller.currency.format(controller.totalDiscount.value + controller.totalBill.value)}',
-                                style: context.textTheme.bodySmall!.copyWith(
-                                    fontStyle: FontStyle.italic,
-                                    decoration: TextDecoration.lineThrough),
-                              ),
-                            const SizedBox(width: 16),
                             Text(
                               'Rp${controller.currency.format(controller.totalBill.value)}',
                               style: TextStyle(
@@ -108,11 +103,20 @@ class PaymentCard extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
+                            const SizedBox(width: 16),
                           ],
                         ),
                       )
                     ],
                   ),
+                  // const SizedBox(height: 12),
+                  if (controller.totalDiscount.value > 0)
+                    Text(
+                      'Rp${controller.currency.format(controller.totalDiscount.value + controller.totalBill.value)}',
+                      style: context.textTheme.bodySmall!.copyWith(
+                          fontStyle: FontStyle.italic,
+                          decoration: TextDecoration.lineThrough),
+                    ),
                   const SizedBox(height: 12),
                   if (controller.selectedPaymentMethod.value != '')
                     Row(

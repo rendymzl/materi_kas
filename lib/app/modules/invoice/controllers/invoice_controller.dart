@@ -32,15 +32,19 @@ class InvoiceController extends GetxController {
   final currency = NumberFormat('#,##0', 'id_ID');
 
   final numberFormat = NumberFormat("#,##0", "id_ID");
-  final purchaseCart = Cart(items: <CartItem>[].obs).obs;
-  final returnCart = Cart(items: <CartItem>[].obs).obs;
-  final afterReturnCart = Cart(items: <CartItem>[].obs).obs;
+  // final purchaseCart = Cart(items: <CartItem>[].obs).obs;
+  final returnList = Cart(items: <CartItem>[].obs).obs;
+  final afterReturnList = Cart(items: <CartItem>[].obs).obs;
+
+  final editPurchaseList = Cart(items: <CartItem>[].obs).obs;
+  final editReturnList = Cart(items: <CartItem>[].obs).obs;
+  final editAfterReturnList = Cart(items: <CartItem>[].obs).obs;
   // final purchaseCart = <Cart>[].obs;
   // final returnCart = <Cart>[].obs;
   // final afterReturnCart = <Cart>[].obs;
-  // final showChange = false.obs;
+  final showChange = false.obs;
   final showReturnFee = false.obs;
-  // final totalChange = 0.obs;
+  final totalChange = 0.obs;
 
   @override
   void onInit() async {
@@ -155,7 +159,7 @@ class InvoiceController extends GetxController {
   }
 
 //! Detail Repayment
-  // final repaymentCtrlText = TextEditingController();
+  final repaymentCtrlText = TextEditingController();
   // void onPayChanged(String value, Invoice invoice) {
   //   // int change = (invoice.change! * -1) - totalReturnFinal.value;
   //   int valueInt = int.parse(value.isEmpty ? '0' : value.replaceAll('.', ''));
@@ -271,9 +275,6 @@ class InvoiceController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   //! Cart Data
-  final editPurchaseCart = <Cart>[].obs;
-  final editReturnCart = <Cart>[].obs;
-  final editAfterReturnCart = <Cart>[].obs;
 
   late final priceType = 1.obs;
   late final moneyChange = 0.obs;
@@ -388,7 +389,7 @@ class InvoiceController extends GetxController {
   }
 
   void removeFromReturnCart(Cart productCart) {
-    editReturnCart.remove(productCart);
+    // editReturnCart.remove(productCart);
   }
 
   void quantityHandle(String productId, String quantity, Cart cart) {
@@ -518,14 +519,14 @@ class InvoiceController extends GetxController {
     // updateCart(editPurchaseCart, newCart);
   }
 
-  final payTextController = TextEditingController();
+  final payTextC = TextEditingController();
   Timer? debounce;
   void onPayHandle(String value) {
     // if (value.isNotEmpty) {
     //   String newValue =
     //       numberFormat.format(int.parse(value.replaceAll('.', '')));
-    //   if (newValue != payTextController.text) {
-    //     payTextController.value = TextEditingValue(
+    //   if (newValue != payTextC.text) {
+    //     payTextC.value = TextEditingValue(
     //       text: newValue,
     //       selection: TextSelection.collapsed(offset: newValue.length),
     //     );
@@ -605,9 +606,9 @@ class InvoiceController extends GetxController {
   //       selectedTime.value.minute,
   //     );
   //     Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
-  //     final payment = payTextController.text == ''
+  //     final payment = payTextC.text == ''
   //         ? 0
-  //         : int.parse(payTextController.text.replaceAll('.', ''));
+  //         : int.parse(payTextC.text.replaceAll('.', ''));
 
   //     invoice.customer = customerInputFieldC.selectedCustomer.value;
   //     invoice.createdAt = timestampDateTime;
@@ -657,9 +658,9 @@ class InvoiceController extends GetxController {
   // }
 
   // Future saveInvoice() async {
-  //   final payment = payTextController.text == ''
+  //   final payment = payTextC.text == ''
   //       ? 0
-  //       : int.parse(payTextController.text.replaceAll('.', ''));
+  //       : int.parse(payTextC.text.replaceAll('.', ''));
   //   final change = totalChange.value;
   //   late final Customer customer;
   //   DateTime dateTime = DateTime(
@@ -712,7 +713,7 @@ class InvoiceController extends GetxController {
   //           purchaseCart.clear();
   //           returnCart.clear();
   //           // await resetToInitCartList();
-  //           payTextController.text = '';
+  //           payTextC.text = '';
   //           totalChange.value = 0;
   //           totalPurchase.value = 0;
   //           totalDiscount.value = 0;
@@ -792,20 +793,20 @@ class InvoiceController extends GetxController {
     // purchaseCart.clear();
     // purchaseCart.addAll(invoice.cartList!.purchaseCart!);
 
-    // returnCart.clear();
-    // if (invoice.cartList!.returnCart != null) {
-    //   returnCart.addAll(invoice.cartList!.returnCart!);
-    // }
+    returnList.value.items.clear();
+    if (invoice.returnList != null) {
+      returnList.value.items.assignAll(invoice.returnList!);
+    }
 
-    // afterReturnCart.clear();
-    // if (invoice.cartList!.afterReturnCart != null) {
-    //   afterReturnCart.addAll(invoice.cartList!.afterReturnCart!);
-    // }
+    afterReturnList.value.items.clear();
+    if (invoice.afterReturnList != null) {
+      afterReturnList.value.items.assignAll(invoice.afterReturnList!);
+    }
 
     // // selectedDate.value = invoice.createdAt!.toDate();
     // // selectedTime.value = TimeOfDay.fromDateTime(selectedDate.value);
 
-    // resetEditData(invoice);
+    asignEditData(invoice);
 
     // // totalReturn.value = returnCart.fold(
     // //   0,
@@ -817,12 +818,11 @@ class InvoiceController extends GetxController {
     // // totalReturnFinal.value = totalReturn.value - invoiceReturn;
   }
 
-  void resetEditData(Invoice invoice) {
-    // id.value = invoice.id!;
+  void asignEditData(Invoice invoice) {
+    id.value = invoice.id!;
 
-    // isRegisteredCustomer.value = invoice.customer!.customerId != null;
-
-    // editPurchaseCart.clear();
+    editPurchaseList.value.items.clear();
+    editPurchaseList.value.items.assignAll(invoice.purchaseList);
     // for (var cart in invoice.cartList!.purchaseCart!) {
     //   Cart newCart = Cart(
     //     product: cart.product,
@@ -833,7 +833,7 @@ class InvoiceController extends GetxController {
     //   editPurchaseCart.add(newCart);
     // }
 
-    // // editPurchaseCart.addAll(purchaseCart);
+    // editPurchaseCart.addAll(purchaseCart);
 
     // editReturnCart.clear();
     // if (invoice.cartList!.returnCart != null) {
@@ -879,10 +879,8 @@ class InvoiceController extends GetxController {
     // // customerInputFieldC.displayName.value =
     // //     invoice.customer!.customerId != null ? invoice.customer!.name! : '';
 
-    // payTextController.text = currency.format(
-    //     invoice.payment!.totalPay! >= invoice.payment!.totalBill!
-    //         ? invoice.payment!.totalBill!
-    //         : invoice.payment!.totalPay!);
+    payTextC.text = currency.format(
+        invoice.totalPaid <= invoice.total ? invoice.totalPaid : invoice.total);
     // totalChange.value =
     //     invoice.payment!.totalPay! >= invoice.payment!.totalBill!
     //         ? 0
@@ -970,7 +968,7 @@ class InvoiceController extends GetxController {
 
     // //! TotalKembalian
     // String payText =
-    //     payTextController.text == '' ? '0' : payTextController.text;
+    //     payTextC.text == '' ? '0' : payTextC.text;
     // totalChange.value =
     //     int.parse(payText.replaceAll('.', '')) - totalPurchase.value;
   }

@@ -20,15 +20,15 @@ class Cart {
   }
 
   int getSubtotal(int priceType) {
-    return items.fold(0, (sum, item) => sum + item.getTotal(priceType));
+    return items.fold(0, (sum, item) => sum + item.getSubtotal(priceType));
   }
 
-  int getTotalIndividualDiscount() {
+  int get totalIndividualDiscount {
     return items.fold(0, (sum, item) => sum + item.individualDiscount.value);
   }
 
   int getTotal(int priceType) {
-    return getSubtotal(priceType) - getTotalIndividualDiscount();
+    return getSubtotal(priceType) - totalIndividualDiscount;
   }
 
   void addItem(CartItem newItem) {

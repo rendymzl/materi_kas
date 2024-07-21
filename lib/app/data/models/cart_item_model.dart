@@ -49,10 +49,20 @@ class CartItem {
     }
   }
 
-  int getTotal(int priceType) {
+  int getSubtotal(int priceType) {
     int price = getPrice(priceType);
     return price * quantity.value;
   }
+
+  int getTotal(int priceType) {
+    // int price = getPrice(priceType);
+    return getSubtotal(priceType) - individualDiscount.value;
+  }
+
+  //   int get totalDiscount {
+  //   return purchaseList.fold(
+  //       0, (prev, item) => prev + item.getSubtotal(priceType));
+  // }
 
   // int getTotalDiscount() {
   // int price = getPrice(priceType);

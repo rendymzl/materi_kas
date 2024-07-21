@@ -959,7 +959,7 @@ class CalculatePrice extends StatelessWidget {
                         PropertiesRowWidget(
                           title: 'Total Diskon',
                           value:
-                              '-${controller.currency.format(cart.getTotalIndividualDiscount())}',
+                              '-${controller.currency.format(cart.totalIndividualDiscount)}',
                           // value:
                           //     '-${controller.currency.format(controller.totalDiscount.value)}',
                         ),

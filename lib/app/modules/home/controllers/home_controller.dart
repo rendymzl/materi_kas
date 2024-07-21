@@ -44,6 +44,7 @@ class HomeController extends GetxController {
     super.onInit();
     productService.fetchProducts(); //! HAPUS NANTI
     customerServices.fetchCustomers(); //! HAPUS NANTI
+    invoiceServices.fetchInvoices(); //! HAPUS NANTI
     filterProducts('');
   }
 
@@ -249,7 +250,7 @@ class HomeController extends GetxController {
     int valueInt = value == '' ? 0 : int.parse(value);
 
     cart.value.updateDiscount(productId, valueInt);
-    totalDiscount.value = cart.value.getTotalIndividualDiscount();
+    totalDiscount.value = cart.value.totalIndividualDiscount;
     totalBill.value = cart.value.getTotal(priceType.value);
 
     // int index = cart.indexWhere((selectItem) =>

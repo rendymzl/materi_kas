@@ -112,7 +112,12 @@ class Invoice {
 
   int get subtotal {
     return purchaseList.fold(
-        0, (prev, item) => prev + item.getTotal(priceType));
+        0, (prev, item) => prev + item.getSubtotal(priceType));
+  }
+
+  int get subtotalReturn {
+    return returnList!
+        .fold(0, (prev, item) => prev + item.getSubtotal(priceType));
   }
 
   int get totalIndividualDiscount {
@@ -132,6 +137,10 @@ class Invoice {
 
   int get total {
     return subtotal - totalDiscount + totalTax + returnFee;
+  }
+
+  int get totalReturn {
+    return subtotalReturn - returnFee;
   }
 
   int get totalPaid {

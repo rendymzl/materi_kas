@@ -205,7 +205,7 @@ class BuildGridView extends StatelessWidget {
                   ? Colors.red[200]!.withOpacity(0.2)
                   : Colors.green[200]!.withOpacity(0.3),
               onTap: () async {
-                // await detailDialog(context, controller, invoice);
+                await detailDialog(context, controller, invoice);
               },
               child: Padding(
                 padding: const EdgeInsets.all(8),
@@ -247,7 +247,7 @@ class BuildGridView extends StatelessWidget {
                             var discount = '';
                             if (purchaseCart.individualDiscount.value > 0) {
                               discount =
-                                  '(-Rp.${controller.currency.format(purchaseCart.individualDiscount)})';
+                                  '(-Rp.${controller.currency.format(purchaseCart.individualDiscount.value)})';
                             }
                             if (index < crossAxisCount) {
                               return Column(
@@ -275,7 +275,7 @@ class BuildGridView extends StatelessWidget {
                                         SizedBox(
                                           width: 90,
                                           child: Text(
-                                            'Rp.${controller.currency.format(invoice.total)}',
+                                            'Rp.${controller.currency.format(purchaseCart.product.getPrice(invoice.priceType))}',
                                             style: context
                                                 .theme.textTheme.bodySmall,
                                             textAlign: TextAlign.right,
