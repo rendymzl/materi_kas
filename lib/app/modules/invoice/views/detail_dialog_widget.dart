@@ -565,30 +565,38 @@ Future<void> detailDialog(
                                 Divider(color: Colors.grey[200]),
                               ],
                             ),
-                          ListTile(
-                            dense: true,
-                            title: Row(
-                              children: [
-                                Expanded(
-                                    flex: 5,
-                                    child: Text('Pembayaran',
-                                        style: Theme.of(Get.context!)
-                                            .textTheme
-                                            .titleSmall!
-                                            .copyWith(color: Colors.green),
-                                        textAlign: TextAlign.right)),
-                                Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                        'Rp${controller.currency.format((invoice.totalPaid))}',
-                                        style: Theme.of(Get.context!)
-                                            .textTheme
-                                            .titleSmall!
-                                            .copyWith(color: Colors.green),
-                                        textAlign: TextAlign.end)),
-                              ],
-                            ),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: invoice.payments.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                dense: true,
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                        flex: 5,
+                                        child: Text(
+                                            'Pembayaran ${!invoice.isDebtPaid ? index + 1 : ''}',
+                                            style: Theme.of(Get.context!)
+                                                .textTheme
+                                                .titleSmall!
+                                                .copyWith(color: Colors.green),
+                                            textAlign: TextAlign.right)),
+                                    Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                            'Rp${controller.currency.format((invoice.payments[index].amountPaid))}',
+                                            style: Theme.of(Get.context!)
+                                                .textTheme
+                                                .titleSmall!
+                                                .copyWith(color: Colors.green),
+                                            textAlign: TextAlign.end)),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
+
                           if (controller.totalReturn.value != 0)
                             ListTile(
                               dense: true,
@@ -643,31 +651,31 @@ Future<void> detailDialog(
                                 ],
                               ),
                             ),
-                          if (!invoice.isDebtPaid)
-                            ListTile(
-                              dense: true,
-                              title: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: Text('SUDAH BAYAR:',
-                                        style: Theme.of(Get.context!)
-                                            .textTheme
-                                            .titleSmall,
-                                        textAlign: TextAlign.right),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                        'Rp${controller.currency.format(invoice.totalPaid)}',
-                                        style: Theme.of(Get.context!)
-                                            .textTheme
-                                            .titleSmall,
-                                        textAlign: TextAlign.end),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          // if (!invoice.isDebtPaid)
+                          //   ListTile(
+                          //     dense: true,
+                          //     title: Row(
+                          //       children: [
+                          //         Expanded(
+                          //           flex: 5,
+                          //           child: Text('SUDAH BAYAR:',
+                          //               style: Theme.of(Get.context!)
+                          //                   .textTheme
+                          //                   .titleSmall,
+                          //               textAlign: TextAlign.right),
+                          //         ),
+                          //         Expanded(
+                          //           flex: 2,
+                          //           child: Text(
+                          //               'Rp${controller.currency.format(invoice.totalPaid)}',
+                          //               style: Theme.of(Get.context!)
+                          //                   .textTheme
+                          //                   .titleSmall,
+                          //               textAlign: TextAlign.end),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ),
                           const SizedBox(height: 20),
                           if (!invoice.isDebtPaid)
                             ListTile(
@@ -676,7 +684,7 @@ Future<void> detailDialog(
                                 children: [
                                   Expanded(
                                     flex: 5,
-                                    child: Text('TAGIHAN YANG PERLU DIBAYAR:',
+                                    child: Text('TAGIHAN YANG BELUM DIBAYAR:',
                                         style: Theme.of(Get.context!)
                                             .textTheme
                                             .bodySmall!

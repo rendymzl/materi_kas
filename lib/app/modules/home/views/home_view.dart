@@ -1103,7 +1103,7 @@ class CalculatePrice extends StatelessWidget {
                                 onPressed: () async {
                                   if (controller.totalBill > 0) {
                                     // await controller.saveInvoice();
-                                    controller.selectedPaymentMethod.value = '';
+                                    controller.asignPayment();
                                     paymentDialog(context, controller);
                                   } else {
                                     Get.defaultDialog(

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../widget/customer_input_field_widget.dart';
 import '../../../widget/properties_row_widget.dart';
+import '../../home/views/payment_dialog.dart';
 import '../controllers/invoice_controller.dart';
 import 'cart_card.dart';
 
@@ -20,7 +21,8 @@ void editDialog(
       width: MediaQuery.of(context).size.width * (7 / 10),
       child: ListView(
         children: [
-          const CustomerInputField(),
+          const CustomerInputFieldCard(),
+          // paymentDialog(context, controller),
           // CartCard(controller: controller, invoice: invoice), //later
           Card(
             child: Container(

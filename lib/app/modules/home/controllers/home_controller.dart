@@ -18,6 +18,8 @@ import '../../../data/models/product_model.dart';
 import '../../../data/providers/auth_services.dart';
 import '../../../data/providers/product_services.dart';
 import '../../../routes/app_pages.dart';
+import '../../../widget/customer_input_field_controller.dart';
+import '../../../widget/model/payment_controller.dart';
 
 // enum PaymentMethod { cash, transfer }
 
@@ -26,6 +28,8 @@ class HomeController extends GetxController {
   late ProductService productService = Get.find();
   late InvoiceService invoiceServices = Get.find();
   late CustomerServices customerServices = Get.find(); //! HAPUS NANTI
+  final CustomerInputFieldController customerInputFieldC = Get.find();
+  final PaymentController paymentController = Get.find();
 
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
@@ -177,14 +181,6 @@ class HomeController extends GetxController {
     totalBill.value = cart.value.getTotal(priceType.value);
   }
 
-  final paymentMethod = ['cash', 'transfer'].obs;
-  final selectedPaymentMethod = ''.obs;
-
-  void setPaymentMethod(String method) {
-    selectedPaymentMethod.value = method;
-    debugPrint(selectedPaymentMethod.value);
-  }
-
   //! delete
   destroyHandle(Invoice invoice) async {
     try {
@@ -233,12 +229,11 @@ class HomeController extends GetxController {
 
   //* discount
   final payTextC = TextEditingController();
-  final numberFormat = NumberFormat("#,##0", "id_ID");
+  // final numberFormat = NumberFormat("#,##0", "id_ID");
   void discountHandle(String productId,
       TextEditingController discountController, String value) {
     if (value.isNotEmpty) {
-      String newValue =
-          numberFormat.format(int.parse(value.replaceAll('.', '')));
+      String newValue = currency.format(int.parse(value.replaceAll('.', '')));
       if (newValue != discountController.text) {
         discountController.value = TextEditingValue(
           text: newValue,
@@ -273,24 +268,24 @@ class HomeController extends GetxController {
 
   Timer? debounce;
 
-  void onPayChanged(String value) {
-    if (value.isNotEmpty) {
-      String newValue =
-          numberFormat.format(int.parse(value.replaceAll('.', '')));
-      if (newValue != payTextC.text) {
-        payTextC.value = TextEditingValue(
-          text: newValue,
-          selection: TextSelection.collapsed(offset: newValue.length),
-        );
-      }
-    }
+  // void onPayChanged(String value) {
+  //   if (value.isNotEmpty) {
+  //     String newValue =
+  //         numberFormat.format(int.parse(value.replaceAll('.', '')));
+  //     if (newValue != payTextC.text) {
+  //       payTextC.value = TextEditingValue(
+  //         text: newValue,
+  //         selection: TextSelection.collapsed(offset: newValue.length),
+  //       );
+  //     }
+  //   }
 
-    if (debounce?.isActive ?? false) debounce!.cancel();
-    debounce = Timer(const Duration(milliseconds: 500), () {
-      moneyChange.value =
-          value == '' ? 0 : int.parse(value.replaceAll('.', ''));
-    });
-  }
+  //   if (debounce?.isActive ?? false) debounce!.cancel();
+  //   debounce = Timer(const Duration(milliseconds: 500), () {
+  //     moneyChange.value =
+  //         value == '' ? 0 : int.parse(value.replaceAll('.', ''));
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -299,9 +294,9 @@ class HomeController extends GetxController {
   }
 
   final displayName = ''.obs;
-  final customerNameController = TextEditingController();
-  final customerPhoneController = TextEditingController();
-  final customerAddressController = TextEditingController();
+  // final customerNameController = customerInputFieldC;
+  // final customerPhoneController = customerInputFieldC;
+  // final customerAddressController = customerInputFieldC;
 
   // final invoiceId = ''.obs;
 
@@ -381,9 +376,9 @@ class HomeController extends GetxController {
       );
     } else {
       customer = Customer(
-        name: customerNameController.text,
-        phone: customerPhoneController.text,
-        address: customerAddressController.text,
+        name: customerInputFieldC.customerNameController.text,
+        phone: customerInputFieldC.customerPhoneController.text,
+        address: customerInputFieldC.customerAddressController.text,
         // uuid: authService.uid.value,
       );
     }
@@ -408,6 +403,7 @@ class HomeController extends GetxController {
       priceType: priceType.value,
       discount: totalDiscount.value,
       payments: [],
+      debtAmount: cart.value.getTotal(priceType.value),
       // debtAmount: cart.value.getTotal(priceType.value) - payment.amountPaid,
       // isDebtPaid: payment.amountPaid > cart.value.getTotal(priceType.value)
       // payment: Payment(
@@ -421,13 +417,9 @@ class HomeController extends GetxController {
       // uuid: authService.uid.value,
     );
 
-    invoice.addPayment(
-      amountPaid,
-      method: selectedPaymentMethod.value,
-      date: Timestamp.now(),
-    );
+    paymentController.addPayment(invoice);
 
-    debugPrint(invoice.invoiceId);
+    // debugPrint(invoice.invoiceId);
 
     // invoice.remainingDebt
     // invoice.remainingDebt
@@ -459,9 +451,7 @@ class HomeController extends GetxController {
               // transfer.value = 0;
               // totalPay.value = 0;
 
-              customerNameController.text = '';
-              customerPhoneController.text = '';
-              customerAddressController.text = '';
+              customerInputFieldC.resetCustomerField();
 
               displayDate.value = DateTime.now().toString();
               displayTime.value = TimeOfDay.now().toString();
@@ -510,9 +500,9 @@ class HomeController extends GetxController {
     }
 
     try {
-      (customerNameController.text == '' ||
-              customerPhoneController.text == '' ||
-              customerAddressController.text == '')
+      (customerInputFieldC.customerNameController.text == '' ||
+              customerInputFieldC.customerPhoneController.text == '' ||
+              customerInputFieldC.customerAddressController.text == '')
           ? validate('Customer')
           : moneyChange.value < 0
               ? validate('debt')

@@ -6,8 +6,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../data/models/customer_model.dart';
 import 'customer_input_field_controller.dart';
 
-class CustomerInputField extends StatelessWidget {
-  const CustomerInputField({
+class CustomerInputFieldCard extends StatelessWidget {
+  const CustomerInputFieldCard({
     super.key,
   });
 
