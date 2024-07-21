@@ -346,7 +346,9 @@ class BuildGridView extends StatelessWidget {
                                     'Pembeli: ${invoice.customer?.name ?? '-'}',
                                     style: context.theme.textTheme.bodySmall),
                                 Text(
-                                  !invoice.isDebtPaid ? 'Belum Lunas' : 'Lunas',
+                                  !invoice.isDebtPaid
+                                      ? 'Belum Lunas Rp${controller.currency.format(invoice.remainingDebt)}'
+                                      : 'Lunas',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.theme.textTheme.bodySmall!

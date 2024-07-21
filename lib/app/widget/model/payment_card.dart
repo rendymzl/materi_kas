@@ -13,9 +13,11 @@ class PaymentCard extends StatelessWidget {
   const PaymentCard({
     super.key,
     required this.invoice,
+    required this.onClick,
   });
 
   final Invoice invoice;
+  final VoidCallback onClick;
 
   @override
   Widget build(BuildContext context) {
@@ -135,18 +137,19 @@ class PaymentCard extends StatelessWidget {
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
                           ],
-                          onChanged: (value) => controller.onPayChanged(value),
+                          onChanged: (value) =>
+                              controller.onPayChanged(invoice, value),
                         ),
                       ),
                     ),
                   ],
                 ),
               const SizedBox(height: 12),
-              if (controller.selectedPaymentMethod.value != '')
+              if (controller.moneyChange.value != 0)
                 Obx(
                   () {
-                    int change = controller.moneyChange.value -
-                        controller.totalBill.value;
+                    // int change = controller.moneyChange.value -
+                    //     controller.totalBill.value;
                     // String formattedChange =
                     //     change > 0 ? formatter.format(change) : '0';
                     return Row(
@@ -154,7 +157,10 @@ class PaymentCard extends StatelessWidget {
                       children: [
                         SizedBox(
                           width: 120,
-                          child: Text(change > 0 ? 'Kembalian' : 'Kurang',
+                          child: Text(
+                              controller.moneyChange.value < 0
+                                  ? 'Kembalian'
+                                  : 'Kurang',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -176,7 +182,8 @@ class PaymentCard extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.only(right: 3),
                                 child: Text(
-                                  controller.currency.format(change),
+                                  controller.currency.format(
+                                      controller.moneyChange.value * -1),
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -198,23 +205,7 @@ class PaymentCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                            onPressed: () async {
-                              if (controller.totalBill > 0) {
-                                await controller.saveInvoice();
-                                // paymentDialog(context, controller);
-                              } else {
-                                Get.defaultDialog(
-                                  title: 'Error',
-                                  middleText:
-                                      'Tidak ada Barang yang ditambahkan.',
-                                  confirm: TextButton(
-                                    onPressed: () => Get.back(),
-                                    child: const Text('OK'),
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text('Bayar')),
+                            onPressed: onClick, child: const Text('Bayar')),
                       ),
                     ],
                   ),

@@ -15,16 +15,17 @@ class PaymentController extends GetxController {
 
   // late final customers = customerServices.customers;
 
-  final moneyChange = 0.obs;
   final currency = NumberFormat('#,##0', 'id_ID');
   final paymentMethod = ['cash', 'transfer'].obs;
   final selectedPaymentMethod = ''.obs;
+  final moneyChange = 0.obs;
 
   final paymentTextC = TextEditingController();
 
-  void addPayment(Invoice invoice) {
+  // final status = ''.obs;
+  Future addPayment(Invoice invoice) async {
     invoice.addPayment(
-      int.parse(paymentTextC.text),
+      int.parse(paymentTextC.text.replaceAll('.', '')),
       method: selectedPaymentMethod.value,
       date: Timestamp.now(),
     );
@@ -41,7 +42,7 @@ class PaymentController extends GetxController {
     selectedPaymentMethod.value = '';
   }
 
-  void onPayChanged(String value) {
+  void onPayChanged(Invoice invoice, String value) {
     if (value.isNotEmpty) {
       String newValue = currency.format(int.parse(value.replaceAll('.', '')));
       if (newValue != paymentTextC.text) {
@@ -54,7 +55,8 @@ class PaymentController extends GetxController {
 
     // if (debounce?.isActive ?? false) debounce!.cancel();
     // debounce = Timer(const Duration(milliseconds: 500), () {
-    moneyChange.value = value == '' ? 0 : int.parse(value.replaceAll('.', ''));
+    int valueInt = value == '' ? 0 : int.parse(value.replaceAll('.', ''));
+    moneyChange.value = invoice.total - valueInt;
     // });
   }
 }

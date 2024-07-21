@@ -585,7 +585,7 @@ Future<void> detailDialog(
                                     Expanded(
                                         flex: 2,
                                         child: Text(
-                                            'Rp${controller.currency.format((invoice.payments[index].amountPaid))}',
+                                            'Rp${controller.currency.format(invoice.payments[index].amountPaid)}',
                                             style: Theme.of(Get.context!)
                                                 .textTheme
                                                 .titleSmall!

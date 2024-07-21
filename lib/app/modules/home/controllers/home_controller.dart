@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/customer_model.dart';
 import 'package:materi_kas/app/data/providers/customer_services.dart';
 import 'package:materi_kas/app/data/providers/invoice_services.dart';
+import 'package:materi_kas/app/modules/home/views/payment_dialog.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -228,7 +229,7 @@ class HomeController extends GetxController {
   // }
 
   //* discount
-  final payTextC = TextEditingController();
+  // final payTextC = TextEditingController();
   // final numberFormat = NumberFormat("#,##0", "id_ID");
   void discountHandle(String productId,
       TextEditingController discountController, String value) {
@@ -347,13 +348,7 @@ class HomeController extends GetxController {
     return invoiceNumber;
   }
 
-  Future saveInvoice() async {
-    // invoiceId.value = await generateInvoice(selectedCustomer.value);
-    final amountPaid =
-        payTextC.text == '' ? 0 : int.parse(payTextC.text.replaceAll('.', ''));
-
-    // isCash.value ? cash.value = payment : transfer.value = payment;
-
+  Future<Invoice> createInvoice() async {
     late final Customer customer;
     DateTime dateTime = DateTime(
       selectedDate.value.year,
@@ -383,18 +378,6 @@ class HomeController extends GetxController {
       );
     }
 
-    // totalPay.value = cash.value + transfer.value;
-    // bool isDebt = totalPay.value < totalBill.value;
-    // double debt = isDebt ? totalBill.value - totalPay.value : 0.0;
-
-    // PaymentTransaction payment = PaymentTransaction(
-    //   method: selectedPaymentMethod.value,
-    //   amountPaid: amountPaid,
-    //   date: Timestamp.now(),
-    // );
-
-    // List payment = [];
-
     final invoice = Invoice(
       invoiceId: await generateInvoice(selectedCustomer.value),
       createdAt: timestampDateTime,
@@ -417,107 +400,124 @@ class HomeController extends GetxController {
       // uuid: authService.uid.value,
     );
 
-    paymentController.addPayment(invoice);
-
-    // debugPrint(invoice.invoiceId);
-
-    // invoice.remainingDebt
-    // invoice.remainingDebt
-
-    Future success() async {
-      Map<String, Map<String, dynamic>> invoicesMap = {};
-      String newInvioceId = await productService.getId();
-      invoice.id = newInvioceId;
-      invoicesMap[newInvioceId] = invoice.toJson();
-      Get.defaultDialog(
-        title: 'Menyimpan Invoice...',
-        content: const CircularProgressIndicator(),
-        barrierDismissible: false,
-      );
-      try {
-        await invoiceServices.addInvoices(invoicesMap);
-        Get.back();
-        return Get.defaultDialog(
-          title: 'Berhasil',
-          middleText: 'Invoice berhasil disimpan.',
-          confirm: TextButton(
-            onPressed: () {
-              cart.value.items.clear();
-              payTextC.text = '';
-              moneyChange.value = 0;
-              totalBill.value = 0;
-              totalDiscount.value = 0;
-              // cash.value = 0;
-              // transfer.value = 0;
-              // totalPay.value = 0;
-
-              customerInputFieldC.resetCustomerField();
-
-              displayDate.value = DateTime.now().toString();
-              displayTime.value = TimeOfDay.now().toString();
-
-              selectedDate.value = DateTime.now();
-              selectedTime.value = TimeOfDay.now();
-              Get.back();
-              Get.back();
-            },
-            child: const Text('OK'),
-          ),
-        );
-      } catch (e) {
-        Get.back();
-        Get.defaultDialog(
-          title: 'Gagal Menyimpan Invoice!',
-          middleText: e.toString(),
-          barrierDismissible: false,
-        );
-      }
-    }
-
-    Future validate(String validateCode) async {
-      Get.defaultDialog(
-        title: 'Ups',
-        middleText: validateCode == 'debt'
-            ? 'Total tagihan belum terpenuhi. lanjutkan?'
-            : 'Data Customer tidak lengkap. lanjutkan?',
-        confirm: TextButton(
-          onPressed: () async {
-            await success();
-            Get.back();
-          },
-          child: const Text('Simpan'),
-        ),
-        cancel: TextButton(
-          onPressed: () {
-            Get.back();
-          },
-          child: Text(
-            'Batal',
-            style: TextStyle(color: Colors.black.withOpacity(0.5)),
-          ),
-        ),
-      );
-    }
-
-    try {
-      (customerInputFieldC.customerNameController.text == '' ||
-              customerInputFieldC.customerPhoneController.text == '' ||
-              customerInputFieldC.customerAddressController.text == '')
-          ? validate('Customer')
-          : moneyChange.value < 0
-              ? validate('debt')
-              : success();
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
+    return invoice;
   }
+
+  void resetData() {
+    cart.value.items.clear();
+    // payTextC.text = '';
+    moneyChange.value = 0;
+    totalBill.value = 0;
+    totalDiscount.value = 0;
+    // cash.value = 0;
+    // transfer.value = 0;
+    // totalPay.value = 0;
+
+    customerInputFieldC.resetCustomerField();
+
+    displayDate.value = DateTime.now().toString();
+    displayTime.value = TimeOfDay.now().toString();
+
+    selectedDate.value = DateTime.now();
+    selectedTime.value = TimeOfDay.now();
+  }
+
+  // Future<void> saveInvoice(Invoice invoice) async {
+  //   Future success() async {
+  //     Map<String, Map<String, dynamic>> invoicesMap = {};
+  //     String newInvioceId = await productService.getId();
+  //     invoice.id = newInvioceId;
+  //     invoicesMap[newInvioceId] = invoice.toJson();
+  //     Get.defaultDialog(
+  //       title: 'Menyimpan Invoice...',
+  //       content: const CircularProgressIndicator(),
+  //       barrierDismissible: false,
+  //     );
+  //     try {
+  //       await invoiceServices.addInvoices(invoicesMap);
+  //       Get.back();
+  //       return Get.defaultDialog(
+  //         title: 'Berhasil',
+  //         middleText: 'Invoice berhasil disimpan.',
+  //         confirm: TextButton(
+  //           onPressed: () {
+  //             cart.value.items.clear();
+  //             // payTextC.text = '';
+  //             moneyChange.value = 0;
+  //             totalBill.value = 0;
+  //             totalDiscount.value = 0;
+  //             // cash.value = 0;
+  //             // transfer.value = 0;
+  //             // totalPay.value = 0;
+
+  //             customerInputFieldC.resetCustomerField();
+
+  //             displayDate.value = DateTime.now().toString();
+  //             displayTime.value = TimeOfDay.now().toString();
+
+  //             selectedDate.value = DateTime.now();
+  //             selectedTime.value = TimeOfDay.now();
+  //             Get.back();
+  //             Get.back();
+  //           },
+  //           child: const Text('OK'),
+  //         ),
+  //       );
+  //     } catch (e) {
+  //       Get.back();
+  //       Get.defaultDialog(
+  //         title: 'Gagal Menyimpan Invoice!',
+  //         middleText: e.toString(),
+  //         barrierDismissible: false,
+  //       );
+  //     }
+  //   }
+
+  //   Future validate(String validateCode) async {
+  //     Get.defaultDialog(
+  //       title: 'Ups',
+  //       middleText: validateCode == 'debt'
+  //           ? 'Total tagihan belum terpenuhi. lanjutkan?'
+  //           : 'Data Customer tidak lengkap. lanjutkan?',
+  //       confirm: TextButton(
+  //         onPressed: () async {
+  //           await success();
+  //           Get.back();
+  //         },
+  //         child: const Text('Simpan'),
+  //       ),
+  //       cancel: TextButton(
+  //         onPressed: () {
+  //           Get.back();
+  //         },
+  //         child: Text(
+  //           'Batal',
+  //           style: TextStyle(color: Colors.black.withOpacity(0.5)),
+  //         ),
+  //       ),
+  //     );
+  //   }
+
+  //   try {
+  //     debugPrint('clicked');
+  //     (customerInputFieldC.customerNameController.text == '' ||
+  //             customerInputFieldC.customerPhoneController.text == '' ||
+  //             customerInputFieldC.customerAddressController.text == '')
+  //         ? validate('Customer')
+  //         : moneyChange.value < 0
+  //             ? validate('debt')
+  //             : success();
+  //   } on PostgrestException catch (e) {
+  //     Get.defaultDialog(
+  //       title: 'Error',
+  //       middleText: e.message,
+  //       confirm: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   }
+  // }
 
   Future<void> signOut() async {
     await authService.signOut();

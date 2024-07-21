@@ -13,6 +13,7 @@ import 'app/data/providers/auth_services.dart';
 import 'app/data/providers/customer_services.dart';
 import 'app/data/providers/product_services.dart';
 import 'app/widget/customer_input_field_controller.dart';
+import 'app/widget/model/payment_controller.dart';
 import 'app/widget/side_menu_controller.dart';
 import 'firebase_options.dart';
 // import 'package:window_manager/window_manager.dart';
@@ -33,6 +34,7 @@ void main() async {
   Get.put(InvoiceService(), permanent: true);
   Get.put(CustomerServices(), permanent: true);
   Get.put(CustomerInputFieldController(), permanent: true);
+  Get.put(PaymentController(), permanent: true);
   // await openDatabase();
   // WidgetsFlutterBinding.ensureInitialized();
   // await windowManager.ensureInitialized();

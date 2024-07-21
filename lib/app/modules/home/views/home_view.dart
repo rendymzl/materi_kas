@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../data/models/cart_item_model.dart';
 // import '../../../data/models/cart_model.dart';
 // import '../../../data/models/customer_model.dart';
+import '../../../data/models/invoice_model.dart';
 import '../../../widget/customer_input_field_widget.dart';
 import '../../../widget/properties_row_widget.dart';
 import '../../../widget/side_menu_widget.dart';
@@ -154,7 +155,7 @@ class ProductListCard extends StatelessWidget {
                           style: context.textTheme.titleLarge,
                         ),
                         trailing: Text(
-                          'Rp. ${controller.numberFormat.format(sellPrice)}',
+                          'Rp. ${controller.currency.format(sellPrice)}',
                           style: const TextStyle(fontSize: 14),
                         ),
                         onTap: () => controller.addToCart(foundProducts),
@@ -1102,9 +1103,16 @@ class CalculatePrice extends StatelessWidget {
                             child: ElevatedButton(
                                 onPressed: () async {
                                   if (controller.totalBill > 0) {
+                                    Invoice invoice =
+                                        await controller.createInvoice();
+
+                                    if (context.mounted) {
+                                      paymentDialog(
+                                          context, invoice, controller);
+                                    }
                                     // await controller.saveInvoice();
-                                    controller.asignPayment();
-                                    paymentDialog(context, controller);
+                                    // controller.asignPayment();
+                                    // paymentDialog(context, invo);
                                   } else {
                                     Get.defaultDialog(
                                       title: 'Error',
