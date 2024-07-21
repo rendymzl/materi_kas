@@ -129,9 +129,9 @@ class ProductListCard extends StatelessWidget {
                   itemCount: controller.foundProducts.length,
                   itemBuilder: (BuildContext context, int index) {
                     final foundProducts = controller.foundProducts[index];
-                    double getPrice =
+                    int getPrice =
                         foundProducts.getPrice(controller.priceType.value);
-                    double sellPrice = getPrice.toInt() != 0
+                    int sellPrice = getPrice.toInt() != 0
                         ? getPrice
                         : foundProducts.sellPrice1;
                     return Container(
@@ -717,9 +717,8 @@ class CartItemWidget extends StatelessWidget {
           TextPosition(offset: qtyTextC.text.length),
         );
 
-        double getPrice = item.getPrice(controller.priceType.value);
-        double sellPrice =
-            getPrice.toInt() != 0 ? getPrice : item.product.sellPrice1;
+        int getPrice = item.getPrice(controller.priceType.value);
+        int sellPrice = getPrice != 0 ? getPrice : item.product.sellPrice1;
         return ListTile(
           tileColor: index.isEven ? Colors.white : Colors.grey[100],
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),

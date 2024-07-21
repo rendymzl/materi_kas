@@ -5,14 +5,14 @@ import 'product_model.dart';
 class CartItem {
   final Product product;
   RxInt quantity;
-  RxDouble individualDiscount;
-  RxDouble bundleDiscount;
+  RxInt individualDiscount;
+  RxInt bundleDiscount;
 
   CartItem({
     required this.product,
     required int quantity,
-    double individualDiscount = 0,
-    double bundleDiscount = 0,
+    int individualDiscount = 0,
+    int bundleDiscount = 0,
   })  : quantity = quantity.obs,
         individualDiscount = individualDiscount.obs,
         bundleDiscount = bundleDiscount.obs;
@@ -20,8 +20,8 @@ class CartItem {
   CartItem.fromJson(Map<String, dynamic> json)
       : product = Product.fromJson(json['product']),
         quantity = (json['quantity'] as int).obs,
-        individualDiscount = (json['individual_discount'] as double).obs,
-        bundleDiscount = (json['bundle_discount'] as double).obs;
+        individualDiscount = (json['individual_discount'] as int).obs,
+        bundleDiscount = (json['bundle_discount'] as int).obs;
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -32,7 +32,7 @@ class CartItem {
     return data;
   }
 
-  double getPrice(int priceType) {
+  int getPrice(int priceType) {
     switch (priceType) {
       case 1:
         return product.sellPrice1;
@@ -49,22 +49,22 @@ class CartItem {
     }
   }
 
-  double getTotal(int priceType) {
-    double price = getPrice(priceType);
+  int getTotal(int priceType) {
+    int price = getPrice(priceType);
     return price * quantity.value;
   }
 
-  // double getTotalDiscount() {
-  // double price = getPrice(priceType);
-  // double totalPrice = price * quantity.value;
-  // double totalDiscount = individualDiscount.value * quantity.value;
+  // int getTotalDiscount() {
+  // int price = getPrice(priceType);
+  // int totalPrice = price * quantity.value;
+  // int totalDiscount = individualDiscount.value * quantity.value;
   // return totalDiscount;
   // return individualDiscount.value;
   // }
 
-  // double getTotalAfterDiscount(int priceType) {
-  //   double total = getTotal(priceType);
-  //   double totalDiscount = getTotalDiscount();
+  // int getTotalAfterDiscount(int priceType) {
+  //   int total = getTotal(priceType);
+  //   int totalDiscount = getTotalDiscount();
   //   return total - totalDiscount;
   // }
 

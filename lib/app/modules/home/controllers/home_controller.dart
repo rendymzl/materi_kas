@@ -262,13 +262,13 @@ class HomeController extends GetxController {
 
   //* calculating
   final priceType = 1.obs;
-  final moneyChange = 0.0.obs;
-  final totalBill = 0.0.obs;
-  final totalDiscount = 0.0.obs;
+  final moneyChange = 0.obs;
+  final totalBill = 0.obs;
+  final totalDiscount = 0.obs;
   // final isCash = true.obs;
-  // final cash = 0.0.obs;
-  // final transfer = 0.0.obs;
-  // final totalPay = 0.0.obs;
+  // final cash = 0.obs;
+  // final transfer = 0.obs;
+  // final totalPay = 0.obs;
 
   Timer? debounce;
 
@@ -287,7 +287,7 @@ class HomeController extends GetxController {
     if (debounce?.isActive ?? false) debounce!.cancel();
     debounce = Timer(const Duration(milliseconds: 500), () {
       moneyChange.value =
-          value == '' ? 0.0 : double.parse(value.replaceAll('.', ''));
+          value == '' ? 0 : int.parse(value.replaceAll('.', ''));
     });
   }
 
@@ -353,9 +353,8 @@ class HomeController extends GetxController {
 
   Future saveInvoice() async {
     // invoiceId.value = await generateInvoice(selectedCustomer.value);
-    final payment = payTextC.text == ''
-        ? 0.0
-        : double.parse(payTextC.text.replaceAll('.', ''));
+    final amountPaid =
+        payTextC.text == '' ? 0 : int.parse(payTextC.text.replaceAll('.', ''));
 
     // isCash.value ? cash.value = payment : transfer.value = payment;
 
@@ -392,11 +391,13 @@ class HomeController extends GetxController {
     // bool isDebt = totalPay.value < totalBill.value;
     // double debt = isDebt ? totalBill.value - totalPay.value : 0.0;
 
-    PaymentTransaction payment1 = PaymentTransaction(
-      method: selectedPaymentMethod.value,
-      amountPaid: payment,
-      date: Timestamp.now(),
-    );
+    // PaymentTransaction payment = PaymentTransaction(
+    //   method: selectedPaymentMethod.value,
+    //   amountPaid: amountPaid,
+    //   date: Timestamp.now(),
+    // );
+
+    // List payment = [];
 
     final invoice = Invoice(
       invoiceId: await generateInvoice(selectedCustomer.value),
@@ -405,7 +406,9 @@ class HomeController extends GetxController {
       purchaseList: cart.value.items,
       priceType: priceType.value,
       discount: totalDiscount.value,
-      payments: [payment1],
+      payments: [],
+      // debtAmount: cart.value.getTotal(priceType.value) - payment.amountPaid,
+      // isDebtPaid: payment.amountPaid > cart.value.getTotal(priceType.value)
       // payment: Payment(
       //   totalBill: totalBill.value,
       //   totalDiscount: totalDiscount.value,
@@ -416,6 +419,17 @@ class HomeController extends GetxController {
       // ),
       // uuid: authService.uid.value,
     );
+
+    invoice.addPayment(
+      amountPaid,
+      method: selectedPaymentMethod.value,
+      date: Timestamp.now(),
+    );
+
+    debugPrint(invoice.invoiceId);
+
+    // invoice.remainingDebt
+    // invoice.remainingDebt
 
     Future success() async {
       Map<String, Map<String, dynamic>> invoicesMap = {};

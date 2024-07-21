@@ -126,36 +126,36 @@ class ProductController extends GetxController {
               var existingProduct = checkexistingProduct(code);
 
               if (existingProduct.isEmpty) {
-                double costPrice = 0;
-                double sellPrice1 = 0;
-                double sellPrice2 = 0;
-                double sellPrice3 = 0;
+                int costPrice = 0;
+                int sellPrice1 = 0;
+                int sellPrice2 = 0;
+                int sellPrice3 = 0;
 
                 if (data.length > 3 &&
                     costPriceString.contains("Rp") &&
                     !costPriceString.contains("-")) {
-                  costPrice = double.parse(
+                  costPrice = int.parse(
                       costPriceString.replaceAll(RegExp(r'[Rp,]'), ''));
                 }
 
                 if (data.length > 4 &&
                     sellPrice1String.contains("Rp") &&
                     !sellPrice1String.contains("-")) {
-                  sellPrice1 = double.parse(
+                  sellPrice1 = int.parse(
                       sellPrice1String.replaceAll(RegExp(r'[Rp,]'), ''));
                 }
 
                 if (data.length > 5 &&
                     sellPrice2String.contains("Rp") &&
                     !sellPrice2String.contains("-")) {
-                  sellPrice2 = double.parse(
+                  sellPrice2 = int.parse(
                       sellPrice2String.replaceAll(RegExp(r'[Rp,]'), ''));
                 }
 
                 if (data.length > 6 &&
                     sellPrice3String.contains("Rp") &&
                     !sellPrice3String.contains("-")) {
-                  sellPrice3 = double.parse(
+                  sellPrice3 = int.parse(
                       sellPrice3String.replaceAll(RegExp(r'[Rp,]'), ''));
                 }
 
@@ -396,16 +396,16 @@ class ProductController extends GetxController {
         unit: unitTextC.text,
         costPrice: costPriceTextC.text == ''
             ? 0
-            : double.parse(costPriceTextC.text.replaceAll('.', '')),
+            : int.parse(costPriceTextC.text.replaceAll('.', '')),
         sellPrice1: sellPriceTextC1.text == ''
             ? 0
-            : double.parse(sellPriceTextC1.text.replaceAll('.', '')),
+            : int.parse(sellPriceTextC1.text.replaceAll('.', '')),
         sellPrice2: sellPriceTextC2.text == ''
             ? 0
-            : double.parse(sellPriceTextC2.text.replaceAll('.', '')),
+            : int.parse(sellPriceTextC2.text.replaceAll('.', '')),
         sellPrice3: sellPriceTextC3.text == ''
             ? 0
-            : double.parse(sellPriceTextC3.text.replaceAll('.', '')),
+            : int.parse(sellPriceTextC3.text.replaceAll('.', '')),
         stock: stockTextC.text == '' ? 0 : int.parse(stockTextC.text),
         sold: soldTextC.text == '' ? 0 : int.parse(soldTextC.text),
       );

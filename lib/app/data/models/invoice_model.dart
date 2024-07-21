@@ -5,12 +5,12 @@ import 'customer_model.dart';
 
 class PaymentTransaction {
   String? method; // Metode pembayaran, misalnya 'Credit Card', 'Bank Transfer'
-  double amountPaid;
+  int amountPaid;
   Timestamp? date;
 
   PaymentTransaction({
     this.method,
-    this.amountPaid = 0.0,
+    this.amountPaid = 0,
     this.date,
   });
 
@@ -37,11 +37,11 @@ class Invoice {
   List<CartItem>? returnList;
   List<CartItem>? afterReturnList;
   int priceType;
-  double discount;
-  double tax;
-  double returnFee;
+  int discount;
+  int tax;
+  int returnFee;
   List<PaymentTransaction> payments;
-  double debtAmount;
+  int debtAmount;
   bool isDebtPaid;
   // String? uuid;
 
@@ -54,16 +54,17 @@ class Invoice {
     this.returnList,
     this.afterReturnList,
     required this.priceType,
-    this.discount = 0.0,
-    this.tax = 0.0,
-    this.returnFee = 0.0,
+    this.discount = 0,
+    this.tax = 0,
+    this.returnFee = 0,
     required this.payments,
-    this.debtAmount = 0.0,
+    this.debtAmount = 0,
     this.isDebtPaid = false,
   });
 
   Invoice.fromJson(Map<String, dynamic> json)
       : id = json['id'],
+        invoiceId = json['invoice_id'],
         customer = Customer.fromJson(json['customer']),
         createdAt = json['created_at'],
         purchaseList = (json['purchase_list'] as List)
@@ -92,6 +93,7 @@ class Invoice {
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['id'] = id;
+    data['invoice_id'] = invoiceId;
     data['customer'] = customer?.toJson();
     data['created_at'] = createdAt;
     data['purchase_list'] = purchaseList.map((item) => item.toJson()).toList();
@@ -108,39 +110,39 @@ class Invoice {
     return data;
   }
 
-  double get subtotal {
+  int get subtotal {
     return purchaseList.fold(
         0, (prev, item) => prev + item.getTotal(priceType));
   }
 
-  double get totalIndividualDiscount {
+  int get totalIndividualDiscount {
     return purchaseList.fold(
         0,
         (prev, item) =>
             prev + (item.individualDiscount.value) * (item.quantity.value));
   }
 
-  double get totalDiscount {
+  int get totalDiscount {
     return totalIndividualDiscount;
   }
 
-  double get totalTax {
-    return subtotal * (tax / 100);
+  int get totalTax {
+    return subtotal * tax ~/ 100;
   }
 
-  double get total {
+  int get total {
     return subtotal - totalDiscount + totalTax + returnFee;
   }
 
-  double get totalPaid {
+  int get totalPaid {
     return payments.fold(0, (prev, payment) => prev + payment.amountPaid);
   }
 
-  double get remainingDebt {
+  int get remainingDebt {
     return debtAmount - totalPaid;
   }
 
-  void addPayment(double amount, {String? method, Timestamp? date}) {
+  void addPayment(int amount, {String? method, Timestamp? date}) {
     payments.add(PaymentTransaction(
       method: method,
       amountPaid: amount,

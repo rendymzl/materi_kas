@@ -7,10 +7,10 @@ class Product {
   bool? featured;
   String productName;
   String unit;
-  double costPrice;
-  double sellPrice1;
-  double? sellPrice2;
-  double? sellPrice3;
+  int costPrice;
+  int sellPrice1;
+  int? sellPrice2;
+  int? sellPrice3;
   int? stock;
   int? sold;
 
@@ -58,7 +58,7 @@ class Product {
         'sold': sold,
       };
 
-  double getPrice(int priceType) {
+  int getPrice(int priceType) {
     switch (priceType) {
       case 1:
         return sellPrice1;

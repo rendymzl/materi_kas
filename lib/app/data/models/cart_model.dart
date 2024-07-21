@@ -19,15 +19,15 @@ class Cart {
     return data;
   }
 
-  double getSubtotal(int priceType) {
+  int getSubtotal(int priceType) {
     return items.fold(0, (sum, item) => sum + item.getTotal(priceType));
   }
 
-  double getTotalIndividualDiscount() {
+  int getTotalIndividualDiscount() {
     return items.fold(0, (sum, item) => sum + item.individualDiscount.value);
   }
 
-  double getTotal(int priceType) {
+  int getTotal(int priceType) {
     return getSubtotal(priceType) - getTotalIndividualDiscount();
   }
 
@@ -52,7 +52,7 @@ class Cart {
   void updateDiscount(String productId, int discount) {
     final existingItem =
         items.firstWhere((item) => item.product.id == productId);
-    existingItem.individualDiscount.value = discount.toDouble();
+    existingItem.individualDiscount.value = discount;
   }
 
   void removeItem(String productId) {

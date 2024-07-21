@@ -162,7 +162,7 @@ class PaymentCard extends StatelessWidget {
                   if (controller.selectedPaymentMethod.value != '')
                     Obx(
                       () {
-                        double change = controller.moneyChange.value -
+                        int change = controller.moneyChange.value -
                             controller.totalBill.value;
                         // String formattedChange =
                         //     change > 0 ? formatter.format(change) : '0';

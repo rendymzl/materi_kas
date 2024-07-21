@@ -194,20 +194,18 @@ class BuildGridView extends StatelessWidget {
         ),
         itemCount: controller.foundInvoices.length,
         itemBuilder: (BuildContext context, int index) {
-          final invoiceList = controller.foundInvoices[index];
+          final invoice = controller.foundInvoices[index];
           return Card(
-            color: invoiceList.payment!.debt! > 0
-                ? Colors.red[100]
-                : Colors.green[100],
+            color: !invoice.isDebtPaid ? Colors.red[100] : Colors.green[100],
             child: InkWell(
-              splashColor: invoiceList.payment!.debt! > 0
+              splashColor: !invoice.isDebtPaid
                   ? Colors.red[200]!.withOpacity(0.2)
                   : Colors.green[200]!.withOpacity(0.3),
-              highlightColor: invoiceList.payment!.debt! > 0
+              highlightColor: !invoice.isDebtPaid
                   ? Colors.red[200]!.withOpacity(0.2)
                   : Colors.green[200]!.withOpacity(0.3),
               onTap: () async {
-                await detailDialog(context, controller, invoiceList);
+                // await detailDialog(context, controller, invoice);
               },
               child: Padding(
                 padding: const EdgeInsets.all(8),
@@ -216,16 +214,16 @@ class BuildGridView extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(invoiceList.invoiceId!,
+                        Text(invoice.invoiceId!,
                             style: context.theme.textTheme.bodySmall),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                               DateFormat('dd MMMM y HH:mm', 'id')
-                                  .format(invoiceList.createdAt!.toDate()),
+                                  .format(invoice.createdAt!.toDate()),
                               style: context.theme.textTheme.bodySmall),
                         ),
-                        invoiceList.payment!.debt! > 0
+                        !invoice.isDebtPaid
                             ? const Icon(
                                 Symbols.info,
                                 color: Colors.red,
@@ -241,16 +239,13 @@ class BuildGridView extends StatelessWidget {
                       child: SizedBox(
                         child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: invoiceList.cartList!.purchaseCart!.length,
+                          itemCount: invoice.purchaseList.length,
                           itemBuilder: (context, index) {
-                            final purchaseCart =
-                                invoiceList.cartList!.purchaseCart![index];
+                            final purchaseCart = invoice.purchaseList[index];
                             final totalPurchase =
-                                purchaseCart.product!.sellPrice! *
-                                        purchaseCart.quantity! -
-                                    purchaseCart.individualDiscount!;
+                                purchaseCart.getTotal(invoice.priceType);
                             var discount = '';
-                            if (purchaseCart.individualDiscount != 0) {
+                            if (purchaseCart.individualDiscount.value > 0) {
                               discount =
                                   '(-Rp.${controller.currency.format(purchaseCart.individualDiscount)})';
                             }
@@ -270,16 +265,17 @@ class BuildGridView extends StatelessWidget {
                                         Expanded(
                                           flex: 1,
                                           child: Text(
-                                              '${purchaseCart.product!.productName}',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: context
-                                                  .theme.textTheme.titleMedium),
+                                            purchaseCart.product.productName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: context
+                                                .theme.textTheme.titleMedium,
+                                          ),
                                         ),
                                         SizedBox(
                                           width: 90,
                                           child: Text(
-                                            'Rp.${controller.currency.format(invoiceList.cartList!.purchaseCart![index].product!.sellPrice)}',
+                                            'Rp.${controller.currency.format(invoice.total)}',
                                             style: context
                                                 .theme.textTheme.bodySmall,
                                             textAlign: TextAlign.right,
@@ -320,7 +316,7 @@ class BuildGridView extends StatelessWidget {
                               );
                             } else {
                               int remainingItemCount =
-                                  (invoiceList.cartList!.purchaseCart!.length -
+                                  (invoice.purchaseList.length -
                                       crossAxisCount);
 
                               return Padding(
@@ -347,17 +343,15 @@ class BuildGridView extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                    'Pembeli: ${invoiceList.customer?.name ?? '-'}',
+                                    'Pembeli: ${invoice.customer?.name ?? '-'}',
                                     style: context.theme.textTheme.bodySmall),
                                 Text(
-                                  invoiceList.payment!.debt! > 0
-                                      ? 'Belum Lunas'
-                                      : 'Lunas',
+                                  !invoice.isDebtPaid ? 'Belum Lunas' : 'Lunas',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.theme.textTheme.bodySmall!
                                       .copyWith(
-                                          color: invoiceList.payment!.debt! > 0
+                                          color: !invoice.isDebtPaid
                                               ? Colors.red
                                               : Colors.green),
                                 ),
@@ -371,7 +365,7 @@ class BuildGridView extends StatelessWidget {
                           SizedBox(
                             width: 100,
                             child: Text(
-                              'Rp.${controller.currency.format(invoiceList.payment!.totalBill)}',
+                              'Rp.${controller.currency.format(invoice.total)}',
                               style: context.theme.textTheme.titleMedium,
                               textAlign: TextAlign.right,
                             ),

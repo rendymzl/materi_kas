@@ -31,6 +31,17 @@ class InvoiceController extends GetxController {
 
   final currency = NumberFormat('#,##0', 'id_ID');
 
+  final numberFormat = NumberFormat("#,##0", "id_ID");
+  final purchaseCart = Cart(items: <CartItem>[].obs).obs;
+  final returnCart = Cart(items: <CartItem>[].obs).obs;
+  final afterReturnCart = Cart(items: <CartItem>[].obs).obs;
+  // final purchaseCart = <Cart>[].obs;
+  // final returnCart = <Cart>[].obs;
+  // final afterReturnCart = <Cart>[].obs;
+  // final showChange = false.obs;
+  final showReturnFee = false.obs;
+  // final totalChange = 0.obs;
+
   @override
   void onInit() async {
     super.onInit();
@@ -142,18 +153,6 @@ class InvoiceController extends GetxController {
     dateIsSelected.value = false;
     filterInvoices('');
   }
-
-//! Detail Invoice
-  final numberFormat = NumberFormat("#,##0", "id_ID");
-  final purchaseCart = Cart(items: <CartItem>[].obs).obs;
-  final returnCart = Cart(items: <CartItem>[].obs).obs;
-  final afterReturnCart = Cart(items: <CartItem>[].obs).obs;
-  // final purchaseCart = <Cart>[].obs;
-  // final returnCart = <Cart>[].obs;
-  // final afterReturnCart = <Cart>[].obs;
-  // final showChange = false.obs;
-  final showReturnFee = false.obs;
-  // final totalChange = 0.obs;
 
 //! Detail Repayment
   // final repaymentCtrlText = TextEditingController();
@@ -277,12 +276,12 @@ class InvoiceController extends GetxController {
   final editAfterReturnCart = <Cart>[].obs;
 
   late final priceType = 1.obs;
-  late final moneyChange = 0.0.obs;
-  late final totalBill = 0.0.obs;
-  late final totalDiscount = 0.0.obs;
-  late final totalReturn = 0.0.obs;
-  late final returnFee = 0.0.obs;
-  late final totalReturnFinal = 0.0.obs;
+  late final moneyChange = 0.obs;
+  late final totalBill = 0.obs;
+  late final totalDiscount = 0.obs;
+  late final totalReturn = 0.obs;
+  late final returnFee = 0.obs;
+  late final totalReturnFinal = 0.obs;
 
   //! EDIT FUNCTION =====
   //! Customer Function
@@ -358,22 +357,22 @@ class InvoiceController extends GetxController {
 
   // final addProduct = false.obs;
   //! Cart Function
-  bool isBreak = false;
+  // bool isBreak = false;
   // bool isDisableButton = false;
-  void removeFromCart(List<Cart> targetCartList, Cart cart) {
-    if (editPurchaseCart.length > 1) {
-      targetCartList.remove(cart);
-    } else {
-      Get.defaultDialog(
-          title: 'Uups', middleText: 'Invoice tidak boleh kosong');
-      isBreak = true;
-    }
-  }
+  void removeFromCart(List<Cart> targetCartList, Cart cart) {}
+  // void removeFromCart(List<Cart> targetCartList, Cart cart) {
+  //   if (editPurchaseCart.length > 1) {
+  //     targetCartList.remove(cart);
+  //   } else {
+  //     Get.defaultDialog(
+  //         title: 'Uups', middleText: 'Invoice tidak boleh kosong');
+  //     isBreak = true;
+  //   }
+  // }
 
   final returnFeeTextController = TextEditingController();
   void returnFeeHandle(String value, Invoice invoice) {
-    double valueInt =
-        double.parse((value.isEmpty) ? '0' : value.replaceAll('.', ''));
+    int valueInt = int.parse((value.isEmpty) ? '0' : value.replaceAll('.', ''));
     returnFee.value = valueInt;
     updateCalculateData();
     if (value.isNotEmpty) {
@@ -433,114 +432,114 @@ class InvoiceController extends GetxController {
   final qtyMoveCount = 0.obs;
 
   void returnHandle(Cart productCart, int addValue) {
-    int indexeditAfterReturnCart = editAfterReturnCart.indexWhere(
-        (cart) => cart.product?.productId == productCart.product?.productId);
-    bool isIndexPurchaseExist = indexeditAfterReturnCart > -1;
+    // int indexeditAfterReturnCart = editAfterReturnCart.indexWhere(
+    //     (cart) => cart.product?.productId == productCart.product?.productId);
+    // bool isIndexPurchaseExist = indexeditAfterReturnCart > -1;
 
-    int prevPurchaseQuantity = isIndexPurchaseExist
-        ? editAfterReturnCart[indexeditAfterReturnCart].quantity!
-        : 0;
+    // int prevPurchaseQuantity = isIndexPurchaseExist
+    //     ? editAfterReturnCart[indexeditAfterReturnCart].quantity!
+    //     : 0;
 
-    int newPurchaseQuantity = prevPurchaseQuantity + addValue;
+    // int newPurchaseQuantity = prevPurchaseQuantity + addValue;
 
-    if (newPurchaseQuantity > 0) {
-      final purchaseCart = Cart(
-        product: productCart.product,
-        quantity: isIndexPurchaseExist ? prevPurchaseQuantity + addValue : 1,
-        individualDiscount: productCart.individualDiscount,
-        bundleDiscount: productCart.bundleDiscount,
-      );
-      updateCart(editAfterReturnCart, purchaseCart);
-    } else {
-      if (editAfterReturnCart.length <= 1) {
-        Get.defaultDialog(
-          title: 'Oops',
-          middleText: 'Invoice product tidak boleh kosong.',
-        );
-        return;
-      } else {
-        editAfterReturnCart.remove(productCart);
-        updateCalculateData();
-      }
-    }
+    // if (newPurchaseQuantity > 0) {
+    //   final purchaseCart = Cart(
+    //     product: productCart.product,
+    //     quantity: isIndexPurchaseExist ? prevPurchaseQuantity + addValue : 1,
+    //     individualDiscount: productCart.individualDiscount,
+    //     bundleDiscount: productCart.bundleDiscount,
+    //   );
+    //   updateCart(editAfterReturnCart, purchaseCart);
+    // } else {
+    //   if (editAfterReturnCart.length <= 1) {
+    //     Get.defaultDialog(
+    //       title: 'Oops',
+    //       middleText: 'Invoice product tidak boleh kosong.',
+    //     );
+    //     return;
+    //   } else {
+    //     editAfterReturnCart.remove(productCart);
+    //     updateCalculateData();
+    //   }
+    // }
 
-    // !==========
+    // // !==========
 
-    int indexEditReturnCart = editReturnCart.indexWhere(
-        (cart) => cart.product?.productId == productCart.product?.productId);
-    bool isIndexReturnExist = indexEditReturnCart > -1;
+    // int indexEditReturnCart = editReturnCart.indexWhere(
+    //     (cart) => cart.product?.productId == productCart.product?.productId);
+    // bool isIndexReturnExist = indexEditReturnCart > -1;
 
-    int prevReturnQuantity =
-        isIndexReturnExist ? editReturnCart[indexEditReturnCart].quantity! : 0;
+    // int prevReturnQuantity =
+    //     isIndexReturnExist ? editReturnCart[indexEditReturnCart].quantity! : 0;
 
-    int newReturnQuantity = prevReturnQuantity - addValue;
+    // int newReturnQuantity = prevReturnQuantity - addValue;
 
-    // debugPrint(newReturnQuantity.toString());
+    // // debugPrint(newReturnQuantity.toString());
 
-    if (newReturnQuantity > 0) {
-      final returnCart = Cart(
-        product: productCart.product,
-        quantity: isIndexReturnExist ? prevReturnQuantity - addValue : 1,
-        individualDiscount: productCart.individualDiscount,
-        bundleDiscount: productCart.bundleDiscount,
-      );
-      updateCart(editReturnCart, returnCart);
-      // debugPrint(returnCart.quantity.toString());
-    } else {
-      editReturnCart.remove(productCart);
-      if (editReturnCart.isEmpty) {
-        returnFee.value = 0;
-      }
-      updateCalculateData();
-    }
+    // if (newReturnQuantity > 0) {
+    //   final returnCart = Cart(
+    //     product: productCart.product,
+    //     quantity: isIndexReturnExist ? prevReturnQuantity - addValue : 1,
+    //     individualDiscount: productCart.individualDiscount,
+    //     bundleDiscount: productCart.bundleDiscount,
+    //   );
+    //   updateCart(editReturnCart, returnCart);
+    //   // debugPrint(returnCart.quantity.toString());
+    // } else {
+    //   editReturnCart.remove(productCart);
+    //   if (editReturnCart.isEmpty) {
+    //     returnFee.value = 0;
+    //   }
+    //   updateCalculateData();
+    // }
   }
 
   final lastChangeDiscount = 0.obs;
 
   void discountHandle(Cart productCart,
       TextEditingController discountController, String value) {
-    if (value.isNotEmpty) {
-      String newValue =
-          numberFormat.format(int.parse(value.replaceAll('.', '')));
-      if (newValue != discountController.text) {
-        discountController.value = TextEditingValue(
-          text: newValue,
-          selection: TextSelection.collapsed(offset: newValue.length),
-        );
-      }
-    }
+    // if (value.isNotEmpty) {
+    //   String newValue =
+    //       numberFormat.format(int.parse(value.replaceAll('.', '')));
+    //   if (newValue != discountController.text) {
+    //     discountController.value = TextEditingValue(
+    //       text: newValue,
+    //       selection: TextSelection.collapsed(offset: newValue.length),
+    //     );
+    //   }
+    // }
 
-    // int index = editPurchaseCart.indexWhere(
-    //     (cart) => cart.product?.productId == productCart.product?.productId);
+    // // int index = editPurchaseCart.indexWhere(
+    // //     (cart) => cart.product?.productId == productCart.product?.productId);
 
-    int discount = value == '' ? 0 : int.parse(value);
-    Cart newCart = productCart;
-    newCart.individualDiscount = discount;
-    updateCart(editPurchaseCart, newCart);
+    // int discount = value == '' ? 0 : int.parse(value);
+    // Cart newCart = productCart;
+    // newCart.individualDiscount = discount;
+    // updateCart(editPurchaseCart, newCart);
   }
 
   final payTextController = TextEditingController();
   Timer? debounce;
   void onPayHandle(String value) {
-    if (value.isNotEmpty) {
-      String newValue =
-          numberFormat.format(int.parse(value.replaceAll('.', '')));
-      if (newValue != payTextController.text) {
-        payTextController.value = TextEditingValue(
-          text: newValue,
-          selection: TextSelection.collapsed(offset: newValue.length),
-        );
-      }
-    }
+    // if (value.isNotEmpty) {
+    //   String newValue =
+    //       numberFormat.format(int.parse(value.replaceAll('.', '')));
+    //   if (newValue != payTextController.text) {
+    //     payTextController.value = TextEditingValue(
+    //       text: newValue,
+    //       selection: TextSelection.collapsed(offset: newValue.length),
+    //     );
+    //   }
+    // }
 
-    if (debounce?.isActive ?? false) debounce!.cancel();
-    debounce = Timer(const Duration(milliseconds: 500), () {
-      if (value == '') value = '0';
-      // debugPrint(
-      //     (int.parse(value.replaceAll('.', '')) - totalPurchase.value).toString());
-      totalChange.value =
-          (int.parse(value.replaceAll('.', '')) - totalPurchase.value);
-    });
+    // if (debounce?.isActive ?? false) debounce!.cancel();
+    // debounce = Timer(const Duration(milliseconds: 500), () {
+    //   if (value == '') value = '0';
+    //   // debugPrint(
+    //   //     (int.parse(value.replaceAll('.', '')) - totalPurchase.value).toString());
+    //   totalChange.value =
+    //       (int.parse(value.replaceAll('.', '')) - totalPurchase.value);
+    // });
   }
 
   @override
@@ -549,113 +548,113 @@ class InvoiceController extends GetxController {
     super.dispose();
   }
 
-  Future saveReturnInvoice(Invoice invoice) async {
-    try {
-      // invoice.cartList!.purchaseCart = editPurchaseCart;
-      invoice.cartList!.returnCart = editReturnCart;
-      invoice.cartList!.afterReturnCart = editAfterReturnCart;
-      invoice.payment!.returnFee = returnFee.value;
-      invoice.payment!.totalReturn = totalReturn.value;
+  // Future saveReturnInvoice(Invoice invoice) async {
+  //   try {
+  //     // invoice.cartList!.purchaseCart = editPurchaseCart;
+  //     invoice.cartList!.returnCart = editReturnCart;
+  //     invoice.cartList!.afterReturnCart = editAfterReturnCart;
+  //     invoice.payment!.returnFee = returnFee.value;
+  //     invoice.payment!.totalReturn = totalReturn.value;
 
-      int totalPurchaseAferReturn = editAfterReturnCart.fold(
-        0,
-        (prev, cart) =>
-            prev +
-            (cart.product!.sellPrice! * cart.quantity!) -
-            cart.individualDiscount!,
-      );
+  //     int totalPurchaseAferReturn = editAfterReturnCart.fold(
+  //       0,
+  //       (prev, cart) =>
+  //           prev +
+  //           (cart.product!.sellPrice! * cart.quantity!) -
+  //           cart.individualDiscount!,
+  //     );
 
-      invoice.payment!.debt = (totalPurchaseAferReturn + returnFee.value);
+  //     invoice.payment!.debt = (totalPurchaseAferReturn + returnFee.value);
 
-      debugPrint(totalPurchaseAferReturn.toString());
-      debugPrint(totalReturnFinal.value.toString());
-      debugPrint(invoice.payment!.totalPay.toString());
-      invoiceServices.updateInvoice(invoice);
+  //     debugPrint(totalPurchaseAferReturn.toString());
+  //     debugPrint(totalReturnFinal.value.toString());
+  //     debugPrint(invoice.payment!.totalPay.toString());
+  //     invoiceServices.updateInvoice(invoice);
 
-      await Get.defaultDialog(
-        title: 'Berhasil',
-        middleText: 'Return berhasil disimpan',
-        confirm: TextButton(
-          onPressed: () {
-            Get.back();
-            Get.back();
-            Get.back();
-          },
-          child: const Text('OK'),
-        ),
-      );
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
-  }
+  //     await Get.defaultDialog(
+  //       title: 'Berhasil',
+  //       middleText: 'Return berhasil disimpan',
+  //       confirm: TextButton(
+  //         onPressed: () {
+  //           Get.back();
+  //           Get.back();
+  //           Get.back();
+  //         },
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   } on PostgrestException catch (e) {
+  //     Get.defaultDialog(
+  //       title: 'Error',
+  //       middleText: e.message,
+  //       confirm: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   }
+  // }
 
-  Future saveInvoice(Invoice invoice) async {
-    try {
-      DateTime dateTime = DateTime(
-        selectedDate.value.year,
-        selectedDate.value.month,
-        selectedDate.value.day,
-        selectedTime.value.hour,
-        selectedTime.value.minute,
-      );
-      Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
-      final payment = payTextController.text == ''
-          ? 0
-          : int.parse(payTextController.text.replaceAll('.', ''));
+  // Future saveInvoice(Invoice invoice) async {
+  //   try {
+  //     DateTime dateTime = DateTime(
+  //       selectedDate.value.year,
+  //       selectedDate.value.month,
+  //       selectedDate.value.day,
+  //       selectedTime.value.hour,
+  //       selectedTime.value.minute,
+  //     );
+  //     Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
+  //     final payment = payTextController.text == ''
+  //         ? 0
+  //         : int.parse(payTextController.text.replaceAll('.', ''));
 
-      invoice.customer = customerInputFieldC.selectedCustomer.value;
-      invoice.createdAt = timestampDateTime;
-      invoice.cartList!.purchaseCart = editPurchaseCart;
-      invoice.cartList!.afterReturnCart = editAfterReturnCart;
-      invoice.payment!.totalBill = totalPurchase.value;
-      invoice.payment!.totalPay = payment;
+  //     invoice.customer = customerInputFieldC.selectedCustomer.value;
+  //     invoice.createdAt = timestampDateTime;
+  //     invoice.cartList!.purchaseCart = editPurchaseCart;
+  //     invoice.cartList!.afterReturnCart = editAfterReturnCart;
+  //     invoice.payment!.totalBill = totalPurchase.value;
+  //     invoice.payment!.totalPay = payment;
 
-      int totalPurchaseAferReturn = editAfterReturnCart.fold(
-        0,
-        (prev, cart) =>
-            prev +
-            (cart.product!.sellPrice! * cart.quantity!) -
-            cart.individualDiscount!,
-      );
+  //     int totalPurchaseAferReturn = editAfterReturnCart.fold(
+  //       0,
+  //       (prev, cart) =>
+  //           prev +
+  //           (cart.product!.sellPrice! * cart.quantity!) -
+  //           cart.individualDiscount!,
+  //     );
 
-      invoice.payment!.debt = (totalPurchaseAferReturn + returnFee.value);
+  //     invoice.payment!.debt = (totalPurchaseAferReturn + returnFee.value);
 
-      // invoice.payment!.debt = (totalChange.value - totalReturn.value) >= 0;
-      // debugPrint(totalChange.value.toString());
-      // debugPrint(totalReturn.value.toString());
-      // debugPrint(returnFee.value.toString());
-      invoiceServices.updateInvoice(invoice);
+  //     // invoice.payment!.debt = (totalChange.value - totalReturn.value) >= 0;
+  //     // debugPrint(totalChange.value.toString());
+  //     // debugPrint(totalReturn.value.toString());
+  //     // debugPrint(returnFee.value.toString());
+  //     invoiceServices.updateInvoice(invoice);
 
-      await Get.defaultDialog(
-        title: 'Berhasil',
-        middleText: 'Invoice berhasil diubah',
-        confirm: TextButton(
-          onPressed: () {
-            Get.back();
-            Get.back();
-            Get.back();
-          },
-          child: const Text('OK'),
-        ),
-      );
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
-  }
+  //     await Get.defaultDialog(
+  //       title: 'Berhasil',
+  //       middleText: 'Invoice berhasil diubah',
+  //       confirm: TextButton(
+  //         onPressed: () {
+  //           Get.back();
+  //           Get.back();
+  //           Get.back();
+  //         },
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   } on PostgrestException catch (e) {
+  //     Get.defaultDialog(
+  //       title: 'Error',
+  //       middleText: e.message,
+  //       confirm: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   }
+  // }
 
   // Future saveInvoice() async {
   //   final payment = payTextController.text == ''
@@ -778,162 +777,162 @@ class InvoiceController extends GetxController {
   }
 
   void addToCart(Product product) {
-    editPurchaseCart.add(
-      Cart(
-        product: product,
-        quantity: 1,
-        individualDiscount: 0,
-        bundleDiscount: 0,
-      ),
-    );
-    updateCalculateData();
+    // editPurchaseCart.add(
+    //   Cart(
+    //     product: product,
+    //     quantity: 1,
+    //     individualDiscount: 0,
+    //     bundleDiscount: 0,
+    //   ),
+    // );
+    // updateCalculateData();
   }
 
   void initDetailInvoice(Invoice invoice) {
-    purchaseCart.clear();
-    purchaseCart.addAll(invoice.cartList!.purchaseCart!);
+    // purchaseCart.clear();
+    // purchaseCart.addAll(invoice.cartList!.purchaseCart!);
 
-    returnCart.clear();
-    if (invoice.cartList!.returnCart != null) {
-      returnCart.addAll(invoice.cartList!.returnCart!);
-    }
+    // returnCart.clear();
+    // if (invoice.cartList!.returnCart != null) {
+    //   returnCart.addAll(invoice.cartList!.returnCart!);
+    // }
 
-    afterReturnCart.clear();
-    if (invoice.cartList!.afterReturnCart != null) {
-      afterReturnCart.addAll(invoice.cartList!.afterReturnCart!);
-    }
+    // afterReturnCart.clear();
+    // if (invoice.cartList!.afterReturnCart != null) {
+    //   afterReturnCart.addAll(invoice.cartList!.afterReturnCart!);
+    // }
 
-    // selectedDate.value = invoice.createdAt!.toDate();
-    // selectedTime.value = TimeOfDay.fromDateTime(selectedDate.value);
+    // // selectedDate.value = invoice.createdAt!.toDate();
+    // // selectedTime.value = TimeOfDay.fromDateTime(selectedDate.value);
 
-    resetEditData(invoice);
+    // resetEditData(invoice);
 
-    // totalReturn.value = returnCart.fold(
-    //   0,
-    //   (prev, cart) => prev + (cart.product!.sellPrice! * cart.quantity!),
-    // );
+    // // totalReturn.value = returnCart.fold(
+    // //   0,
+    // //   (prev, cart) => prev + (cart.product!.sellPrice! * cart.quantity!),
+    // // );
 
-    // int invoiceReturn = invoice.returnFee ?? 0;
-    // returnFee.value = invoiceReturn;
-    // totalReturnFinal.value = totalReturn.value - invoiceReturn;
+    // // int invoiceReturn = invoice.returnFee ?? 0;
+    // // returnFee.value = invoiceReturn;
+    // // totalReturnFinal.value = totalReturn.value - invoiceReturn;
   }
 
   void resetEditData(Invoice invoice) {
-    id.value = invoice.id!;
+    // id.value = invoice.id!;
 
-    isRegisteredCustomer.value = invoice.customer!.customerId != null;
+    // isRegisteredCustomer.value = invoice.customer!.customerId != null;
 
-    editPurchaseCart.clear();
-    for (var cart in invoice.cartList!.purchaseCart!) {
-      Cart newCart = Cart(
-        product: cart.product,
-        quantity: cart.quantity,
-        individualDiscount: cart.individualDiscount,
-        bundleDiscount: cart.individualDiscount,
-      );
-      editPurchaseCart.add(newCart);
-    }
+    // editPurchaseCart.clear();
+    // for (var cart in invoice.cartList!.purchaseCart!) {
+    //   Cart newCart = Cart(
+    //     product: cart.product,
+    //     quantity: cart.quantity,
+    //     individualDiscount: cart.individualDiscount,
+    //     bundleDiscount: cart.individualDiscount,
+    //   );
+    //   editPurchaseCart.add(newCart);
+    // }
 
-    // editPurchaseCart.addAll(purchaseCart);
+    // // editPurchaseCart.addAll(purchaseCart);
 
-    editReturnCart.clear();
-    if (invoice.cartList!.returnCart != null) {
-      for (var cart in invoice.cartList!.returnCart!) {
-        Cart newCart = Cart(
-          product: cart.product,
-          quantity: cart.quantity,
-          individualDiscount: cart.individualDiscount,
-          bundleDiscount: cart.individualDiscount,
-        );
-        editReturnCart.add(newCart);
-      }
-    }
+    // editReturnCart.clear();
+    // if (invoice.cartList!.returnCart != null) {
+    //   for (var cart in invoice.cartList!.returnCart!) {
+    //     Cart newCart = Cart(
+    //       product: cart.product,
+    //       quantity: cart.quantity,
+    //       individualDiscount: cart.individualDiscount,
+    //       bundleDiscount: cart.individualDiscount,
+    //     );
+    //     editReturnCart.add(newCart);
+    //   }
+    // }
 
-    editAfterReturnCart.clear();
-    if (invoice.cartList!.afterReturnCart != null) {
-      for (var cart in invoice.cartList!.afterReturnCart!) {
-        Cart newCart = Cart(
-          product: cart.product,
-          quantity: cart.quantity,
-          individualDiscount: cart.individualDiscount,
-          bundleDiscount: cart.individualDiscount,
-        );
-        editAfterReturnCart.add(newCart);
-      }
-    } else {
-      for (var cart in invoice.cartList!.purchaseCart!) {
-        Cart newCart = Cart(
-          product: cart.product,
-          quantity: cart.quantity,
-          individualDiscount: cart.individualDiscount,
-          bundleDiscount: cart.individualDiscount,
-        );
-        editAfterReturnCart.add(newCart);
-      }
-    }
-    // editReturnCart.addAll(returnCart);
-    customerInputFieldC.asignCustomer(invoice.customer!);
-    // customerInputFieldC.customerNameController.text = invoice.customer!.name!;
-    // customerInputFieldC.customerPhoneController.text = invoice.customer!.phone!;
-    // customerInputFieldC.customerAddressController.text =
-    //     invoice.customer!.address!;
-    // customerInputFieldC.displayName.value =
-    //     invoice.customer!.customerId != null ? invoice.customer!.name! : '';
+    // editAfterReturnCart.clear();
+    // if (invoice.cartList!.afterReturnCart != null) {
+    //   for (var cart in invoice.cartList!.afterReturnCart!) {
+    //     Cart newCart = Cart(
+    //       product: cart.product,
+    //       quantity: cart.quantity,
+    //       individualDiscount: cart.individualDiscount,
+    //       bundleDiscount: cart.individualDiscount,
+    //     );
+    //     editAfterReturnCart.add(newCart);
+    //   }
+    // } else {
+    //   for (var cart in invoice.cartList!.purchaseCart!) {
+    //     Cart newCart = Cart(
+    //       product: cart.product,
+    //       quantity: cart.quantity,
+    //       individualDiscount: cart.individualDiscount,
+    //       bundleDiscount: cart.individualDiscount,
+    //     );
+    //     editAfterReturnCart.add(newCart);
+    //   }
+    // }
+    // // editReturnCart.addAll(returnCart);
+    // customerInputFieldC.asignCustomer(invoice.customer!);
+    // // customerInputFieldC.customerNameController.text = invoice.customer!.name!;
+    // // customerInputFieldC.customerPhoneController.text = invoice.customer!.phone!;
+    // // customerInputFieldC.customerAddressController.text =
+    // //     invoice.customer!.address!;
+    // // customerInputFieldC.displayName.value =
+    // //     invoice.customer!.customerId != null ? invoice.customer!.name! : '';
 
-    payTextController.text = currency.format(
-        invoice.payment!.totalPay! >= invoice.payment!.totalBill!
-            ? invoice.payment!.totalBill!
-            : invoice.payment!.totalPay!);
-    totalChange.value =
-        invoice.payment!.totalPay! >= invoice.payment!.totalBill!
-            ? 0
-            : invoice.payment!.totalPay! - invoice.payment!.totalBill!;
-    totalPurchase.value = invoice.payment!.totalBill!;
+    // payTextController.text = currency.format(
+    //     invoice.payment!.totalPay! >= invoice.payment!.totalBill!
+    //         ? invoice.payment!.totalBill!
+    //         : invoice.payment!.totalPay!);
+    // totalChange.value =
+    //     invoice.payment!.totalPay! >= invoice.payment!.totalBill!
+    //         ? 0
+    //         : invoice.payment!.totalPay! - invoice.payment!.totalBill!;
+    // totalPurchase.value = invoice.payment!.totalBill!;
 
-    DateTime invoiceDateTime = invoice.createdAt!.toDate();
+    // DateTime invoiceDateTime = invoice.createdAt!.toDate();
 
-    DateTime date = DateTime(
-      invoiceDateTime.year,
-      invoiceDateTime.month,
-      invoiceDateTime.day,
-      invoiceDateTime.hour,
-      invoiceDateTime.minute,
-    );
-
-    selectedDate.value = date;
-    displayDate.value =
-        DateFormat('dd MMMM y', 'id').format(selectedDate.value);
-
-    selectedTime.value = TimeOfDay.fromDateTime(date);
-    displayTime.value = DateFormat('HH:mm', 'id').format(date);
-
-    if (invoice.payment!.returnFee != null) {
-      returnFee.value = invoice.payment!.returnFee!;
-      totalReturnFinal.value = totalReturn.value - invoice.payment!.returnFee!;
-    }
-
-    updateCalculateData();
-
-    // totalReturn.value = editReturnCart.fold(
-    //   0,
-    //   (prev, cart) =>
-    //       prev +
-    //       (cart.product!.sellPrice! * cart.quantity!) -
-    //       cart.individualDiscount!,
+    // DateTime date = DateTime(
+    //   invoiceDateTime.year,
+    //   invoiceDateTime.month,
+    //   invoiceDateTime.day,
+    //   invoiceDateTime.hour,
+    //   invoiceDateTime.minute,
     // );
+
+    // selectedDate.value = date;
+    // displayDate.value =
+    //     DateFormat('dd MMMM y', 'id').format(selectedDate.value);
+
+    // selectedTime.value = TimeOfDay.fromDateTime(date);
+    // displayTime.value = DateFormat('HH:mm', 'id').format(date);
+
+    // if (invoice.payment!.returnFee != null) {
+    //   returnFee.value = invoice.payment!.returnFee!;
+    //   totalReturnFinal.value = totalReturn.value - invoice.payment!.returnFee!;
+    // }
+
+    // updateCalculateData();
+
+    // // totalReturn.value = editReturnCart.fold(
+    // //   0,
+    // //   (prev, cart) =>
+    // //       prev +
+    // //       (cart.product!.sellPrice! * cart.quantity!) -
+    // //       cart.individualDiscount!,
+    // // );
   }
 
   void updateCart(RxList<Cart> targetCartList, Cart newCart) {
-    int index = targetCartList.indexWhere(
-        (cart) => cart.product?.productId == newCart.product?.productId);
+    // int index = targetCartList.indexWhere(
+    //     (cart) => cart.product?.productId == newCart.product?.productId);
 
-    if (index > -1) {
-      targetCartList.replaceRange(index, index + 1, [newCart]);
-    } else {
-      targetCartList.add(newCart);
-    }
+    // if (index > -1) {
+    //   targetCartList.replaceRange(index, index + 1, [newCart]);
+    // } else {
+    //   targetCartList.add(newCart);
+    // }
 
-    updateCalculateData();
+    // updateCalculateData();
   }
 
   updateCalculateData() {
@@ -945,35 +944,35 @@ class InvoiceController extends GetxController {
 
     //   totalDiscount.value += editCart.individualDiscount!;
     // }
-    //! TotalReturn
-    totalReturn.value = editReturnCart.fold(
-      0,
-      (prev, cart) => prev + (cart.product!.sellPrice! * cart.quantity!),
-    );
+    // //! TotalReturn
+    // totalReturn.value = editReturnCart.fold(
+    //   0,
+    //   (prev, cart) => prev + (cart.product!.sellPrice! * cart.quantity!),
+    // );
 
-    //! TotalReturnFinal
-    totalReturnFinal.value = totalReturn.value - returnFee.value;
+    // //! TotalReturnFinal
+    // totalReturnFinal.value = totalReturn.value - returnFee.value;
 
-    //! TotalHarga
-    totalPurchase.value = editPurchaseCart.fold(
-      0,
-      (prev, cart) =>
-          prev +
-          (cart.product!.sellPrice! * cart.quantity!) -
-          cart.individualDiscount!,
-    );
+    // //! TotalHarga
+    // totalPurchase.value = editPurchaseCart.fold(
+    //   0,
+    //   (prev, cart) =>
+    //       prev +
+    //       (cart.product!.sellPrice! * cart.quantity!) -
+    //       cart.individualDiscount!,
+    // );
 
-    //! TotalDiskon
-    totalDiscount.value = editPurchaseCart.fold(
-      0,
-      (prev, cart) => prev + cart.individualDiscount!,
-    );
+    // //! TotalDiskon
+    // totalDiscount.value = editPurchaseCart.fold(
+    //   0,
+    //   (prev, cart) => prev + cart.individualDiscount!,
+    // );
 
-    //! TotalKembalian
-    String payText =
-        payTextController.text == '' ? '0' : payTextController.text;
-    totalChange.value =
-        int.parse(payText.replaceAll('.', '')) - totalPurchase.value;
+    // //! TotalKembalian
+    // String payText =
+    //     payTextController.text == '' ? '0' : payTextController.text;
+    // totalChange.value =
+    //     int.parse(payText.replaceAll('.', '')) - totalPurchase.value;
   }
 
   destroyHandle(Invoice invoice) async {
