@@ -1,3 +1,4 @@
 {
-  "cmake.sourceDirectory": "D:/flutter-app/MateriKas/materi_kas/windows/flutter"
+  "cmake.sourceDirectory": "D:/flutter-app/MateriKas/materi_kas/windows/flutter",
+  "dart.flutterSdkPath": ".fvm/versions/3.22.0"
 }

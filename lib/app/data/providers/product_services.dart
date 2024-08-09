@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../models/product_model.dart';
-import 'auth_services.dart';
+import 'stores_services.dart';
+// import 'auth_services.dart';
 
 class ProductService extends GetxController {
-  final AuthService authService = Get.find();
+  // final AuthService authService = Get.find();
+  final StoreServices storesService = Get.find();
+
   final CollectionReference _productsCollection =
       FirebaseFirestore.instance.collection('products');
 
@@ -14,6 +17,8 @@ class ProductService extends GetxController {
   var productsLenght = 0.obs;
   var lastProductCode = ''.obs;
   var foundProducts = <Product>[].obs;
+  var lowStockProducts = <Product>[].obs;
+  // var foundProductsBySales = <Product>[].obs;
 
   // @override
   // void onInit() {
@@ -23,19 +28,23 @@ class ProductService extends GetxController {
 
   Future<void> fetchProducts() async {
     try {
-      DocumentSnapshot docSnapshot =
-          await _productsCollection.doc(authService.uid.value).get();
+      DocumentSnapshot docSnapshot = await _productsCollection
+          .doc(storesService.account.value.ownerUid)
+          .get();
       if (docSnapshot.exists) {
         var productData = docSnapshot.data() as Map<String, dynamic>;
         products.value = productData.values
             .map((productJson) => Product.fromJson(productJson))
             .toList();
         products.sort((a, b) => a.productName.compareTo(b.productName));
+
         searchProducts('');
       } else {
         // Handle case where the document does not exist
         products.value = [];
         foundProducts.value = [];
+        lowStockProducts.value = [];
+        // foundProductsBySales.value = [];
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -50,7 +59,8 @@ class ProductService extends GetxController {
       Map<String, Map<String, dynamic>> productsMap) async {
     // List<List<Product>> productChunks = _chunkProducts(productsList, 500);
     try {
-      DocumentReference docRef = _productsCollection.doc(authService.uid.value);
+      DocumentReference docRef =
+          _productsCollection.doc(storesService.account.value.ownerUid);
       await docRef.set(productsMap, SetOptions(merge: true));
       // products.addAll(productsList);
       // foundProducts.addAll(productsList);
@@ -72,8 +82,23 @@ class ProductService extends GetxController {
   Future<void> updateProduct(Product newProduct, Product currentProduct) async {
     try {
       await _productsCollection
-          .doc(authService.uid.value)
+          .doc(storesService.account.value.ownerUid)
           .update({currentProduct.id: newProduct.toJson()});
+      await fetchProducts();
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> updateMultipleProducts(List<Product> updatedProducts) async {
+    try {
+      var updateData = {
+        for (var product in updatedProducts) product.id: product.toJson()
+      };
+
+      await _productsCollection
+          .doc(storesService.account.value.ownerUid)
+          .update(updateData);
       await fetchProducts();
     } catch (e) {
       debugPrint(e.toString());
@@ -82,10 +107,16 @@ class ProductService extends GetxController {
 
   Future<void> deleteProduct(String productId) async {
     try {
+      Get.defaultDialog(
+        title: 'Menghapus Barang...',
+        content: const CircularProgressIndicator(),
+        barrierDismissible: false,
+      );
       await _productsCollection
-          .doc(authService.uid.value)
+          .doc(storesService.account.value.ownerUid)
           .update({productId: FieldValue.delete()});
-      fetchProducts();
+      await fetchProducts();
+      Get.back();
       // searchProducts('');
       // products.removeWhere((product) => product.id == productId);
       // foundProducts.removeWhere((product) => product.id == productId);
@@ -96,7 +127,9 @@ class ProductService extends GetxController {
 
   Future<void> deleteAllProduct() async {
     try {
-      await _productsCollection.doc(authService.uid.value).delete();
+      await _productsCollection
+          .doc(storesService.account.value.ownerUid)
+          .delete();
       await fetchProducts();
     } catch (e) {
       debugPrint(e.toString());
@@ -109,6 +142,10 @@ class ProductService extends GetxController {
         List<Product> productsList = [];
         foundProducts.clear();
         foundProducts.addAll(products);
+        lowStockProducts.clear();
+        lowStockProducts.addAll(products);
+        lowStockProducts.sort((a, b) => (a.stock.value - a.stockMin.value)
+            .compareTo(b.stock.value - b.stockMin.value));
 
         productsLenght.value = products.length;
 
@@ -121,6 +158,12 @@ class ProductService extends GetxController {
             : productsList[products.length - 1].productId;
       } else {
         foundProducts.value = products.where((product) {
+          return product.productName
+              .toLowerCase()
+              .contains(productName.toLowerCase());
+        }).toList();
+
+        lowStockProducts.value = products.where((product) {
           return product.productName
               .toLowerCase()
               .contains(productName.toLowerCase());

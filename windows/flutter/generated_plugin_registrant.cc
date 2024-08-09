@@ -11,6 +11,7 @@
 #include <firebase_auth/firebase_auth_plugin_c_api.h>
 #include <firebase_core/firebase_core_plugin_c_api.h>
 #include <screen_retriever/screen_retriever_plugin.h>
+#include <thermal_printer/thermal_printer_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
 #include <window_manager/window_manager_plugin.h>
 
@@ -25,6 +26,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("FirebaseCorePluginCApi"));
   ScreenRetrieverPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
+  ThermalPrinterPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("ThermalPrinterPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
   WindowManagerPluginRegisterWithRegistrar(

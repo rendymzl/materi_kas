@@ -3,25 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../models/customer_model.dart';
-import 'auth_services.dart';
+
+import 'stores_services.dart';
 
 class CustomerServices extends GetxController {
-  final AuthService authService = Get.find();
+  final StoreServices storesService = Get.find();
   final CollectionReference _customersCollection =
       FirebaseFirestore.instance.collection('customers');
 
   var customers = <Customer>[].obs;
   var foundCustomers = <Customer>[].obs;
+  var lastCustomersId = 'CST0'.obs;
 
   Future<void> fetchCustomers() async {
     try {
-      DocumentSnapshot docSnapshot =
-          await _customersCollection.doc(authService.uid.value).get();
+      DocumentSnapshot docSnapshot = await _customersCollection
+          .doc(storesService.account.value.ownerUid)
+          .get();
       if (docSnapshot.exists) {
         var customerData = docSnapshot.data() as Map<String, dynamic>;
         customers.value = customerData.values
             .map((customerJson) => Customer.fromJson(customerJson))
             .toList();
+
         searchCustomers('');
       } else {
         customers.value = [];
@@ -40,7 +44,7 @@ class CustomerServices extends GetxController {
       Map<String, Map<String, dynamic>> customersMap) async {
     try {
       DocumentReference docRef =
-          _customersCollection.doc(authService.uid.value);
+          _customersCollection.doc(storesService.account.value.ownerUid);
       await docRef.set(customersMap, SetOptions(merge: true));
       await fetchCustomers();
     } catch (e) {
@@ -57,7 +61,7 @@ class CustomerServices extends GetxController {
 
     try {
       await _customersCollection
-          .doc(authService.uid.value)
+          .doc(storesService.account.value.ownerUid)
           .update({currentCustomer.id!: newCustomer.toJson()});
       await fetchCustomers();
     } catch (e) {
@@ -65,13 +69,13 @@ class CustomerServices extends GetxController {
     }
   }
 
-  Future<void> deleteCustomer(String customerId) async {
+  Future<void> deleteCustomer(String id) async {
     try {
       await _customersCollection
-          .doc(authService.uid.value)
-          .update({customerId: FieldValue.delete()});
-      customers.removeWhere((customer) => customer.id == customerId);
-      foundCustomers.removeWhere((customer) => customer.id == customerId);
+          .doc(storesService.account.value.ownerUid)
+          .update({id: FieldValue.delete()});
+      customers.removeWhere((customer) => customer.id == id);
+      foundCustomers.removeWhere((customer) => customer.id == id);
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -79,7 +83,9 @@ class CustomerServices extends GetxController {
 
   Future<void> deleteAllCustomer() async {
     try {
-      await _customersCollection.doc(authService.uid.value).delete();
+      await _customersCollection
+          .doc(storesService.account.value.ownerUid)
+          .delete();
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -94,6 +100,10 @@ class CustomerServices extends GetxController {
         List<Customer> subList = customersList.take(50).toList();
         foundCustomers.clear();
         foundCustomers.addAll(subList);
+        List<Customer> customerList = [];
+        customerList.addAll(customers);
+        customerList.sort((a, b) => a.customerId!.compareTo(b.customerId!));
+        lastCustomersId.value = customerList[customers.length - 1].customerId!;
       } else {
         foundCustomers.value = customers.where((customer) {
           return customer.name!

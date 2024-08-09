@@ -19,42 +19,47 @@ class PropertiesRowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        SizedBox(
-          width: 250,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title,
-                  style: primary != null && primary == true
-                      ? context.textTheme.titleLarge!
-                          .copyWith(fontWeight: FontWeight.bold, color: color)
-                      : context.textTheme.titleMedium!.copyWith(color: color)),
-              Row(
+    return SizedBox(
+      height: 35,
+      child: ListTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    subValue ?? '',
-                    style: context.textTheme.bodySmall!.copyWith(
-                        fontStyle: FontStyle.italic,
-                        decoration: TextDecoration.lineThrough,
-                        color: color),
+                  Text(title,
+                      style: primary != null && primary == true
+                          ? context.textTheme.titleLarge!.copyWith(
+                              fontWeight: FontWeight.bold, color: color)
+                          : context.textTheme.titleMedium!
+                              .copyWith(color: color)),
+                  Row(
+                    children: [
+                      Text(
+                        subValue ?? '',
+                        style: context.textTheme.bodySmall!.copyWith(
+                            fontStyle: FontStyle.italic,
+                            decoration: TextDecoration.lineThrough,
+                            color: color),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
                   ),
-                  const SizedBox(width: 16),
                 ],
               ),
-            ],
-          ),
+            ),
+            Text(
+              value == '0' || value == '-0' ? '-' : 'Rp$value',
+              style: primary != null && primary == true
+                  ? context.textTheme.titleLarge!
+                      .copyWith(fontWeight: FontWeight.bold, color: color)
+                  : context.textTheme.titleMedium!.copyWith(color: color),
+            )
+          ],
         ),
-        Text(
-          'Rp$value',
-          style: primary != null && primary == true
-              ? context.textTheme.titleLarge!
-                  .copyWith(fontWeight: FontWeight.bold, color: color)
-              : context.textTheme.titleMedium!.copyWith(color: color),
-        )
-      ],
+      ),
     );
   }
 }

@@ -12,10 +12,6 @@ class LoginView extends GetView<LoginController> {
   Widget build(BuildContext context) {
     OutlineInputBorder outlineRed =
         const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
-
-    // var screenSize = MediaQuery.of(context).size;
-    // var screenWidth = screenSize.width;
-    // var screenHeight = screenSize.height;
     return Scaffold(
       body: Center(
         child: Container(
@@ -30,9 +26,14 @@ class LoginView extends GetView<LoginController> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Selamat datang',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                  Obx(
+                    () => Text(
+                      controller.isLoginPage.value
+                          ? 'Selamat datang'
+                          : 'Daftar',
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w600),
+                    ),
                   ),
                   Obx(
                     () => Form(
@@ -103,46 +104,57 @@ class LoginView extends GetView<LoginController> {
                     children: [
                       Expanded(
                           child: ElevatedButton(
-                              onPressed: () => controller.signInWithEmail(),
-                              child: const Text("Masuk")))
-                    ],
-                  ),
-                  const Row(children: [
-                    Expanded(child: Divider(color: Colors.grey)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'ATAU',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.grey)),
-                  ]),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: SvgPicture.asset(
-                            'assets/logos/google.svg',
-                            width: 24,
-                            height: 24,
-                          ),
-                          label: const Text(
-                            'Masuk dengan akun google',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black),
-                          ),
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.grey),
+                        onPressed: () => controller.isLoginPage.value
+                            ? controller.signInWithEmail()
+                            : controller.signUpWithEmail(),
+                        child: Obx(
+                          () => Text(
+                            controller.isLoginPage.value ? 'Masuk' : 'Daftar',
                           ),
                         ),
-                      ),
+                      ))
                     ],
                   ),
+                  // const Row(children: [
+                  //   Expanded(child: Divider(color: Colors.grey)),
+                  //   Padding(
+                  //     padding: EdgeInsets.symmetric(horizontal: 12),
+                  //     child: Text(
+                  //       'ATAU',
+                  //       style: TextStyle(color: Colors.grey),
+                  //     ),
+                  //   ),
+                  //   Expanded(child: Divider(color: Colors.grey)),
+                  // ]),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: OutlinedButton.icon(
+                  //         icon: SvgPicture.asset(
+                  //           'assets/logos/google.svg',
+                  //           width: 24,
+                  //           height: 24,
+                  //         ),
+                  //         label: Obx(
+                  //           () => Text(
+                  //             controller.isLoginPage.value
+                  //                 ? 'Masuk dengan akun google'
+                  //                 : 'Daftar dengan akun google',
+                  //             style: const TextStyle(
+                  //                 fontWeight: FontWeight.w400,
+                  //                 color: Colors.black),
+                  //           ),
+                  //         ),
+                  //         onPressed: () {},
+                  //         style: OutlinedButton.styleFrom(
+                  //           side: const BorderSide(color: Colors.grey),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       GestureDetector(
                         child: const Text(
@@ -150,7 +162,36 @@ class LoginView extends GetView<LoginController> {
                           style: TextStyle(fontSize: 12, color: Colors.red),
                         ),
                         onTap: () {},
-                      )
+                      ),
+                      Obx(
+                        () => Row(
+                          children: [
+                            Text(
+                              controller.isLoginPage.value
+                                  ? 'Belum punya akun? '
+                                  : 'Sudah punya akun? ',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
+                            ),
+                            // const SizedBox(width: 12),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                child: Text(
+                                  controller.isLoginPage.value
+                                      ? 'Daftar'
+                                      : 'Masuk',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                onTap: () => controller.toggleLoginPage(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   )
                 ],

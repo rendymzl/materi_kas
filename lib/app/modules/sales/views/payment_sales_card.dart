@@ -2,26 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../data/models/invoice_model.dart';
-import 'payment_controller.dart';
+import '../../../data/models/sales_invoice_model.dart';
+import 'payment_sales_controller.dart';
 // import 'package:material_symbols_icons/symbols.dart';
 
 // import '../data/models/customer_model.dart';
 // import 'customer_input_field_controller.dart';
 
-class PaymentCard extends StatelessWidget {
-  const PaymentCard({
+class PaymentSalesCard extends StatelessWidget {
+  const PaymentSalesCard({
     super.key,
     required this.invoice,
     required this.onClick,
   });
 
-  final Invoice invoice;
+  final SalesInvoice invoice;
   final VoidCallback onClick;
 
   @override
   Widget build(BuildContext context) {
-    late PaymentController controller = Get.put(PaymentController());
+    late PaymentSalesController controller = Get.put(PaymentSalesController());
     // OutlineInputBorder outlineRed =
     //     const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
     return Card(
@@ -36,27 +36,40 @@ class PaymentCard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: ListTile(
-                      title: const Text('Cash'),
-                      leading: Radio<String>(
-                        value: controller.paymentMethod[0],
-                        groupValue: controller.selectedPaymentMethod.value,
-                        onChanged: (value) {
-                          controller.setPaymentMethod(value!);
-                        },
+                      tileColor: Colors.grey[100],
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Radio<String>(
+                            value: controller.paymentMethod[0],
+                            groupValue: controller.selectedPaymentMethod.value,
+                            onChanged: (value) {
+                              controller.setPaymentMethod(value!);
+                            },
+                          ),
+                          const Text('Cash'),
+                        ],
                       ),
                       onTap: () => controller
                           .setPaymentMethod(controller.paymentMethod[0]),
                     ),
                   ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ListTile(
-                      title: const Text('Transfer'),
-                      leading: Radio<String>(
-                        value: controller.paymentMethod[1],
-                        groupValue: controller.selectedPaymentMethod.value,
-                        onChanged: (value) {
-                          controller.setPaymentMethod(value!);
-                        },
+                      tileColor: Colors.grey[100],
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Radio<String>(
+                            value: controller.paymentMethod[1],
+                            groupValue: controller.selectedPaymentMethod.value,
+                            onChanged: (value) {
+                              controller.setPaymentMethod(value!);
+                            },
+                          ),
+                          const Text('Transfer'),
+                        ],
                       ),
                       onTap: () => controller
                           .setPaymentMethod(controller.paymentMethod[1]),
@@ -64,40 +77,48 @@ class PaymentCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                // crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    width: 200,
-                    child: Text('Total Belanja:',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        )),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 3),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Rp${controller.currency.format(invoice.total)}',
-                          style: TextStyle(
-                              fontSize: 32,
+              const SizedBox(height: 14),
+
+              Obx(
+                () {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: 200,
+                        child: Text(
+                            invoice.totalCost != invoice.remainingDebt
+                                ? 'SISA HUTANG:'
+                                : 'HUTANG:',
+                            style: const TextStyle(
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                    ),
-                  )
-                ],
+                            )),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Obx(
+                            () => Text(
+                              'Rp${controller.currency.format(invoice.remainingDebt)}',
+                              style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                      )
+                    ],
+                  );
+                },
               ),
               // const SizedBox(height: 12),
-              if (invoice.totalDiscount > 0)
+              if (invoice.totalDiscount > 0 &&
+                  invoice.totalCost == invoice.remainingDebt)
                 Text(
-                  'Rp${controller.currency.format(invoice.subtotal)}',
+                  'Rp${controller.currency.format(invoice.subtotalCost)}',
                   style: context.textTheme.bodySmall!.copyWith(
                       fontStyle: FontStyle.italic,
                       decoration: TextDecoration.lineThrough),
@@ -148,10 +169,6 @@ class PaymentCard extends StatelessWidget {
               if (controller.moneyChange.value != 0)
                 Obx(
                   () {
-                    // int change = controller.moneyChange.value -
-                    //     controller.totalBill.value;
-                    // String formattedChange =
-                    //     change > 0 ? formatter.format(change) : '0';
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

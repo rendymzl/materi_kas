@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "13933506648",
-    "project_id": "materikas-e152b",
-    "storage_bucket": "materikas-e152b.appspot.com"
+    "project_number": "969054215392",
+    "firebase_url": "https://materi-kas-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "materi-kas",
+    "storage_bucket": "materi-kas.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:13933506648:android:3f5093015d379787989a2d",
+        "mobilesdk_app_id": "1:969054215392:android:723d71b5cec680dbcbc485",
         "android_client_info": {
           "package_name": "com.materikas.materi_kas"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC6GOBES33ubL1fAlrcPJQfaTco1ADnzKA"
+          "current_key": "AIzaSyAxVEl2fJK_yLYIBQM7e3onHY5rRPkiUfY"
         }
       ],
       "services": {

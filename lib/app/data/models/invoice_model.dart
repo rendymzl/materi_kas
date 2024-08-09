@@ -1,11 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'cart_item_model.dart';
-// import 'cart_model.dart';
+import 'package:get/get.dart';
+import 'account_model.dart';
+import 'cart_model.dart';
 import 'customer_model.dart';
+// import 'store_model.dart';
+
+class OtherCost {
+  String name;
+  double amount;
+
+  OtherCost({
+    required this.name,
+    required this.amount,
+  });
+
+  OtherCost.fromJson(Map<String, dynamic> json)
+      : name = json['name'],
+        amount = json['amount'];
+
+  Map<String, dynamic> toJson() {
+    final data = <String, dynamic>{};
+    data['name'] = name;
+    data['amount'] = amount;
+    return data;
+  }
+}
 
 class PaymentTransaction {
-  String? method; // Metode pembayaran, misalnya 'Credit Card', 'Bank Transfer'
-  int amountPaid;
+  String? method;
+  double amountPaid;
   Timestamp? date;
 
   PaymentTransaction({
@@ -16,8 +39,8 @@ class PaymentTransaction {
 
   PaymentTransaction.fromJson(Map<String, dynamic> json)
       : method = json['method'],
-        amountPaid = json['amount_paid'],
-        date = json['created_at'];
+        amountPaid = json['amount_paid'].toDouble(),
+        date = json['date'];
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -31,178 +54,224 @@ class PaymentTransaction {
 class Invoice {
   String? id;
   String? invoiceId;
-  Timestamp? createdAt;
-  Customer? customer;
-  List<CartItem> purchaseList;
-  List<CartItem>? returnList;
-  List<CartItem>? afterReturnList;
-  int priceType;
-  int discount;
-  int tax;
-  int returnFee;
-  List<PaymentTransaction> payments;
-  int debtAmount;
-  bool isDebtPaid;
-  // String? uuid;
+  Rx<Account> account;
+  Rx<Timestamp?> createdAt;
+  Rx<Customer?> customer;
+  Rx<Cart> purchaseList;
+  Rx<Cart?> returnList;
+  Rx<Cart?> afterReturnList;
+  RxInt priceType;
+  RxDouble discount;
+  RxDouble tax;
+  RxDouble returnFee;
+  RxList<PaymentTransaction> payments;
+  // RxDouble change;
+  RxDouble debtAmount;
+  RxBool isDebtPaid;
+  RxList<OtherCost> otherCosts;
 
   Invoice({
     this.id,
     this.invoiceId,
-    this.createdAt,
-    this.customer,
-    required this.purchaseList,
-    this.returnList,
-    this.afterReturnList,
-    required this.priceType,
-    this.discount = 0,
-    this.tax = 0,
-    this.returnFee = 0,
-    required this.payments,
-    this.debtAmount = 0,
-    this.isDebtPaid = false,
-  });
+    required Account account,
+    Timestamp? createdAt,
+    Customer? customer,
+    required Cart purchaseList,
+    Cart? returnList,
+    Cart? afterReturnList,
+    required int priceType,
+    double discount = 0,
+    double tax = 0,
+    double returnFee = 0,
+    List<PaymentTransaction>? payments,
+    // double change = 0,
+    double debtAmount = 0,
+    bool isDebtPaid = false,
+    List<OtherCost>? otherCosts,
+  })  : account = Rx<Account>(account),
+        createdAt = Rx<Timestamp?>(createdAt),
+        customer = Rx<Customer?>(customer),
+        purchaseList = Rx<Cart>(purchaseList),
+        returnList = Rx<Cart?>(returnList),
+        afterReturnList = Rx<Cart?>(afterReturnList),
+        priceType = RxInt(priceType),
+        discount = RxDouble(discount),
+        tax = RxDouble(tax),
+        returnFee = RxDouble(returnFee),
+        payments = RxList<PaymentTransaction>(payments ?? []),
+        // change = RxDouble(change),
+        debtAmount = RxDouble(debtAmount),
+        isDebtPaid = RxBool(isDebtPaid),
+        otherCosts = RxList<OtherCost>(otherCosts ?? []);
 
   Invoice.fromJson(Map<String, dynamic> json)
-      : id = json['id'],
+      : account = Rx<Account>(Account.fromJson(json['account'])),
+        id = json['id'],
         invoiceId = json['invoice_id'],
-        customer = Customer.fromJson(json['customer']),
-        createdAt = json['created_at'],
-        purchaseList = (json['purchase_list'] as List)
-            .map((i) => CartItem.fromJson(i))
-            .toList(),
-        returnList = json['return_list'] != null
-            ? (json['return_list'] as List)
-                .map((i) => CartItem.fromJson(i))
-                .toList()
-            : null,
-        afterReturnList = json['after_return_list'] != null
-            ? (json['after_return_list'] as List)
-                .map((i) => CartItem.fromJson(i))
-                .toList()
-            : null,
-        priceType = json['price_type'],
-        discount = json['discount'],
-        tax = json['tax'],
-        returnFee = json['return_fee'] ?? 0.0,
-        payments = (json['payments'] as List)
+        createdAt = Rx<Timestamp?>(json['created_at']),
+        customer = Rx<Customer?>(Customer.fromJson(json['customer'])),
+        purchaseList = Rx<Cart>(Cart.fromJson(json['purchase_list'])),
+        returnList = Rx<Cart?>(json['return_list'] != null
+            ? Cart.fromJson(json['return_list'])
+            : null),
+        afterReturnList = Rx<Cart?>(json['after_return_list'] != null
+            ? Cart.fromJson(json['after_return_list'])
+            : null),
+        priceType = RxInt(json['price_type']),
+        discount = RxDouble(json['discount'].toDouble()),
+        tax = RxDouble(json['tax'].toDouble()),
+        returnFee = RxDouble(json['return_fee'].toDouble() ?? 0),
+        payments = RxList<PaymentTransaction>((json['payments'] as List)
             .map((i) => PaymentTransaction.fromJson(i))
-            .toList(),
-        debtAmount = json['debt_amount'],
-        isDebtPaid = json['is_debt_paid'];
+            .toList()),
+        // change = RxDouble(json['change']),
+        debtAmount = RxDouble(json['debt_amount'].toDouble()),
+        isDebtPaid = RxBool(json['is_debt_paid']),
+        otherCosts = RxList<OtherCost>((json['other_costs'] as List)
+            .map((i) => OtherCost.fromJson(i))
+            .toList());
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['id'] = id;
     data['invoice_id'] = invoiceId;
-    data['customer'] = customer?.toJson();
-    data['created_at'] = createdAt;
-    data['purchase_list'] = purchaseList.map((item) => item.toJson()).toList();
-    data['return_list'] = returnList?.map((item) => item.toJson()).toList();
-    data['after_return_list'] =
-        afterReturnList?.map((item) => item.toJson()).toList();
-    data['price_type'] = priceType;
-    data['discount'] = discount;
-    data['tax'] = tax;
-    data['return_fee'] = returnFee;
+    data['account'] = account.value.toJson();
+    data['created_at'] = createdAt.value;
+    data['customer'] = customer.value?.toJson();
+    data['purchase_list'] = purchaseList.value.toJson();
+    data['return_list'] = returnList.value?.toJson();
+    data['after_return_list'] = afterReturnList.value?.toJson();
+    data['price_type'] = priceType.value;
+    data['discount'] = discount.value;
+    data['tax'] = tax.value;
+    data['return_fee'] = returnFee.value;
     data['payments'] = payments.map((item) => item.toJson()).toList();
-    data['debt_amount'] = debtAmount;
-    data['is_debt_paid'] = isDebtPaid;
+    // data['change'] = change.value;
+    data['debt_amount'] = debtAmount.value;
+    data['is_debt_paid'] = isDebtPaid.value;
+    data['other_costs'] = otherCosts.map((item) => item.toJson()).toList();
     return data;
   }
 
-  int get subtotal {
-    return purchaseList.fold(
-        0, (prev, item) => prev + item.getSubtotal(priceType));
+  double get subtotal {
+    return purchaseList.value.items
+        .fold(0, (prev, item) => prev + (item.getSubtotal(priceType.value)));
   }
 
-  int get subtotalReturn {
-    return returnList!
-        .fold(0, (prev, item) => prev + item.getSubtotal(priceType));
+  double get subtotalCost {
+    return purchaseList.value.items
+        .fold(0, (prev, item) => prev + item.getSubTotalCost());
   }
 
-  int get totalIndividualDiscount {
-    return purchaseList.fold(
-        0,
-        (prev, item) =>
-            prev + (item.individualDiscount.value) * (item.quantity.value));
+  double get totalCost {
+    return purchaseList.value.items
+        .fold(0, (prev, item) => prev + item.getTotalCost());
   }
 
-  int get totalDiscount {
+  double get subtotalReturn {
+    return purchaseList.value.items
+        .fold(0, (prev, item) => prev + item.getTotalReturn(priceType.value));
+  }
+
+  double get totalIndividualDiscount {
+    return purchaseList.value.items
+        .fold(0, (prev, item) => prev + (item.individualDiscount.value));
+  }
+
+  double get totalReturn {
+    return subtotalReturn - returnFee.value;
+  }
+
+  double get remainingReturn {
+    return totalReturn - remainingDebt;
+  }
+
+  double get totalDiscount {
     return totalIndividualDiscount;
   }
 
-  int get totalTax {
-    return subtotal * tax ~/ 100;
+  double get totalTax {
+    return subtotal * (tax.value ~/ 100);
   }
 
-  int get total {
-    return subtotal - totalDiscount + totalTax + returnFee;
+  double get totalOtherCosts {
+    return otherCosts.fold(0, (prev, cost) => prev + cost.amount);
   }
 
-  int get totalReturn {
-    return subtotalReturn - returnFee;
+  double get total {
+    return subtotal - totalDiscount + totalTax + totalOtherCosts;
   }
 
-  int get totalPaid {
+  double get totalFinal {
+    return total - totalReturn;
+  }
+
+  double get totalPaid {
     return payments.fold(0, (prev, payment) => prev + payment.amountPaid);
   }
 
-  int get remainingDebt {
-    return debtAmount - totalPaid;
+  double get remainingDebt {
+    return debtAmount.value - totalPaid;
   }
 
-  void addPayment(int amount, {String? method, Timestamp? date}) {
-    payments.add(PaymentTransaction(
-      method: method,
-      amountPaid: amount,
-      date: date,
-    ));
-    isDebtPaid = remainingDebt <= 0;
+  double get change {
+    double firstPayment = payments.isNotEmpty ? payments[0].amountPaid : 0;
+
+    return totalFinal - firstPayment;
+  }
+
+  void addPayment(double amount, {String? method, Timestamp? date}) {
+    // double amountPaid = totalPaid + amount <= total ? amount : total - totalPaid;
+
+    payments.add(
+        PaymentTransaction(method: method, amountPaid: amount, date: date));
+    isDebtPaid.value = remainingDebt <= 0;
+  }
+
+  void removePayment(PaymentTransaction paymentTransaction) {
+    payments.remove(paymentTransaction);
+    isDebtPaid.value = remainingDebt <= 0;
+  }
+
+  void updateIsDebtPaid() {
+    debtAmount.value = total;
+    isDebtPaid.value = remainingDebt <= 0;
+  }
+
+  void updateReturn() {
+    totalReturn;
+  }
+
+  void addOtherCost(String name, double amount) {
+    otherCosts.add(OtherCost(name: name, amount: amount));
+  }
+
+  void removeOtherCost(String name) {
+    otherCosts.removeWhere((cost) => cost.name == name);
+    isDebtPaid.value = remainingDebt <= 0;
+    updateIsDebtPaid();
+    updateReturn();
+  }
+
+  Map<String, double> totalPaymentsByMethod() {
+    Map<String, double> totals = {};
+    for (var payment in payments) {
+      if (payment.method != null) {
+        if (!totals.containsKey(payment.method)) {
+          totals[payment.method!] = 0;
+        }
+        double result = totals[payment.method!]! + payment.amountPaid;
+        totals[payment.method!] = result <= subtotal ? result : subtotal;
+      }
+    }
+    return totals;
+  }
+
+  double getTotalByMethod(String method) {
+    return totalPaymentsByMethod()[method] ?? 0;
+  }
+
+  double get totalProfit {
+    return subtotal - subtotalCost - totalDiscount - totalTax - totalOtherCosts;
   }
 }
-
-
-// class CartList {
-//   List<Cart>? purchaseCart;
-//   List<Cart>? returnCart;
-//   List<Cart>? afterReturnCart;
-
-//   CartList({this.purchaseCart, this.returnCart, this.afterReturnCart});
-
-//   CartList.fromJson(Map<String, dynamic> json) {
-//     if (json['purchase_cart'] != null) {
-//       purchaseCart = <Cart>[];
-//       json['purchase_cart'].forEach((cartJson) {
-//         purchaseCart?.add(Cart.fromJson(cartJson));
-//       });
-//     }
-//     if (json['return_cart'] != null) {
-//       returnCart = <Cart>[];
-//       json['return_cart'].forEach((cartJson) {
-//         returnCart?.add(Cart.fromJson(cartJson));
-//       });
-//     }
-//     if (json['aftet_return_cart'] != null) {
-//       afterReturnCart = <Cart>[];
-//       json['aftet_return_cart'].forEach((cartJson) {
-//         afterReturnCart?.add(Cart.fromJson(cartJson));
-//       });
-//     }
-//   }
-
-//   Map<String, dynamic> toJson() {
-//     final data = <String, dynamic>{};
-//     if (purchaseCart != null) {
-//       data['purchase_cart'] =
-//           purchaseCart?.map((cart) => cart.toJson()).toList();
-//     }
-//     if (returnCart != null) {
-//       data['return_cart'] = returnCart?.map((cart) => cart.toJson()).toList();
-//     }
-//     if (returnCart != null) {
-//       data['aftet_return_cart'] =
-//           afterReturnCart?.map((cart) => cart.toJson()).toList();
-//     }
-//     return data;
-//   }
-// }

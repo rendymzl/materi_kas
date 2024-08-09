@@ -1,27 +1,44 @@
+// import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_rx/get_rx.dart';
 import 'product_model.dart';
 
 class CartItem {
   final Product product;
-  RxInt quantity;
-  RxInt individualDiscount;
-  RxInt bundleDiscount;
+  RxDouble quantity;
+  RxDouble individualDiscount;
+  RxDouble bundleDiscount;
+  RxDouble quantityReturn;
 
   CartItem({
     required this.product,
-    required int quantity,
-    int individualDiscount = 0,
-    int bundleDiscount = 0,
+    required double quantity,
+    double individualDiscount = 0.0,
+    double bundleDiscount = 0.0,
+    double quantityReturn = 0.0,
   })  : quantity = quantity.obs,
         individualDiscount = individualDiscount.obs,
-        bundleDiscount = bundleDiscount.obs;
+        bundleDiscount = bundleDiscount.obs,
+        quantityReturn = quantityReturn.obs;
 
   CartItem.fromJson(Map<String, dynamic> json)
       : product = Product.fromJson(json['product']),
-        quantity = (json['quantity'] as int).obs,
-        individualDiscount = (json['individual_discount'] as int).obs,
-        bundleDiscount = (json['bundle_discount'] as int).obs;
+        quantity = ((json['quantity'] is int
+                ? json['quantity'].toDouble()
+                : json['quantity']) as double)
+            .obs,
+        individualDiscount = ((json['individual_discount'] is int
+                ? json['individual_discount'].toDouble()
+                : json['individual_discount']) as double)
+            .obs,
+        bundleDiscount = ((json['bundle_discount'] is int
+                ? json['bundle_discount'].toDouble()
+                : json['bundle_discount']) as double)
+            .obs,
+        quantityReturn = ((json['Quantity_return'] is int
+                ? json['Quantity_return'].toDouble()
+                : json['Quantity_return']) as double)
+            .obs;
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -29,10 +46,11 @@ class CartItem {
     data['quantity'] = quantity.value;
     data['individual_discount'] = individualDiscount.value;
     data['bundle_discount'] = bundleDiscount.value;
+    data['Quantity_return'] = quantityReturn.value;
     return data;
   }
 
-  int getPrice(int priceType) {
+  double getPrice(int priceType) {
     switch (priceType) {
       case 1:
         return product.sellPrice1;
@@ -49,14 +67,36 @@ class CartItem {
     }
   }
 
-  int getSubtotal(int priceType) {
-    int price = getPrice(priceType);
+  double getSubtotal(int priceType) {
+    double price = getPrice(priceType);
     return price * quantity.value;
   }
 
-  int getTotal(int priceType) {
-    // int price = getPrice(priceType);
+  double getSubTotalCost() {
+    return product.costPrice.value * quantity.value;
+  }
+
+  double getTotalCost() {
+    return getSubTotalCost();
+  }
+
+  double getTotal(int priceType) {
     return getSubtotal(priceType) - individualDiscount.value;
+  }
+
+  double getTotalReturn(int priceType) {
+    double price = getPrice(priceType);
+    return price * quantityReturn.value;
+  }
+
+  double get totalQuantity {
+    return quantity.value + quantityReturn.value;
+  }
+
+  String get qtyDisplay {
+    return quantity.value % 1 == 0
+        ? quantity.value.toInt().toString()
+        : quantity.value.toString().replaceAll('.', ',');
   }
 
   //   int get totalDiscount {

@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "materi-kas",
+    "staging": "materi-kas"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}

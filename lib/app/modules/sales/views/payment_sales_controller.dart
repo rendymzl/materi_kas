@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../data/models/invoice_model.dart';
+import '../../../data/models/sales_invoice_model.dart';
 
 // import '../data/models/customer_model.dart';
 // import '../data/providers/auth_services.dart';
 // import '../data/providers/customer_services.dart';
 
-class PaymentController extends GetxController {
+class PaymentSalesController extends GetxController {
   // final AuthService authService = Get.find();
   // late CustomerServices customerServices = Get.find();
 
@@ -18,17 +18,19 @@ class PaymentController extends GetxController {
   final currency = NumberFormat('#,##0', 'id_ID');
   final paymentMethod = ['cash', 'transfer'].obs;
   final selectedPaymentMethod = ''.obs;
-  final moneyChange = 0.obs;
+  final moneyChange = 0.0.obs;
 
   final paymentTextC = TextEditingController();
 
   // final status = ''.obs;
-  Future addPayment(Invoice invoice) async {
-    invoice.addPayment(
-      int.parse(paymentTextC.text.replaceAll('.', '')),
-      method: selectedPaymentMethod.value,
-      date: Timestamp.now(),
-    );
+  Future addPayment(SalesInvoice invoice) async {
+    if (paymentTextC.text != '') {
+      invoice.addPayment(
+        double.parse(paymentTextC.text.replaceAll('.', '')),
+        method: selectedPaymentMethod.value,
+        date: Timestamp.now(),
+      );
+    }
   }
   // Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
@@ -37,12 +39,13 @@ class PaymentController extends GetxController {
     // debugPrint(selectedPaymentMethod.value);
   }
 
-  void asignPayment() {
-    // customerInputFieldC.resetCustomerField();
+  void clear() {
     selectedPaymentMethod.value = '';
+    paymentTextC.text = '';
+    moneyChange.value = 0;
   }
 
-  void onPayChanged(Invoice invoice, String value) {
+  void onPayChanged(SalesInvoice invoice, String value) {
     if (value.isNotEmpty) {
       String newValue = currency.format(int.parse(value.replaceAll('.', '')));
       if (newValue != paymentTextC.text) {
@@ -55,8 +58,8 @@ class PaymentController extends GetxController {
 
     // if (debounce?.isActive ?? false) debounce!.cancel();
     // debounce = Timer(const Duration(milliseconds: 500), () {
-    int valueInt = value == '' ? 0 : int.parse(value.replaceAll('.', ''));
-    moneyChange.value = invoice.total - valueInt;
+    double valueInt = value == '' ? 0 : double.parse(value.replaceAll('.', ''));
+    moneyChange.value = invoice.remainingDebt - valueInt;
     // });
   }
 }

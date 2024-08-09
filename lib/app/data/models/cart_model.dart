@@ -1,3 +1,4 @@
+// import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'cart_item_model.dart';
 
@@ -19,15 +20,45 @@ class Cart {
     return data;
   }
 
-  int getSubtotal(int priceType) {
-    return items.fold(0, (sum, item) => sum + item.getSubtotal(priceType));
+  double getSubtotal(int priceType) {
+    double subTotal =
+        items.fold(0, (sum, item) => sum + item.getSubtotal(priceType));
+
+    return subTotal;
   }
 
-  int get totalIndividualDiscount {
+  double getSubTotalCost() {
+    double costPrice =
+        items.fold(0, (sum, item) => sum + item.getSubTotalCost());
+
+    return costPrice;
+  }
+
+  double getTotalCost() {
+    double costPrice = items.fold(0, (sum, item) => sum + item.getTotalCost());
+
+    return costPrice;
+  }
+
+  double getTotalReturn(int priceType) {
+    double totalReturn =
+        items.fold(0, (sum, item) => sum + item.getTotalReturn(priceType));
+
+    return totalReturn;
+  }
+
+  double getTotalQuantityReturn() {
+    double totalQuantityReturn =
+        items.fold(0, (sum, item) => sum + item.quantityReturn.value);
+
+    return totalQuantityReturn;
+  }
+
+  double get totalIndividualDiscount {
     return items.fold(0, (sum, item) => sum + item.individualDiscount.value);
   }
 
-  int getTotal(int priceType) {
+  double getTotal(int priceType) {
     return getSubtotal(priceType) - totalIndividualDiscount;
   }
 
@@ -36,20 +67,24 @@ class Cart {
         items.firstWhereOrNull((item) => item.product.id == newItem.product.id);
     if (existingItem != null) {
       existingItem.quantity.value += newItem.quantity.value;
-      existingItem.individualDiscount.value = newItem.individualDiscount.value;
-      existingItem.bundleDiscount.value = newItem.bundleDiscount.value;
     } else {
       items.add(newItem);
     }
   }
 
-  void updateQuantity(String productId, int quantity) {
+  void updateQuantity(String productId, double quantity) {
     final existingItem =
         items.firstWhere((item) => item.product.id == productId);
     existingItem.quantity.value = quantity;
   }
 
-  void updateDiscount(String productId, int discount) {
+  void updateQuantityReturn(String productId, double quantityReturn) {
+    final existingItem =
+        items.firstWhere((item) => item.product.id == productId);
+    existingItem.quantityReturn.value = quantityReturn;
+  }
+
+  void updateDiscount(String productId, double discount) {
     final existingItem =
         items.firstWhere((item) => item.product.id == productId);
     existingItem.individualDiscount.value = discount;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../controllers/init_controller.dart';
 
@@ -18,11 +19,33 @@ class InitView extends GetView<InitController> {
         () => Center(
           child: controller.loading.value
               ? const CircularProgressIndicator()
-              : ElevatedButton(
-                  onPressed: () async {
-                    controller.handleAuthChanged();
-                  },
-                  child: const Text('Mulai Aplikasi'),
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        controller.handleAuthChanged();
+                      },
+                      child: const Text('Mulai Aplikasi'),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        Get.defaultDialog(
+                          title: 'Logout?',
+                          middleText: 'Logout akun?',
+                          confirm: TextButton(
+                            onPressed: () => controller.signOut(),
+                            child: const Text('Logout'),
+                          ),
+                          cancel: TextButton(
+                            onPressed: () => Get.back(),
+                            child: const Text('Batal'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Symbols.logout),
+                    ),
+                  ],
                 ),
         ),
       ),

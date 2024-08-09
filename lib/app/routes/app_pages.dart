@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-// import '../data/providers/auth_services.dart';
 import '../modules/customer/bindings/customer_binding.dart';
 import '../modules/customer/views/customer_view.dart';
 import '../modules/home/bindings/home_binding.dart';
@@ -15,8 +14,16 @@ import '../modules/product/bindings/product_binding.dart';
 import '../modules/product/views/product_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/register/bindings/register_binding.dart';
+import '../modules/register/views/register_view.dart';
+import '../modules/sales/bindings/sales_binding.dart';
+import '../modules/sales/views/sales_view.dart';
+import '../modules/setup/bindings/setup_binding.dart';
+import '../modules/setup/views/setup_view.dart';
 import '../modules/statistic/bindings/statistic_binding.dart';
 import '../modules/statistic/views/statistic_view.dart';
+
+// import '../data/providers/auth_services.dart';
 
 // import 'package:firebase_auth/firebase_auth.dart';
 
@@ -67,15 +74,30 @@ class AppPages {
       page: () => const ProfileView(),
       binding: ProfileBinding(),
     ),
-    // GetPage(
-    //   name: _Paths.STATISTIC,
-    //   page: () => const StatisticView(),
-    //   binding: StatisticBinding(),
-    // ),
+    GetPage(
+      name: _Paths.STATISTIC,
+      page: () => const StatisticView(),
+      binding: StatisticBinding(),
+    ),
     GetPage(
       name: _Paths.INIT,
       page: () => const InitView(),
       binding: InitBinding(),
+    ),
+    GetPage(
+      name: _Paths.SALES,
+      page: () => const SalesView(),
+      binding: SalesBinding(),
+    ),
+    GetPage(
+      name: _Paths.SETUP,
+      page: () => const SetupView(),
+      binding: SetupBinding(),
+    ),
+    GetPage(
+      name: _Paths.REGISTER,
+      page: () => const RegisterView(),
+      binding: RegisterBinding(),
     ),
   ];
 }

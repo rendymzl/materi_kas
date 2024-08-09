@@ -4,50 +4,21 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// import '../../../../main.dart';
 import '../../../data/models/customer_model.dart';
-import '../../../data/providers/auth_services.dart';
 import '../../../data/providers/customer_services.dart';
-// import '../../../data/providers/customer_provider.dart';
+import '../../../data/providers/stores_services.dart';
 
 class CustomerController extends GetxController {
-  final AuthService authService = Get.find();
+  late StoreServices storeService = Get.find();
   final CustomerServices customerServices = Get.find();
 
   late final customers = customerServices.customers;
   late final foundCustomers = customerServices.foundCustomers;
-  // late final String uuid;
-  // late final List<Customer> customerList = <Customer>[].obs;
-
-  // final foundCustomers = <Customer>[].obs;
-
-  // @override
-  // void onInit() async {
-  // super.onInit();
-  // uuid = supabase.auth.currentUser!.id;
-  // List<Customer> newData = await CustomerProvider.fetchData(uuid);
-  // refreshFetch(newData);
-  // }
+  late final isAdmin = storeService.isOwner;
 
   void filterCustomers(String customerName) {
     customerServices.searchCustomers(customerName);
-    // var result = <Customer>[];
-    // name.isEmpty
-    //     ? result = customers
-    //     : result = customers
-    //         .where((customer) =>
-    //             customer.name.toString().toLowerCase().contains(name))
-    //         .toList();
-
-    // customers.value = result;
   }
-
-  //! Fetch
-  // void refreshFetch(List<Customer> newData) async {
-  //   customers.clear();
-  //   customers.assignAll(newData);
-  //   foundCustomers.value = customers;
-  // }
 
   //! create
   void addCustomer(
@@ -66,7 +37,6 @@ class CustomerController extends GetxController {
     } else {
       try {
         await customerServices.addCustomers(customerData);
-        // List<Customer> newData = await CustomerProvider.create(customer);
         await Get.defaultDialog(
           title: 'Berhasil',
           middleText: 'Customer berhasil ditambahkan',
@@ -75,7 +45,6 @@ class CustomerController extends GetxController {
             child: const Text('OK'),
           ),
         );
-        // refreshFetch(newData);
         Get.back();
       } on PostgrestException catch (e) {
         Get.defaultDialog(
@@ -109,67 +78,36 @@ class CustomerController extends GetxController {
         ),
       );
     } else {
-      try {
-        // Map<String, Object?> data = {
-        //   'name': newCustomer.name,
-        //   'phone': newCustomer.phone,
-        //   'address': newCustomer.address,
-        // };
-        customerServices.updateCustomer(newCustomer, curentCustomer);
-        // List<Customer> newData =
-        // await CustomerProvider.update(data, curentid, uuid);
-        await Get.defaultDialog(
-          title: 'Berhasil',
-          middleText: 'Customer berhasil diupdate',
-          confirm: TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('OK'),
-          ),
-        );
-        // refreshFetch(newData);
-        Get.back();
-      } on PostgrestException catch (e) {
-        Get.defaultDialog(
-          title: 'Error',
-          middleText: e.message,
-          confirm: TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('OK'),
-          ),
-        );
-      }
+      customerServices.updateCustomer(newCustomer, curentCustomer);
+      await Get.defaultDialog(
+        title: 'Berhasil',
+        middleText: 'Customer berhasil diupdate',
+        confirm: TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('OK'),
+        ),
+      );
+      Get.back();
     }
   }
 
   //! delete
   destroyHandle(Customer customer) async {
-    try {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Hapus Customer ini?',
-        confirm: TextButton(
-          onPressed: () async {
-            // List<Customer> newData = await CustomerProvider.destroy(customer);
-            // refreshFetch(newData);
-            Get.back();
-          },
-          child: const Text('OK'),
-        ),
-        cancel: TextButton(
-          onPressed: () => Get.back(),
-          child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
-        ),
-      );
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
+    Get.defaultDialog(
+      title: 'Error',
+      middleText: 'Hapus Customer ini?',
+      confirm: TextButton(
+        onPressed: () async {
+          customerServices.deleteCustomer(customer.id!);
+          Get.back();
+        },
+        child: const Text('OK'),
+      ),
+      cancel: TextButton(
+        onPressed: () => Get.back(),
+        child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+      ),
+    );
   }
 
   //! edit form

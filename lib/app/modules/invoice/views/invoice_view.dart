@@ -9,6 +9,7 @@ import 'package:material_symbols_icons/symbols.dart';
 // import '../../../data/models/invoice_model.dart';
 // import '../../../widget/customer_input_field_widget.dart';
 // import '../../../widget/return_widget.dart';
+import '../../../../main.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/invoice_controller.dart';
 import 'detail_dialog_widget.dart';
@@ -20,11 +21,11 @@ class InvoiceView extends GetView<InvoiceController> {
     // final formatter = NumberFormat('#,##0', 'id_ID');
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 100,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: const Color(0xFFF5F8FF),
-        title: const Text('Invoice'),
-        centerTitle: true,
+        title: const SideMenuWidget(title: 'Invoice'),
       ),
       body: SizedBox(
         child: Padding(
@@ -32,7 +33,6 @@ class InvoiceView extends GetView<InvoiceController> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SideMenuWidget(),
               Expanded(
                 flex: 13,
                 child: Card(
@@ -77,10 +77,17 @@ class InvoiceGridCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Container(
-                      color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(8),
+                        ),
+                      ),
                       child: TextField(
                         decoration: const InputDecoration(
-                          labelText: "Cari Invoice (Contoh: INV001/G052824)",
+                          border: InputBorder.none,
+                          labelText:
+                              "    Cari Invoice (Contoh: INV001/G052824)",
                           labelStyle: TextStyle(color: Colors.grey),
                           suffixIcon: Icon(Symbols.search),
                         ),
@@ -196,16 +203,17 @@ class BuildGridView extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           final invoice = controller.foundInvoices[index];
           return Card(
-            color: !invoice.isDebtPaid ? Colors.red[100] : Colors.green[100],
+            color:
+                !invoice.isDebtPaid.value ? Colors.red[100] : Colors.green[100],
             child: InkWell(
-              splashColor: !invoice.isDebtPaid
+              splashColor: !invoice.isDebtPaid.value
                   ? Colors.red[200]!.withOpacity(0.2)
                   : Colors.green[200]!.withOpacity(0.3),
-              highlightColor: !invoice.isDebtPaid
+              highlightColor: !invoice.isDebtPaid.value
                   ? Colors.red[200]!.withOpacity(0.2)
                   : Colors.green[200]!.withOpacity(0.3),
-              onTap: () async {
-                await detailDialog(context, controller, invoice);
+              onTap: () {
+                detailDialog(context, controller, invoice);
               },
               child: Padding(
                 padding: const EdgeInsets.all(8),
@@ -220,10 +228,10 @@ class BuildGridView extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                               DateFormat('dd MMMM y HH:mm', 'id')
-                                  .format(invoice.createdAt!.toDate()),
+                                  .format(invoice.createdAt.value!.toDate()),
                               style: context.theme.textTheme.bodySmall),
                         ),
-                        !invoice.isDebtPaid
+                        !invoice.isDebtPaid.value
                             ? const Icon(
                                 Symbols.info,
                                 color: Colors.red,
@@ -234,96 +242,107 @@ class BuildGridView extends StatelessWidget {
                               ),
                       ],
                     ),
-                    const Divider(color: Colors.grey),
+                    const Divider(color: Colors.white54),
                     Expanded(
                       child: SizedBox(
                         child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: invoice.purchaseList.length,
+                          itemCount: invoice.purchaseList.value.items.length,
                           itemBuilder: (context, index) {
-                            final purchaseCart = invoice.purchaseList[index];
+                            final purchaseCart =
+                                invoice.purchaseList.value.items[index];
                             final totalPurchase =
-                                purchaseCart.getTotal(invoice.priceType);
+                                purchaseCart.getTotal(invoice.priceType.value);
                             var discount = '';
                             if (purchaseCart.individualDiscount.value > 0) {
                               discount =
-                                  '(-Rp.${controller.currency.format(purchaseCart.individualDiscount.value)})';
+                                  'Diskon (-Rp${currency.format(purchaseCart.individualDiscount.value)})';
                             }
+                            // var quantity = purchaseCart.quantity.value % 1 == 0
+                            //     ? purchaseCart.quantity.value.toInt().toString()
+                            //     : purchaseCart.quantity.value
+                            //         .toString()
+                            //         .replaceAll('.', ',');
                             if (index < crossAxisCount) {
-                              return Column(
-                                children: [
-                                  ListTile(
-                                    dense: true,
-                                    title: Row(
+                              return purchaseCart.quantity.value > 0
+                                  ? Column(
                                       children: [
-                                        SizedBox(
-                                          width: 30,
-                                          child: Text('${index + 1}. ',
-                                              style: context
-                                                  .theme.textTheme.bodySmall),
-                                        ),
-                                        Expanded(
-                                          flex: 1,
-                                          child: Text(
-                                            purchaseCart.product.productName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: context
-                                                .theme.textTheme.titleMedium,
+                                        ListTile(
+                                          dense: true,
+                                          title: Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 30,
+                                                child: Text('${index + 1}. ',
+                                                    style: context.theme
+                                                        .textTheme.bodySmall),
+                                              ),
+                                              Expanded(
+                                                flex: 1,
+                                                child: Text(
+                                                  purchaseCart
+                                                      .product.productName,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: context.theme.textTheme
+                                                      .titleMedium,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 90,
+                                                child: Text(
+                                                  'Rp${currency.format(purchaseCart.product.getPrice(invoice.priceType.value))}',
+                                                  style: context.theme.textTheme
+                                                      .bodySmall,
+                                                  textAlign: TextAlign.right,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 75,
+                                                child: Text(
+                                                    ' x ${purchaseCart.qtyDisplay} =',
+                                                    style: context.theme
+                                                        .textTheme.bodySmall),
+                                              ),
+                                              SizedBox(
+                                                width: 100,
+                                                child: Text(
+                                                  'Rp${currency.format(totalPurchase)}',
+                                                  style: context.theme.textTheme
+                                                      .bodySmall,
+                                                  textAlign: TextAlign.right,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        SizedBox(
-                                          width: 90,
-                                          child: Text(
-                                            'Rp.${controller.currency.format(purchaseCart.product.getPrice(invoice.priceType))}',
-                                            style: context
-                                                .theme.textTheme.bodySmall,
-                                            textAlign: TextAlign.right,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 70,
-                                          child: Text(
-                                              '  x   ${purchaseCart.quantity}   =',
+                                          subtitle: Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Text(
+                                              discount,
                                               style: context
-                                                  .theme.textTheme.bodySmall),
-                                        ),
-                                        SizedBox(
-                                          width: 100,
-                                          child: Text(
-                                            'Rp.${controller.currency.format(totalPurchase)}',
-                                            style: context
-                                                .theme.textTheme.bodySmall,
-                                            textAlign: TextAlign.right,
+                                                  .theme.textTheme.bodySmall!
+                                                  .copyWith(
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      fontSize: 11),
+                                              textAlign: TextAlign.right,
+                                            ),
                                           ),
                                         ),
                                       ],
-                                    ),
-                                    subtitle: Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Text(
-                                        discount,
-                                        style: context
-                                            .theme.textTheme.bodySmall!
-                                            .copyWith(
-                                                fontStyle: FontStyle.italic,
-                                                fontSize: 11),
-                                        textAlign: TextAlign.right,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
+                                    )
+                                  : const SizedBox();
                             } else {
                               int remainingItemCount =
-                                  (invoice.purchaseList.length -
+                                  (invoice.purchaseList.value.items.length -
                                       crossAxisCount);
 
                               return Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: index == crossAxisCount
                                     ? Text(
-                                        '+ $remainingItemCount barang lainnya',
+                                        '+ $remainingItemCount barang lainnya...',
                                         style:
                                             context.theme.textTheme.bodySmall,
                                       )
@@ -342,18 +361,24 @@ class BuildGridView extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                if (invoice.purchaseList.value
+                                        .getTotalQuantityReturn() >
+                                    0)
+                                  Text(
+                                      '${invoice.purchaseList.value.getTotalQuantityReturn()} Barang direturn',
+                                      style: context.theme.textTheme.bodySmall),
                                 Text(
-                                    'Pembeli: ${invoice.customer?.name ?? '-'}',
+                                    'Pembeli: ${invoice.customer.value?.name!.toUpperCase() ?? '-'}',
                                     style: context.theme.textTheme.bodySmall),
                                 Text(
-                                  !invoice.isDebtPaid
-                                      ? 'Belum Lunas Rp${controller.currency.format(invoice.remainingDebt)}'
+                                  !invoice.isDebtPaid.value
+                                      ? 'Belum Lunas Rp${currency.format(invoice.remainingDebt)}'
                                       : 'Lunas',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.theme.textTheme.bodySmall!
                                       .copyWith(
-                                          color: !invoice.isDebtPaid
+                                          color: !invoice.isDebtPaid.value
                                               ? Colors.red
                                               : Colors.green),
                                 ),
@@ -365,9 +390,9 @@ class BuildGridView extends StatelessWidget {
                             child: Text(''),
                           ),
                           SizedBox(
-                            width: 100,
+                            width: 150,
                             child: Text(
-                              'Rp.${controller.currency.format(invoice.total)}',
+                              'Rp${currency.format(invoice.total)}',
                               style: context.theme.textTheme.titleMedium,
                               textAlign: TextAlign.right,
                             ),

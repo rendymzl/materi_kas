@@ -1,1 +1,46 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"materikas-e152b","appId":"1:13933506648:android:3f5093015d379787989a2d","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"materikas-e152b","configurations":{"android":"1:13933506648:android:3f5093015d379787989a2d","web":"1:13933506648:web:c7e8370f75ba156a989a2d","windows":"1:13933506648:web:cacc4669b1ba5d3d989a2d"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "materi-kas",
+          "appId": "1:969054215392:android:723d71b5cec680dbcbc485",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "materi-kas",
+          "configurations": {
+            "android": "1:969054215392:android:723d71b5cec680dbcbc485",
+            "web": "1:969054215392:web:b6f73d3d7c50dc79cbc485",
+            "windows": "1:969054215392:web:b6f73d3d7c50dc79cbc485"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

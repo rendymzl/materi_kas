@@ -17,6 +17,7 @@ class CustomerInputFieldCard extends StatelessWidget {
         Get.put(CustomerInputFieldController());
     OutlineInputBorder outlineRed =
         const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
+    final GlobalKey textFieldKey = GlobalKey();
     return Card(
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -51,17 +52,34 @@ class CustomerInputFieldCard extends StatelessWidget {
                     TextEditingController textEditingController,
                     FocusNode focusNode,
                     VoidCallback onFieldSubmitted) {
-                  return TextField(
-                    controller: textEditingController,
-                    focusNode: focusNode,
-                    onSubmitted: (String value) {
-                      onFieldSubmitted();
-                    },
-                    decoration: const InputDecoration(
-                      labelText: "Cari Pelanggan",
-                      labelStyle: TextStyle(color: Colors.grey),
-                      prefixIcon: Icon(Symbols.search),
-                      border: InputBorder.none,
+                  return Obx(
+                    () => TextField(
+                      key: textFieldKey,
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      onChanged: (value) {
+                        controller.showSuffixClear.value = value != '';
+                        debugPrint((value != '').toString());
+                      },
+                      onSubmitted: (String value) {
+                        onFieldSubmitted();
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Cari Pelanggan",
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        prefixIcon: const Icon(Symbols.search),
+                        suffixIconColor: Colors.red,
+                        suffixIcon: controller.showSuffixClear.value
+                            ? IconButton(
+                                onPressed: () {
+                                  textEditingController.text = '';
+                                  controller.showSuffixClear.value = false;
+                                  controller.clear();
+                                },
+                                icon: const Icon(Symbols.close))
+                            : null,
+                        border: InputBorder.none,
+                      ),
                     ),
                   );
                 },
@@ -69,22 +87,30 @@ class CustomerInputFieldCard extends StatelessWidget {
                     AutocompleteOnSelected<Customer> onSelected,
                     Iterable<Customer> options) {
                   final int optionsLength = options.length;
-                  const double itemHeight = 56.0;
-                  final double maxHeight = itemHeight * optionsLength;
+                  final RenderBox renderBox = textFieldKey.currentContext
+                      ?.findRenderObject() as RenderBox;
+                  final double textFieldWidth = renderBox.size.width;
 
                   return Align(
                     alignment: Alignment.topLeft,
-                    child: Material(
-                      elevation: 4.0,
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width * (1 / 4),
-                        height: maxHeight > 150 ? 150 : maxHeight,
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        border: Border.symmetric(
+                          horizontal: BorderSide(color: Colors.grey[200]!),
+                        ),
+                      ),
+                      width: textFieldWidth,
+                      child: Card(
+                        color: Colors.grey[100],
                         child: ListView.builder(
+                          shrinkWrap: true,
                           padding: const EdgeInsets.all(8.0),
                           itemCount: optionsLength,
                           itemBuilder: (BuildContext context, int index) {
                             final Customer option = options.elementAt(index);
                             return ListTile(
+                              // hoverColor: Colors.white,
                               title: Text(option.name ?? ''),
                               onTap: () {
                                 onSelected(option);

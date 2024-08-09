@@ -8,23 +8,30 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:async' show Future;
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
-// import '../../../../main.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/auth_services.dart';
-// import '../../../data/providers/product_provider.dart';
+import '../../../data/models/sales_model.dart';
 import '../../../data/providers/product_services.dart';
+import '../../../data/providers/sales_customer_services.dart';
+import '../../../data/providers/stores_services.dart';
+import '../../../widget/date_picker_controller.dart';
+import '../views/buy_product_controller.dart';
 
 class ProductController extends GetxController {
+  late StoreServices storeService = Get.find();
   final ProductService productService = Get.find();
-  final AuthService authService = Get.find();
+  final SalesCustomerServices salesCustomerServices = Get.find();
 
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
+  late final lowStockProduct = productService.lowStockProducts;
   late final totalProduct = productService.productsLenght;
   late final lastCode = productService.lastProductCode;
+
+  late final isAdmin = storeService.isOwner;
+
+  late final sales = salesCustomerServices.customers;
 
   // final provider = ProductProvider();
   final csvList = <Product>[].obs;
@@ -33,15 +40,18 @@ class ProductController extends GetxController {
   // late final List<Product> allProductList = <Product>[].obs;
   // final totalProduct = 0.obs;
   // final lastCode = ''.obs;
+  final isLowStock = false.obs;
   final isLoading = false.obs;
   final totalCsvData = 0.obs;
   final currentCsvData = 0.obs;
   final emptyCsv = 0.obs;
+  late ProgressDialog _progressDialog;
   // final foundProducts = <Product>[].obs;
   final NumberFormat numberFormat = NumberFormat("#,##0", "id_ID");
   final TextEditingController codeTextC = TextEditingController();
   final TextEditingController productNameTextC = TextEditingController();
   final TextEditingController unitTextC = TextEditingController();
+  final TextEditingController salesTextC = TextEditingController();
   final TextEditingController costPriceTextC = TextEditingController();
   final TextEditingController sellPriceTextC1 = TextEditingController();
   final TextEditingController sellPriceTextC2 = TextEditingController();
@@ -51,11 +61,20 @@ class ProductController extends GetxController {
 
   late final Map<String, TextEditingController> textControllers;
 
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  Rx<Sales?> selectedSales = Rx<Sales?>(null);
+  //   void asignSales(Customer customer) {
+  //   customerNameController.text = customer.name!;
+  //   customerPhoneController.text = customer.phone!;
+  //   customerAddressController.text = customer.address!;
+  //   selectedSales.value = customer;
+  // }
+
+  // final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   final RxMap<String, bool> clickedField = {
     'code': false,
     'productName': false,
+    'sales': false,
     'cost': false,
     'sell1': false,
     'sell2': false,
@@ -69,11 +88,15 @@ class ProductController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
+    _progressDialog = ProgressDialog(context: Get.context!);
+    Get.put(DatePickerController(), permanent: true);
+    Get.lazyPut(() => BuyProductController());
     filterProducts('');
     textControllers = {
       'code': codeTextC,
       'productName': productNameTextC,
       'unit': unitTextC,
+      'sales': salesTextC,
       'cost': costPriceTextC,
       'sell1': sellPriceTextC1,
       'sell2': sellPriceTextC2,
@@ -81,6 +104,10 @@ class ProductController extends GetxController {
       'stock': stockTextC,
       'sold': soldTextC,
     };
+  }
+
+  void toggleLowStock() {
+    isLowStock.value = !isLowStock.value;
   }
 
   void filterProducts(String productName) {
@@ -105,59 +132,92 @@ class ProductController extends GetxController {
           // List<Product> productList = [];
           Map<String, Map<String, dynamic>> productsMap = {};
           if (!context.mounted) return;
-          ProgressDialog dialog = ProgressDialog(context: context);
 
-          dialog.show(
+          _progressDialog.show(
+            max: csvData.length - 1,
             msg: 'Menambahkan Barang dari Excel...',
-            max: csvData.length,
+            progressBgColor: Colors.transparent,
           );
+
+          // dialog.show(
+          //   msg: 'Menambahkan Barang dari Excel...',
+          //   max: csvData.length,
+          //   // completed: Completed()
+          // );
           for (var i = 1; i < csvData.length; i++) {
             var data = csvData[i];
+
+            double parseToDouble(dynamic value) {
+              if (value is String) {
+                // Remove commas from the string
+                value = value.replaceAll(',', '');
+
+                // Check if the string is empty, a dash, or null
+                if (value.isEmpty || value == '-' || value == 'null') {
+                  return 0;
+                }
+
+                // Try to parse the string to an integer
+                try {
+                  return double.parse(value);
+                } catch (e) {
+                  return 0;
+                }
+              } else if (value is double) {
+                // If the value is already an integer, return it
+                return value;
+              } else {
+                // For any other type, return 0
+                return 0;
+              }
+            }
+
             String code = data[0] as String;
             String productName = data[1] as String;
             String unit = data[2] as String;
-            String costPriceString = data[3] as String;
-            String sellPrice1String = data[4] as String;
-            String sellPrice2String = data[5] as String;
-            String sellPrice3String = data[6] as String;
-            int stock = data[7] as int;
+            double stock = parseToDouble(data[3]);
+            double stockMin = parseToDouble(data[4]);
+            double costPrice = parseToDouble(data[5]);
+            double sellPrice1 = parseToDouble(data[6]);
+            double sellPrice2 = parseToDouble(data[7]);
+            double sellPrice3 = parseToDouble(data[8]);
 
             if (productName != '') {
               var existingProduct = checkexistingProduct(code);
 
               if (existingProduct.isEmpty) {
-                int costPrice = 0;
-                int sellPrice1 = 0;
-                int sellPrice2 = 0;
-                int sellPrice3 = 0;
+                // int costPrice = 0;
+                // int sellPrice1 = 0;
+                // int sellPrice2 = 0;
+                // int sellPrice3 = 0;
 
-                if (data.length > 3 &&
-                    costPriceString.contains("Rp") &&
-                    !costPriceString.contains("-")) {
-                  costPrice = int.parse(
-                      costPriceString.replaceAll(RegExp(r'[Rp,]'), ''));
-                }
+                // if (data.length > 5 &&
+                //     costPriceString.contains("Rp") &&
+                //     !costPriceString.contains("-")) {
+                //   costPrice = int.parse(
+                //       costPriceString.replaceAll(RegExp(r'[Rp,]'), ''));
+                // }
 
-                if (data.length > 4 &&
-                    sellPrice1String.contains("Rp") &&
-                    !sellPrice1String.contains("-")) {
-                  sellPrice1 = int.parse(
-                      sellPrice1String.replaceAll(RegExp(r'[Rp,]'), ''));
-                }
+                // if (data.length > 7 &&
+                //     sellPrice1String.contains("Rp") &&
+                //     !sellPrice1String.contains("-")) {
+                //   sellPrice1 = int.parse(
+                //       sellPrice1String.replaceAll(RegExp(r'[Rp,]'), ''));
+                // }
 
-                if (data.length > 5 &&
-                    sellPrice2String.contains("Rp") &&
-                    !sellPrice2String.contains("-")) {
-                  sellPrice2 = int.parse(
-                      sellPrice2String.replaceAll(RegExp(r'[Rp,]'), ''));
-                }
+                // if (data.length > 8 &&
+                //     sellPrice2String.contains("Rp") &&
+                //     !sellPrice2String.contains("-")) {
+                //   sellPrice2 = int.parse(
+                //       sellPrice2String.replaceAll(RegExp(r'[Rp,]'), ''));
+                // }
 
-                if (data.length > 6 &&
-                    sellPrice3String.contains("Rp") &&
-                    !sellPrice3String.contains("-")) {
-                  sellPrice3 = int.parse(
-                      sellPrice3String.replaceAll(RegExp(r'[Rp,]'), ''));
-                }
+                // if (data.length > 6 &&
+                //     sellPrice3String.contains("Rp") &&
+                //     !sellPrice3String.contains("-")) {
+                //   sellPrice3 = int.parse(
+                //       sellPrice3String.replaceAll(RegExp(r'[Rp,]'), ''));
+                // }
 
                 String newProductId = await productService.getId();
 
@@ -173,17 +233,30 @@ class ProductController extends GetxController {
                   sellPrice2: sellPrice2,
                   sellPrice3: sellPrice3,
                   stock: stock,
+                  stockMin: stockMin,
                   sold: 0,
                 );
                 productsMap[newProductId] = product.toJson();
               }
             } else {
-              emptyCsv.value = i + 1;
+              // emptyCsv.value = i + 1;
             }
-            dialog.update(value: i + 1);
+
+            _progressDialog.update(
+                value: i, msg: 'Menambahkan barang ke... $i');
           }
 
+          Get.defaultDialog(
+            // onConfirm: () => print("Ok"),
+            title: 'Menyimpan',
+            middleText: "Menyimpan data...",
+            barrierDismissible: true,
+          );
           await productService.addProducts(productsMap);
+          Get.back();
+          await productService.fetchProducts();
+          productService.searchProducts('');
+          _progressDialog.close();
         }
       }
     } catch (e) {
@@ -191,20 +264,38 @@ class ProductController extends GetxController {
     }
   }
 
-  //! update
-  void updateSuccessDialog() async {
-    await Get.defaultDialog(
-      title: 'Berhasil',
-      middleText: 'Product berhasil diupdate',
-      confirm: TextButton(
-        onPressed: () {
-          Get.back();
-          Get.back();
-        },
-        child: const Text('OK'),
-      ),
-    );
-  }
+  // //! update
+  // void updateSuccessDialog() async {
+  //   await Get.defaultDialog(
+  //     title: 'Berhasil',
+  //     middleText: 'Product berhasil diupdate',
+  //     confirm: TextButton(
+  //       onPressed: () {
+  //         Get.back();
+  //         Get.back();
+  //       },
+  //       child: const Text('OK'),
+  //     ),
+  //   );
+  // }
+
+  // //! addSales
+  // Future<void> addSalses() async {
+  //   final existingSales = sales.firstWhere(
+  //     (customer) =>
+  //         customer.name?.toLowerCase() ==
+  //         selectedSales.value?.name?.toLowerCase(),
+  //     orElse: () => Sales(name: '', createdAt: Timestamp.now()),
+  //   );
+
+  //   if ((existingSales.name == '') && (selectedSales.value?.name != '')) {
+  //     Map<String, Map<String, dynamic>> customersMap = {};
+  //     String newCustomerId = await salesCustomerServices.getId();
+  //     selectedSales.value?.id = newCustomerId;
+  //     customersMap[newCustomerId] = selectedSales.toJson();
+  //     await addSales(selectedSales.value!, customersMap);
+  //   }
+  // }
 
   List<Product> checkexistingProduct(String newProductId) {
     var existingProduct = <Product>[];
@@ -234,8 +325,8 @@ class ProductController extends GetxController {
   Future addProduct(List<Map<String, Object?>> newProductList) async {
     try {
       Get.back();
-    } on PostgrestException catch (e) {
-      String errorMessage = e.message;
+    } catch (e) {
+      String errorMessage = e.toString();
       if (errorMessage.toLowerCase().contains('duplicate')) {
         errorMessage = 'Kode produk sudah ada sebelumnya.';
       }
@@ -253,49 +344,55 @@ class ProductController extends GetxController {
     // }
   }
 
-  void addSuccessDialog() async {
-    await Get.defaultDialog(
-      title: 'Berhasil',
-      middleText: 'Product berhasil ditambahkan',
-      confirm: TextButton(
-        onPressed: () {
-          Get.back();
-          Get.back();
-        },
-        child: const Text('OK'),
-      ),
-    );
-  }
+  // void addSuccessDialog() async {
+  //   await Get.defaultDialog(
+  //     title: 'Berhasil',
+  //     middleText: 'Product berhasil ditambahkan',
+  //     confirm: TextButton(
+  //       onPressed: () {
+  //         Get.back();
+  //         Get.back();
+  //       },
+  //       child: const Text('OK'),
+  //     ),
+  //   );
+  // }
 
   //! delete
-  destroyHandle(Product product) async {
-    try {
-      Get.defaultDialog(
-        title: 'Hapus?',
-        middleText: 'Hapus barang ini?',
-        confirm: TextButton(
-          onPressed: () async {
-            productService.deleteProduct(product.id);
-            Get.back();
-          },
-          child: const Text('OK'),
-        ),
-        cancel: TextButton(
-          onPressed: () => Get.back(),
-          child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
-        ),
-      );
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
-  }
+  // destroyHandle(Product product) async {
+  //   try {
+  //     Get.defaultDialog(
+  //       title: 'Hapus?',
+  //       middleText: 'Hapus barang ini?',
+  //       confirm: TextButton(
+  //         onPressed: () async {
+  //           Get.defaultDialog(
+  //             title: 'Menghapus Barang...',
+  //             content: const CircularProgressIndicator(),
+  //             barrierDismissible: false,
+  //           );
+  //           await productService.deleteProduct(product.id);
+  //           Get.back();
+  //           Get.back();
+  //         },
+  //         child: const Text('OK'),
+  //       ),
+  //       cancel: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     Get.defaultDialog(
+  //       title: 'Error',
+  //       middleText: e.toString(),
+  //       confirm: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   }
+  // }
 
   destroyAllHandle() async {
     try {
@@ -315,10 +412,10 @@ class ProductController extends GetxController {
           child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
         ),
       );
-    } on PostgrestException catch (e) {
+    } catch (e) {
       Get.defaultDialog(
         title: 'Error',
-        middleText: e.message,
+        middleText: e.toString(),
         confirm: TextButton(
           onPressed: () => Get.back(),
           child: const Text('OK'),
@@ -328,130 +425,178 @@ class ProductController extends GetxController {
   }
 
   //! edit form
-  void bindingEditData(Product foundProduct) {
-    codeTextC.text = foundProduct.productId;
-    productNameTextC.text = foundProduct.productName;
-    unitTextC.text = foundProduct.unit;
-    costPriceTextC.text = numberFormat.format(foundProduct.costPrice);
-    sellPriceTextC1.text = numberFormat.format(foundProduct.sellPrice1);
-    sellPriceTextC2.text = numberFormat.format(foundProduct.sellPrice2 ?? 0.0);
-    sellPriceTextC3.text = numberFormat.format(foundProduct.sellPrice3 ?? 0.0);
-    stockTextC.text =
-        foundProduct.stock == 0 ? '' : foundProduct.stock?.toString() ?? '';
-    soldTextC.text =
-        foundProduct.sold == 0 ? '' : foundProduct.sold?.toString() ?? '';
-  }
+  // void bindingEditData(Product foundProduct) {
+  //   selectedSales.value = foundProduct.sales;
+  //   codeTextC.text = foundProduct.productId;
+  //   productNameTextC.text = foundProduct.productName;
+  //   unitTextC.text = foundProduct.unit;
+  //   salesTextC.text = foundProduct.sales?.name ?? '';
+  //   costPriceTextC.text = numberFormat.format(foundProduct.costPrice.value);
+  //   sellPriceTextC1.text = numberFormat.format(foundProduct.sellPrice1);
+  //   sellPriceTextC2.text = numberFormat.format(foundProduct.sellPrice2 ?? 0.0);
+  //   sellPriceTextC3.text = numberFormat.format(foundProduct.sellPrice3 ?? 0.0);
+  //   stockTextC.text =
+  //       foundProduct.stock == 0 ? '' : foundProduct.stock?.toString() ?? '';
+  //   soldTextC.text =
+  //       foundProduct.sold == 0 ? '' : foundProduct.sold?.toString() ?? '';
+  // }
 
-  String? fieldValidator(String value, String fieldKey, String errorMessage) {
-    value = value.trim();
-    if ((value.isEmpty || value == '0') && clickedField[fieldKey] == true) {
-      return errorMessage;
-    }
-    return null;
-  }
+  // String? fieldValidator(String value, String fieldKey, String errorMessage) {
+  //   value = value.trim();
+  //   if ((value.isEmpty || value == '0') && clickedField[fieldKey] == true) {
+  //     return errorMessage;
+  //   }
+  //   return null;
+  // }
 
-  void onCurrencyChanged(String value, String field) {
-    clickedField[field] = true;
+  // void onCurrencyChanged(String value, String field) {
+  //   clickedField[field] = true;
 
-    if (value.isNotEmpty) {
-      String newValue =
-          numberFormat.format(int.parse(value.replaceAll('.', '')));
+  //   if (value.isNotEmpty) {
+  //     String newValue =
+  //         numberFormat.format(int.parse(value.replaceAll('.', '')));
 
-      final textController = textControllers[field];
+  //     final textController = textControllers[field];
 
-      if (textController != null && newValue != textController.text) {
-        textController.value = TextEditingValue(
-          text: newValue,
-          selection: TextSelection.collapsed(offset: newValue.length),
-        );
-      }
-    }
-  }
+  //     if (textController != null && newValue != textController.text) {
+  //       textController.value = TextEditingValue(
+  //         text: newValue,
+  //         selection: TextSelection.collapsed(offset: newValue.length),
+  //       );
+  //     }
+  //   }
+  // }
 
-  void onTextChange(String value, String field) {
-    clickedField[field] = true;
-  }
+  // Future<void> addSales(Sales salesCustomer,
+  //     Map<String, Map<String, dynamic>> customerData) async {
+  //   bool isCustomerExists = sales.any((item) => item.id == salesCustomer.id);
+  //   debugPrint(salesCustomer.id);
+  //   if (isCustomerExists) {
+  //     await Get.defaultDialog(
+  //       title: 'Gagal',
+  //       middleText: 'Kode yang dimasukkan sudah ada',
+  //       confirm: TextButton(
+  //         onPressed: () => Get.back(),
+  //         child: const Text('OK'),
+  //       ),
+  //     );
+  //   } else {
+  //     try {
+  //       await salesCustomerServices.addCustomers(customerData);
+  //       // List<Customer> newData = await CustomerProvider.create(customer);
+  //       await Get.defaultDialog(
+  //         title: 'Berhasil',
+  //         middleText: 'Sales berhasil ditambahkan',
+  //         confirm: TextButton(
+  //           onPressed: () => Get.back(),
+  //           child: const Text('OK'),
+  //         ),
+  //       );
+  //       // refreshFetch(newData);
+  //       Get.back();
+  //     } catch (e) {
+  //       Get.defaultDialog(
+  //         title: 'Error',
+  //         middleText: e.toString(),
+  //         confirm: TextButton(
+  //           onPressed: () => Get.back(),
+  //           child: const Text('OK'),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
-  Future handleSave(Product? currentProduct) async {
-    clickedField.assignAll({
-      'code': true,
-      'productName': true,
-      'unit': true,
-      'cost': true,
-      'sell1': true,
-      'sell2': true,
-      'sell3': true,
-      'stock': true,
-      'sold': true,
-    });
+  // void onTextChange(String value, String field) {
+  //   clickedField[field] = true;
+  // }
 
-    if (formkey.currentState!.validate()) {
-      Map<String, Map<String, dynamic>> productsMap = {};
-      final newProduct = Product(
-        id: await productService.getId(),
-        productId: codeTextC.text.toUpperCase(),
-        createdAt: Timestamp.now(),
-        featured: false,
-        productName: productNameTextC.text,
-        unit: unitTextC.text,
-        costPrice: costPriceTextC.text == ''
-            ? 0
-            : int.parse(costPriceTextC.text.replaceAll('.', '')),
-        sellPrice1: sellPriceTextC1.text == ''
-            ? 0
-            : int.parse(sellPriceTextC1.text.replaceAll('.', '')),
-        sellPrice2: sellPriceTextC2.text == ''
-            ? 0
-            : int.parse(sellPriceTextC2.text.replaceAll('.', '')),
-        sellPrice3: sellPriceTextC3.text == ''
-            ? 0
-            : int.parse(sellPriceTextC3.text.replaceAll('.', '')),
-        stock: stockTextC.text == '' ? 0 : int.parse(stockTextC.text),
-        sold: soldTextC.text == '' ? 0 : int.parse(soldTextC.text),
-      );
+  // Future handleSave(Product? currentProduct) async {
+  //   clickedField.assignAll({
+  //     'code': true,
+  //     'productName': true,
+  //     'unit': true,
+  //     'sales': true,
+  //     'cost': true,
+  //     'sell1': true,
+  //     'sell2': true,
+  //     'sell3': true,
+  //     'stock': true,
+  //     'sold': true,
+  //   });
 
-      List existingProduct = checkexistingProduct(newProduct.productId);
+  //   if (formkey.currentState!.validate()) {
+  //     Map<String, Map<String, dynamic>> productsMap = {};
 
-      if (currentProduct != null) {
-        if (existingProduct.isNotEmpty &&
-            newProduct.productId != currentProduct.productId) {
-          Get.defaultDialog(
-            title: 'Gagal',
-            middleText: 'Kode yang dimasukkan sudah ada',
-            confirm: TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          );
-        } else {
-          newProduct.id = currentProduct.id.toUpperCase();
-          Get.defaultDialog(
-            title: 'Menyimpan Perubahan Barang...',
-            content: const CircularProgressIndicator(),
-            barrierDismissible: false,
-          );
-          await productService.updateProduct(newProduct, currentProduct);
-          Get.back();
-          updateSuccessDialog();
-        }
-      } else {
-        if (existingProduct.isNotEmpty) {
-          Get.defaultDialog(
-            title: 'Gagal menambahkan barang',
-            middleText: 'Kode barang sudah ada.',
-            confirm: TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          );
-        } else {
-          productsMap[newProduct.id] = newProduct.toJson();
-          await productService.addProducts(productsMap);
-          addSuccessDialog();
-        }
-      }
-    }
-  }
+  //     final newProduct = Product(
+  //       id: await productService.getId(),
+  //       productId: codeTextC.text.toUpperCase(),
+  //       createdAt: Timestamp.now(),
+  //       featured: false,
+  //       productName: productNameTextC.text,
+  //       unit: unitTextC.text,
+  //       sales: selectedSales.value,
+  //       costPrice: costPriceTextC.text == ''
+  //           ? 0
+  //           : int.parse(costPriceTextC.text.replaceAll('.', '')),
+  //       sellPrice1: sellPriceTextC1.text == ''
+  //           ? 0
+  //           : int.parse(sellPriceTextC1.text.replaceAll('.', '')),
+  //       sellPrice2: sellPriceTextC2.text == ''
+  //           ? 0
+  //           : int.parse(sellPriceTextC2.text.replaceAll('.', '')),
+  //       sellPrice3: sellPriceTextC3.text == ''
+  //           ? 0
+  //           : int.parse(sellPriceTextC3.text.replaceAll('.', '')),
+  //       stock: stockTextC.text == '' ? 0 : int.parse(stockTextC.text),
+  //       sold: soldTextC.text == '' ? 0 : int.parse(soldTextC.text),
+  //     );
+
+  //     List existingProduct = checkexistingProduct(newProduct.productId);
+
+  //     if (currentProduct != null) {
+  //       if (existingProduct.isNotEmpty &&
+  //           newProduct.productId != currentProduct.productId) {
+  //         Get.defaultDialog(
+  //           title: 'Gagal',
+  //           middleText: 'Kode yang dimasukkan sudah ada',
+  //           confirm: TextButton(
+  //             onPressed: () => Get.back(),
+  //             child: const Text('OK'),
+  //           ),
+  //         );
+  //       } else {
+  //         newProduct.id = currentProduct.id;
+  //         Get.defaultDialog(
+  //           title: 'Menyimpan Perubahan Barang...',
+  //           content: const CircularProgressIndicator(),
+  //           barrierDismissible: false,
+  //         );
+
+  //         await productService.updateProduct(newProduct, currentProduct);
+  //         await addSalses();
+  //         Get.back();
+  //         updateSuccessDialog();
+  //       }
+  //     } else {
+  //       if (existingProduct.isNotEmpty) {
+  //         Get.defaultDialog(
+  //           title: 'Gagal menambahkan barang',
+  //           middleText: 'Kode barang sudah ada.',
+  //           confirm: TextButton(
+  //             onPressed: () => Get.back(),
+  //             child: const Text('OK'),
+  //           ),
+  //         );
+  //       } else {
+  //         productsMap[newProduct.id] = newProduct.toJson();
+  //         await productService.addProducts(productsMap);
+  //         await addSalses();
+  //         addSuccessDialog();
+  //       }
+  //     }
+  //   }
+  // }
 
   featuredHandle(bool value, Product product) {
     // int index =

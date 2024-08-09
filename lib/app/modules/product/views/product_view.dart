@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:materi_kas/app/data/models/product_model.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../main.dart';
+import '../../../widget/add_product.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/product_controller.dart';
+import 'buy_product_dialog.dart';
 
 class ProductView extends GetView<ProductController> {
   const ProductView({super.key});
@@ -17,11 +19,11 @@ class ProductView extends GetView<ProductController> {
     final formatter = NumberFormat('#,##0', 'id_ID');
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 100,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: const Color(0xFFF5F8FF),
-        title: const Text('Daftar Barang'),
-        centerTitle: true,
+        title: const SideMenuWidget(title: 'Barang'),
       ),
       body: SizedBox(
         child: Padding(
@@ -29,7 +31,6 @@ class ProductView extends GetView<ProductController> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SideMenuWidget(),
               Expanded(
                 flex: 4,
                 child: SizedBox(
@@ -62,31 +63,25 @@ class ProductView extends GetView<ProductController> {
                             ),
                             Row(
                               children: [
+                                if (controller.isAdmin.value)
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        controller.destroyAllHandle(),
+                                    child: const Text('HAPUS SEMUA'),
+                                  ),
+                                if (controller.isAdmin.value)
+                                  const SizedBox(width: 16),
                                 ElevatedButton(
-                                  onPressed: () =>
-                                      controller.destroyAllHandle(),
-                                  child: const Text('HAPUS SEMUA'),
+                                  onPressed: () {
+                                    buyProductDialog(context, null);
+                                  },
+                                  child: const Text('Beli Barang'),
                                 ),
                                 const SizedBox(width: 16),
                                 ElevatedButton(
                                   onPressed: () {
-                                    controller.bindingEditData(
-                                      Product(
-                                        id: '',
-                                        productId:
-                                            controller.getNumberAfterChar(),
-                                        productName: '',
-                                        unit: '',
-                                        costPrice: 0,
-                                        sellPrice1: 0,
-                                        sellPrice2: 0,
-                                        sellPrice3: 0,
-                                        stock: 0,
-                                        sold: 0,
-                                      ),
-                                    );
-                                    addEditDialog(context, controller, null,
-                                        'Tambah Barang');
+                                    // controller.bindingEditData(null);
+                                    addEditDialogProduct(context, null);
                                   },
                                   child: const Text('Tambah Barang'),
                                 ),
@@ -134,24 +129,73 @@ class ProductListCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            TextField(
-              decoration: const InputDecoration(
-                labelText: "Cari Barang",
-                labelStyle: TextStyle(color: Colors.grey),
-                suffixIcon: Icon(Symbols.search),
-              ),
-              onChanged: (value) => controller.filterProducts(value),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(8),
+                      ),
+                    ),
+                    height: 50,
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        labelText: "Cari Barang",
+                        labelStyle: TextStyle(color: Colors.grey),
+                        prefixIcon: Icon(Symbols.search),
+                      ),
+                      onChanged: (value) => controller.filterProducts(value),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  width: 200,
+                  child: Obx(
+                    () => InkWell(
+                      onTap: () => controller.toggleLowStock(),
+                      child: SizedBox(
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: controller.isLowStock.value,
+                              onChanged: (value) => controller.toggleLowStock(),
+                            ),
+                            Text(
+                              'Urutkan stok sedikit',
+                              style: controller.isLowStock.value
+                                  ? context.textTheme.bodySmall!.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary)
+                                  : context.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const TableHeader(), //* TableHeader
+            TableHeader(controller: controller),
             Divider(color: Colors.grey[500]),
             Expanded(
               child: Obx(
                 () => ListView.separated(
                   separatorBuilder: (context, index) =>
                       Divider(color: Colors.grey[300]),
-                  itemCount: controller.foundProducts.length,
+                  itemCount: !controller.isLowStock.value
+                      ? controller.lowStockProduct.length
+                      : controller.foundProducts.length,
                   itemBuilder: (BuildContext context, int index) {
-                    final foundProduct = controller.foundProducts[index];
+                    final foundProduct = controller.isLowStock.value
+                        ? controller.lowStockProduct[index]
+                        : controller.foundProducts[index];
                     return TableContent(
                         foundProduct: foundProduct,
                         formatter: formatter,
@@ -171,8 +215,10 @@ class ProductListCard extends StatelessWidget {
 class TableHeader extends StatelessWidget {
   const TableHeader({
     super.key,
+    required this.controller,
   });
 
+  final ProductController controller;
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -186,7 +232,7 @@ class TableHeader extends StatelessWidget {
       title: Row(
         children: [
           Expanded(
-            flex: 10,
+            flex: 9,
             child: SizedBox(
               child: Text(
                 'Nama Barang',
@@ -250,12 +296,24 @@ class TableHeader extends StatelessWidget {
               ),
             ),
           ),
+          Expanded(
+            flex: 4,
+            child: SizedBox(
+              child: Text(
+                'Min. Stok',
+                style: context.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
         ],
       ),
-      trailing: Text(
-        'Hapus',
-        style: context.textTheme.headlineSmall,
-      ),
+      // trailing: controller.isAdmin.value
+      //     ? Text(
+      //         'Hapus',
+      //         style: context.textTheme.headlineSmall,
+      //       )
+      //     : null,
     );
   }
 }
@@ -275,333 +333,146 @@ class TableContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: SizedBox(
-        width: 100,
-        child: Text(
-          foundProduct.productId,
-          style: context.textTheme.bodySmall,
-        ),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            flex: 10,
-            child: SizedBox(
-              child: Text(
-                foundProduct.productName,
-                style: context.textTheme.titleMedium,
-              ),
+    return Obx(
+      () => Container(
+        color: foundProduct.stock.value < foundProduct.stockMin.value
+            ? Colors.red[200]
+            : null,
+        child: ListTile(
+          leading: SizedBox(
+            width: 100,
+            child: Text(
+              foundProduct.productId,
+              style: context.textTheme.bodySmall,
             ),
           ),
-          Expanded(
-            flex: 5,
-            child: SizedBox(
-              child: Text(
-                'Rp. ${formatter.format(foundProduct.costPrice)}',
-                style: context.textTheme.titleMedium,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green[600],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Rp. ${formatter.format(foundProduct.sellPrice1)}',
-                style:
-                    context.textTheme.titleLarge!.copyWith(color: Colors.white),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green[500],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Rp. ${formatter.format(foundProduct.sellPrice2)}',
-                style:
-                    context.textTheme.titleLarge!.copyWith(color: Colors.white),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green[400],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Rp. ${formatter.format(foundProduct.sellPrice3)}',
-                style:
-                    context.textTheme.titleLarge!.copyWith(color: Colors.white),
-              ),
-            ),
-          ),
-          // Expanded(
-          //   flex: 4,
-          //   child: SizedBox(
-          //     child: Container(
-          //       padding: const EdgeInsets.all(8),
-          //       decoration: BoxDecoration(
-          //         color: Theme.of(context).colorScheme.primary,
-          //         borderRadius: BorderRadius.circular(10),
-          //       ),
-          //       child: Text(
-          //         'Rp. ${formatter.format(foundProduct.sellPrice1 - foundProduct.costPrice)}',
-          //         style: context.textTheme.titleLarge!
-          //             .copyWith(color: Colors.white),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          Expanded(
-            flex: 4,
-            child: SizedBox(
-              child: Text(
-                '${foundProduct.stock}',
-                style: context.textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ],
-      ),
-      trailing: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: IconButton(
-          onPressed: () => controller.destroyHandle(foundProduct),
-          icon: const Icon(
-            Symbols.delete,
-            color: Colors.red,
-          ),
-        ),
-      ),
-      onTap: () {
-        controller.bindingEditData(foundProduct);
-        addEditDialog(context, controller, foundProduct, 'Edit Barang');
-      },
-    );
-  }
-}
-
-//* addEditDialog ==================================================================
-void addEditDialog(BuildContext context, ProductController controller,
-    Product? foundProduct, String title) {
-  controller.clickedField['code'] = false;
-  controller.clickedField['productName'] = false;
-  controller.clickedField['unit'] = false;
-  controller.clickedField['sell1'] = false;
-  controller.clickedField['sell2'] = false;
-  controller.clickedField['sell3'] = false;
-  controller.clickedField['stock'] = false;
-  controller.clickedField['cost'] = false;
-
-  // OutlineInputBorder outlineRed =
-  //     const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
-
-  Get.defaultDialog(
-    title: title,
-    content: SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        margin: const EdgeInsets.all(8),
-        height: MediaQuery.of(context).size.height * (1 / 2),
-        width: MediaQuery.of(context).size.width * (3 / 10),
-        child: Form(
-          key: controller.formkey,
-          autovalidateMode: AutovalidateMode.always,
-          onChanged: () => Form.of(primaryFocus!.context!).save(),
-          child: ListView(
-            children: <Widget>[
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.codeTextC,
-                context: context,
-                labelText: 'Kode Barang',
-                onChanged: (value) => controller.onTextChange(value, 'code'),
-                validator: (value) => controller.fieldValidator(
-                    value!, 'code', 'Kode tidak boleh kosong'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-              ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.productNameTextC,
-                context: context,
-                labelText: 'Nama Barang',
-                onChanged: (value) =>
-                    controller.onTextChange(value, 'productName'),
-                validator: (value) => controller.fieldValidator(
-                    value!, 'productName', 'Nama barang tidak boleh kosong'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-              ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.unitTextC,
-                context: context,
-                labelText: 'Satuan',
-                onChanged: (value) => controller.onTextChange(value, 'unit'),
-                validator: (value) => controller.fieldValidator(
-                    value!, 'unit', 'Satuan tidak boleh kosong'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-              ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.costPriceTextC,
-                context: context,
-                labelText: 'Harga Modal',
-                prefixText: 'Rp. ',
-                onChanged: (value) =>
-                    controller.onCurrencyChanged(value, 'cost'),
-                validator: (value) => controller.fieldValidator(
-                    value!, 'cost', 'Harga modal tidak boleh kosong'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-                isCurrency: true,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: buildTextFormField(
-                      controller: controller.sellPriceTextC1,
-                      context: context,
-                      labelText: 'Harga Jual 1',
-                      prefixText: 'Rp. ',
-                      onChanged: (value) =>
-                          controller.onCurrencyChanged(value, 'sell1'),
-                      validator: (value) => controller.fieldValidator(
-                          value!, 'sell1', 'Harga jual 1 tidak boleh kosong'),
-                      onFieldSubmitted: (_) =>
-                          controller.handleSave(foundProduct),
-                      isCurrency: true,
-                    ),
+          title: Row(
+            children: [
+              Expanded(
+                flex: 9,
+                child: SizedBox(
+                  child: Text(
+                    foundProduct.productName,
+                    style: context.textTheme.titleMedium,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: buildTextFormField(
-                      controller: controller.sellPriceTextC2,
-                      context: context,
-                      labelText: 'Harga Jual 2',
-                      prefixText: 'Rp. ',
-                      onChanged: (value) =>
-                          controller.onCurrencyChanged(value, 'sell2'),
-                      onFieldSubmitted: (_) =>
-                          controller.handleSave(foundProduct),
-                      isCurrency: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: buildTextFormField(
-                      controller: controller.sellPriceTextC3,
-                      context: context,
-                      labelText: 'Harga Jual 3',
-                      prefixText: 'Rp. ',
-                      onChanged: (value) =>
-                          controller.onCurrencyChanged(value, 'sell3'),
-                      onFieldSubmitted: (_) =>
-                          controller.handleSave(foundProduct),
-                      isCurrency: true,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.stockTextC,
-                context: context,
-                labelText: 'Stok',
-                onChanged: (value) => controller.onTextChange(value, 'stock'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-                isNumeric: true,
+              Expanded(
+                flex: 5,
+                child: SizedBox(
+                  child: Text(
+                    'Rp. ${formatter.format(foundProduct.costPrice.value)}',
+                    style: context.textTheme.titleMedium,
+                  ),
+                ),
               ),
-              const SizedBox(height: 20),
-              buildTextFormField(
-                controller: controller.soldTextC,
-                context: context,
-                labelText: 'Terjual',
-                onChanged: (value) => controller.onTextChange(value, 'sold'),
-                onFieldSubmitted: (_) => controller.handleSave(foundProduct),
-                isNumeric: true,
+              Expanded(
+                flex: 5,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green[600],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Rp. ${formatter.format(foundProduct.sellPrice1)}',
+                    style: context.textTheme.titleLarge!
+                        .copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green[500],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Rp. ${formatter.format(foundProduct.sellPrice2)}',
+                    style: context.textTheme.titleLarge!
+                        .copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green[400],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Rp. ${formatter.format(foundProduct.sellPrice3)}',
+                    style: context.textTheme.titleLarge!
+                        .copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+              // Expanded(
+              //   flex: 4,
+              //   child: SizedBox(
+              //     child: Container(
+              //       padding: const EdgeInsets.all(8),
+              //       decoration: BoxDecoration(
+              //         color: Theme.of(context).colorScheme.primary,
+              //         borderRadius: BorderRadius.circular(10),
+              //       ),
+              //       child: Text(
+              //         'Rp. ${formatter.format(foundProduct.sellPrice1 - foundProduct.costPrice)}',
+              //         style: context.textTheme.titleLarge!
+              //             .copyWith(color: Colors.white),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              Expanded(
+                flex: 4,
+                child: SizedBox(
+                  child: Text(
+                    '${decimal.format(foundProduct.stock.value)} ',
+                    style: context.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: SizedBox(
+                  child: Text(
+                    '${decimal.format(foundProduct.stockMin.value)} ${foundProduct.unit}',
+                    style: context.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ],
           ),
+          // trailing: controller.isAdmin.value
+          //     ? Padding(
+          //         padding: const EdgeInsets.symmetric(horizontal: 4),
+          //         child: IconButton(
+          //           onPressed: () => controller.destroyHandle(foundProduct),
+          //           icon: const Icon(
+          //             Symbols.delete,
+          //             color: Colors.red,
+          //           ),
+          //         ),
+          //       )
+          //     : null,
+          onTap: () {
+            // controller.bindingEditData(foundProduct);
+            addEditDialogProduct(context, foundProduct);
+          },
         ),
       ),
-    ),
-    backgroundColor: Colors.white,
-    confirm: Container(
-      margin: const EdgeInsets.all(10),
-      width: 160,
-      child: ElevatedButton(
-        onPressed: () async => await controller.handleSave(foundProduct),
-        child: const Text('Simpan'),
-      ),
-    ),
-    cancel: Container(
-      margin: const EdgeInsets.all(10),
-      width: 160,
-      child: OutlinedButton(
-        style: ButtonStyle(
-          side: WidgetStateProperty.all(
-              BorderSide(color: Colors.black.withOpacity(0.5))),
-        ),
-        onPressed: () => Get.back(),
-        child: const Text('Batal'),
-      ),
-    ),
-  );
-}
-
-Widget buildTextFormField({
-  required TextEditingController controller,
-  required String labelText,
-  required BuildContext context,
-  required Function(String) onChanged,
-  String? Function(String?)? validator,
-  required Function(String) onFieldSubmitted,
-  String prefixText = '',
-  bool isCurrency = false,
-  bool isNumeric = false,
-}) {
-  return TextFormField(
-    controller: controller,
-    decoration: InputDecoration(
-      border: const OutlineInputBorder(),
-      labelText: labelText,
-      labelStyle: const TextStyle(color: Colors.grey),
-      floatingLabelStyle:
-          TextStyle(color: Theme.of(context).colorScheme.primary),
-      focusedErrorBorder:
-          const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
-      errorBorder:
-          const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
-      prefixText: prefixText,
-      prefixStyle: prefixText.isNotEmpty ? const TextStyle() : null,
-    ),
-    keyboardType: isNumeric || isCurrency
-        ? const TextInputType.numberWithOptions(decimal: true)
-        : TextInputType.text,
-    inputFormatters: isNumeric || isCurrency
-        ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))]
-        : [],
-    onChanged: onChanged,
-    validator: validator,
-    onFieldSubmitted: onFieldSubmitted,
-  );
+    );
+  }
 }
 
 //! Loading Dialog

@@ -4,53 +4,62 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:materi_kas/app/data/models/customer_model.dart';
-import 'package:materi_kas/app/data/providers/customer_services.dart';
-import 'package:materi_kas/app/data/providers/invoice_services.dart';
-import 'package:materi_kas/app/modules/home/views/payment_dialog.dart';
+import 'package:materi_kas/app/modules/login/controllers/login_controller.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
+import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/cart_model.dart';
+import '../../../data/models/customer_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/auth_services.dart';
+import '../../../data/providers/customer_services.dart';
+import '../../../data/providers/invoice_services.dart';
 import '../../../data/providers/product_services.dart';
-import '../../../routes/app_pages.dart';
+import '../../../data/providers/sales_customer_services.dart';
+import '../../../data/providers/sales_invoice_services.dart';
+import '../../../data/providers/stores_services.dart';
 import '../../../widget/customer_input_field_controller.dart';
-import '../../../widget/model/payment_controller.dart';
-
-// enum PaymentMethod { cash, transfer }
+import '../../../widget/date_picker_controller.dart';
 
 class HomeController extends GetxController {
-  late AuthService authService = Get.find();
+  late StoreServices storeService = Get.find();
   late ProductService productService = Get.find();
-  late InvoiceService invoiceServices = Get.find();
-  late CustomerServices customerServices = Get.find(); //! HAPUS NANTI
-  final CustomerInputFieldController customerInputFieldC = Get.find();
-  final PaymentController paymentController = Get.find();
+  late InvoiceService invoiceService = Get.find();
+  late SalesInvoiceService salesInvoiceService = Get.find();
+  late CustomerServices customerServices = Get.find();
+  late SalesCustomerServices salesCustomerServices = Get.find();
+
+  late CustomerInputFieldController customerInputFieldC =
+      Get.put(CustomerInputFieldController());
+  late DatePickerController datePickerC = Get.put(DatePickerController());
+  late LoginController loginC = Get.put(LoginController());
 
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
-  late final invoices = invoiceServices.invoices;
-  // final cart = <Cart>[].obs;
+  late final invoices = invoiceService.invoices;
+
   final cart = Cart(items: <CartItem>[].obs).obs;
 
+  List<Product> updatedStockProducts = [];
+
   Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
+  Rx<Invoice?> lastInvoice = Rx<Invoice?>(null);
 
-  final currency = NumberFormat('#,##0', 'id_ID');
-
-  // final reload = 0.obs;
+  final isComa = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    productService.fetchProducts(); //! HAPUS NANTI
-    customerServices.fetchCustomers(); //! HAPUS NANTI
-    invoiceServices.fetchInvoices(); //! HAPUS NANTI
+    // Get.lazyPut(() => DatePickerController());
+    // Get.lazyPut(() => CustomerInputFieldController());
     filterProducts('');
+  }
+
+  void fetchAll() async {
+    debugPrint('fetchings');
+    await loginC.fetchData();
   }
 
   void filterProducts(String productName) {
@@ -59,33 +68,32 @@ class HomeController extends GetxController {
 
   late ScrollController scrollController = ScrollController();
 
+// final addToCartCount = 0.obs;
   void addToCart(Product product) async {
-    // if (index != -1) {
-    //   Cart productCart = Cart(
-    //       product: product,
-    //       quantity: cart[index].quantity! + 1,
-    //       individualDiscount: 0,
-    //       bundleDiscount: 0);
+    CartItem newItemToCart = CartItem(product: product, quantity: 1);
+    cart.value.addItem(newItemToCart);
 
-    //   cart.replaceRange(index, index + 1, [productCart]);
+    final existingupdatedProducts =
+        updatedStockProducts.firstWhereOrNull((item) => item.id == product.id);
 
-    // } else {
-    //   Cart productCart = Cart(
-    //       product: product,
-    //       quantity: 1,
-    //       individualDiscount: 0,
-    //       bundleDiscount: 0);
+    if (existingupdatedProducts != null) {
+      existingupdatedProducts.stock.value += 1;
+    } else {
+      Product newProduct = Product.fromJson(product.toJson());
+      newProduct.stock.value = 1;
 
-    //   cart.add(productCart);
+      CartItem newItem = CartItem(product: newProduct, quantity: 1);
+      updatedStockProducts.add(newItem.product);
+    }
 
-    CartItem newItem = CartItem(product: product, quantity: 1);
+    // final dbg =
+    //     updatedStockProducts.firstWhereOrNull((item) => item.id == product.id);
 
-    cart.value.addItem(newItem);
+    // debugPrint(dbg!.stock.value.toString());
 
     int index = cart.value.items
         .indexWhere((selectItem) => selectItem.product.id == product.id);
 
-    debugPrint(index.toString());
     Future.delayed(const Duration(milliseconds: 50), () {
       scrollController.animateTo(
         index * 80.0,
@@ -95,21 +103,18 @@ class HomeController extends GetxController {
     });
 
     totalBill.value = cart.value.getTotal(priceType.value);
-    // Future.delayed(const Duration(milliseconds: 10), () {
-    //   if (scrollController.hasClients) {
-    //     scrollController.animateTo(
-    //       scrollController.position.maxScrollExtent,
-    //       duration: const Duration(milliseconds: 200),
-    //       curve: Curves.easeInOut,
-    //     );
-    //   }
-    // });
-
-    // }
   }
 
-  void removeFromCart(String productCart) {
-    cart.value.removeItem(productCart);
+  void removeFromCart(CartItem cartItem) {
+    cart.value.removeItem(cartItem.product.id);
+    final existingProduct = updatedStockProducts
+        .firstWhereOrNull((item) => item.id == cartItem.product.id);
+
+    // cartItem.product.stock = cartItem.product.stock + cartItem.quantity.value;
+
+    if (existingProduct != null) {
+      existingProduct.stock.value = 0;
+    }
     totalBill.value = cart.value.getTotal(priceType.value);
   }
 
@@ -184,39 +189,51 @@ class HomeController extends GetxController {
 
   //! delete
   destroyHandle(Invoice invoice) async {
-    try {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: 'Hapus barang ini?',
-        confirm: TextButton(
-          onPressed: () async {
-            await productService.deleteProduct(invoice.id!);
-            Get.back();
-          },
-          child: const Text('OK'),
-        ),
-        cancel: TextButton(
-          onPressed: () => Get.back(),
-          child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
-        ),
-      );
-    } on PostgrestException catch (e) {
-      Get.defaultDialog(
-        title: 'Error',
-        middleText: e.message,
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    }
+    Get.defaultDialog(
+      title: 'Error',
+      middleText: 'Hapus barang ini?',
+      confirm: TextButton(
+        onPressed: () async {
+          await productService.deleteProduct(invoice.id!);
+          Get.back();
+        },
+        child: const Text('OK'),
+      ),
+      cancel: TextButton(
+        onPressed: () => Get.back(),
+        child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+      ),
+    );
   }
 
   //! MoneyHandle
   //* quantity
-  void quantityHandle(String productId, String quantity) {
-    int qty = int.tryParse(quantity) ?? 0;
-    cart.value.updateQuantity(productId, qty);
+  void quantityHandle(CartItem cartItem, String quantity) {
+    double? qty = double.tryParse(quantity);
+    qty ??= 0;
+
+    Product newProduct = Product.fromJson(cartItem.product.toJson());
+    newProduct.stock.value = qty;
+
+    CartItem newItem = CartItem(product: newProduct, quantity: qty);
+
+    final existingupdatedProducts = updatedStockProducts
+        .firstWhereOrNull((item) => item.id == newItem.product.id);
+
+    cartItem.quantity.value = qty;
+
+    if (existingupdatedProducts != null) {
+      existingupdatedProducts.stock = newItem.product.stock;
+    } else {
+      updatedStockProducts.add(cartItem.product);
+    }
+
+    // final dbg = updatedStockProducts
+    //     .firstWhereOrNull((item) => item.id == newItem.product.id);
+
+    // debugPrint(dbg!.stock.value.toString());
+    // cart.value.updateQuantity(cartItem.product.id, qty);
+
     totalBill.value = cart.value.getTotal(priceType.value);
   }
   // void quantityHandle(Cart productCart, String qty) {
@@ -234,7 +251,8 @@ class HomeController extends GetxController {
   void discountHandle(String productId,
       TextEditingController discountController, String value) {
     if (value.isNotEmpty) {
-      String newValue = currency.format(int.parse(value.replaceAll('.', '')));
+      String newValue =
+          currency.format(double.parse(value.replaceAll('.', '')));
       if (newValue != discountController.text) {
         discountController.value = TextEditingValue(
           text: newValue,
@@ -243,9 +261,9 @@ class HomeController extends GetxController {
       }
     }
 
-    int valueInt = value == '' ? 0 : int.parse(value);
+    double valueDouble = value == '' ? 0 : double.parse(value);
 
-    cart.value.updateDiscount(productId, valueInt);
+    cart.value.updateDiscount(productId, valueDouble);
     totalDiscount.value = cart.value.totalIndividualDiscount;
     totalBill.value = cart.value.getTotal(priceType.value);
 
@@ -259,9 +277,9 @@ class HomeController extends GetxController {
 
   //* calculating
   final priceType = 1.obs;
-  final moneyChange = 0.obs;
-  final totalBill = 0.obs;
-  final totalDiscount = 0.obs;
+  final moneyChange = 0.0.obs;
+  final totalBill = 0.0.obs;
+  final totalDiscount = 0.0.obs;
   // final isCash = true.obs;
   // final cash = 0.obs;
   // final transfer = 0.obs;
@@ -351,9 +369,9 @@ class HomeController extends GetxController {
   Future<Invoice> createInvoice() async {
     late final Customer customer;
     DateTime dateTime = DateTime(
-      selectedDate.value.year,
-      selectedDate.value.month,
-      selectedDate.value.day,
+      datePickerC.selectedDate.value.year,
+      datePickerC.selectedDate.value.month,
+      datePickerC.selectedDate.value.day,
       selectedTime.value.hour,
       selectedTime.value.minute,
     );
@@ -380,24 +398,14 @@ class HomeController extends GetxController {
 
     final invoice = Invoice(
       invoiceId: await generateInvoice(selectedCustomer.value),
+      account: storeService.account.value,
       createdAt: timestampDateTime,
       customer: customer,
-      purchaseList: cart.value.items,
+      purchaseList: cart.value,
       priceType: priceType.value,
       discount: totalDiscount.value,
       payments: [],
       debtAmount: cart.value.getTotal(priceType.value),
-      // debtAmount: cart.value.getTotal(priceType.value) - payment.amountPaid,
-      // isDebtPaid: payment.amountPaid > cart.value.getTotal(priceType.value)
-      // payment: Payment(
-      //   totalBill: totalBill.value,
-      //   totalDiscount: totalDiscount.value,
-      //   cash: cash.value,
-      //   transfer: transfer.value,
-      //   totalPay: totalPay.value,
-      //   debt: debt,
-      // ),
-      // uuid: authService.uid.value,
     );
 
     return invoice;
@@ -413,7 +421,7 @@ class HomeController extends GetxController {
     // transfer.value = 0;
     // totalPay.value = 0;
 
-    customerInputFieldC.resetCustomerField();
+    customerInputFieldC.clear();
 
     displayDate.value = DateTime.now().toString();
     displayTime.value = TimeOfDay.now().toString();
@@ -518,9 +526,4 @@ class HomeController extends GetxController {
   //     );
   //   }
   // }
-
-  Future<void> signOut() async {
-    await authService.signOut();
-    Get.offNamed(Routes.LOGIN);
-  }
 }

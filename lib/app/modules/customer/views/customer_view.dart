@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +7,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/customer_controller.dart';
+import 'add_customer_dialog.dart';
 
 class CustomerView extends GetView<CustomerController> {
   const CustomerView({super.key});
@@ -16,9 +16,10 @@ class CustomerView extends GetView<CustomerController> {
     final formatter = NumberFormat('#,##0', 'id_ID');
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 100,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Pelanggan'),
+        title: const SideMenuWidget(title: 'Pelanggan'),
         centerTitle: true,
         backgroundColor: const Color(0xFFF5F8FF),
       ),
@@ -28,7 +29,6 @@ class CustomerView extends GetView<CustomerController> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SideMenuWidget(),
               Expanded(
                 flex: 4,
                 child: SizedBox(
@@ -54,17 +54,8 @@ class CustomerView extends GetView<CustomerController> {
                             Row(
                               children: [
                                 ElevatedButton(
-                                  onPressed: () {
-                                    controller.bindingEditData(
-                                      Customer(
-                                        name: '',
-                                        phone: '',
-                                        address: '',
-                                      ),
-                                    );
-                                    addEditDialog(context, controller, null,
-                                        'Tambah Pelanggan');
-                                  },
+                                  onPressed: () =>
+                                      addEditCustomerDialog(context, null),
                                   child: const Text('Tambah Pelanggan'),
                                 ),
                               ],
@@ -104,15 +95,27 @@ class CustomerListCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            TextField(
-              decoration: const InputDecoration(
-                labelText: "Cari Pelanggan",
-                labelStyle: TextStyle(color: Colors.grey),
-                suffixIcon: Icon(Symbols.search),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(8),
+                ),
               ),
-              onChanged: (value) => controller.filterCustomers(value),
+              height: 50,
+              child: TextField(
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  labelText: "Cari Pelanggan",
+                  labelStyle: TextStyle(color: Colors.grey),
+                  suffixIcon: Icon(Symbols.search),
+                ),
+                onChanged: (value) => controller.filterCustomers(value),
+              ),
             ),
-            const TableHeader(), //* TableHeader
+            TableHeader(controller: controller), //* TableHeader
             Divider(color: Colors.grey[500]),
             Expanded(
               child: Obx(
@@ -141,8 +144,10 @@ class CustomerListCard extends StatelessWidget {
 class TableHeader extends StatelessWidget {
   const TableHeader({
     super.key,
+    required this.controller,
   });
 
+  final CustomerController controller;
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -184,10 +189,12 @@ class TableHeader extends StatelessWidget {
           ),
         ],
       ),
-      trailing: Text(
-        'Hapus',
-        style: context.textTheme.headlineSmall,
-      ),
+      trailing: controller.isAdmin.value
+          ? Text(
+              'Hapus',
+              style: context.textTheme.headlineSmall,
+            )
+          : null,
     );
   }
 }
@@ -247,123 +254,19 @@ class TableContent extends StatelessWidget {
           ),
         ],
       ),
-      trailing: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: IconButton(
-          onPressed: () => controller.destroyHandle(foundCustomer),
-          icon: const Icon(
-            Symbols.delete,
-            color: Colors.red,
-          ),
-        ),
-      ),
-      onTap: () {
-        controller.bindingEditData(foundCustomer);
-        addEditDialog(context, controller, foundCustomer, 'Edit Customer');
-      },
+      trailing: controller.isAdmin.value
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: IconButton(
+                onPressed: () => controller.destroyHandle(foundCustomer),
+                icon: const Icon(
+                  Symbols.delete,
+                  color: Colors.red,
+                ),
+              ),
+            )
+          : null,
+      onTap: () => addEditCustomerDialog(context, foundCustomer),
     );
   }
-}
-
-//* addEditDialog ==================================================================
-void addEditDialog(BuildContext context, CustomerController controller,
-    Customer? foundCustomer, String title) {
-  // controller.minNameLenght.value = 0;
-  controller.clickedField['name'] = false;
-  controller.clickedField['phone'] = false;
-  controller.clickedField['address'] = false;
-  OutlineInputBorder outlineRed =
-      const OutlineInputBorder(borderSide: BorderSide(color: Colors.red));
-  Get.defaultDialog(
-    title: title,
-    content: SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        margin: const EdgeInsets.all(8),
-        height: MediaQuery.of(context).size.height * (1 / 2),
-        width: MediaQuery.of(context).size.width * (3 / 10),
-        child: Form(
-          key: controller.formkey,
-          autovalidateMode: AutovalidateMode.always,
-          child: ListView(
-            children: <Widget>[
-              TextFormField(
-                controller: controller.nameController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Nama Pelanggan',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
-                onChanged: (value) => controller.clickedField['name'] = true,
-                validator: (value) => controller.nameValidator(value!),
-                onFieldSubmitted: (_) => controller.handleSave(foundCustomer),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: controller.phoneController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'No.Telp',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
-                ],
-                onChanged: (value) => controller.clickedField['phone'] = true,
-                onFieldSubmitted: (_) => controller.handleSave(foundCustomer),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: controller.addressController,
-                minLines: 1,
-                maxLines: 7,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: 'Alamat',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  floatingLabelStyle:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
-                  focusedErrorBorder: outlineRed,
-                  errorBorder: outlineRed,
-                ),
-                onChanged: (value) => controller.clickedField['address'] = true,
-                onFieldSubmitted: (_) => controller.handleSave(foundCustomer),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-    backgroundColor: Colors.white,
-    confirm: Container(
-      margin: const EdgeInsets.all(10),
-      width: 160,
-      child: ElevatedButton(
-        onPressed: () async => await controller.handleSave(foundCustomer),
-        child: const Text('Simpan'),
-      ),
-    ),
-    cancel: Container(
-      margin: const EdgeInsets.all(10),
-      width: 160,
-      child: OutlinedButton(
-        style: ButtonStyle(
-          side: WidgetStateProperty.all(
-              BorderSide(color: Colors.black.withOpacity(0.5))),
-        ),
-        onPressed: () => Get.back(),
-        child: const Text('Batal'),
-      ),
-    ),
-  );
 }

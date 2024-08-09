@@ -8,7 +8,8 @@ class SideMenuData {
     MenuModel(icon: Symbols.clinical_notes, label: 'Invoice'),
     MenuModel(icon: Symbols.groups, label: 'Pelanggan'),
     MenuModel(icon: Symbols.handyman, label: 'Barang'),
+    MenuModel(icon: Symbols.people, label: 'sales'),
     MenuModel(icon: Symbols.monitoring, label: 'Laporan'),
-    // MenuModel(icon: Symbols.account_circle, label: 'Profil'),
+    MenuModel(icon: Symbols.store, label: 'Toko'),
   ];
 }

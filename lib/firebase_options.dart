@@ -47,29 +47,32 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAuNCilrbDyF1eSdqpRZMXWAO6_ibXGO1I',
-    appId: '1:13933506648:web:c7e8370f75ba156a989a2d',
-    messagingSenderId: '13933506648',
-    projectId: 'materikas-e152b',
-    authDomain: 'materikas-e152b.firebaseapp.com',
-    storageBucket: 'materikas-e152b.appspot.com',
+    apiKey: 'AIzaSyDg2bs6T8npgh2RkFGDxU4xf3-Ts6wxSkU',
+    appId: '1:969054215392:web:b6f73d3d7c50dc79cbc485',
+    messagingSenderId: '969054215392',
+    projectId: 'materi-kas',
+    authDomain: 'materi-kas.firebaseapp.com',
+    databaseURL: 'https://materi-kas-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'materi-kas.appspot.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC6GOBES33ubL1fAlrcPJQfaTco1ADnzKA',
-    appId: '1:13933506648:android:3f5093015d379787989a2d',
-    messagingSenderId: '13933506648',
-    projectId: 'materikas-e152b',
-    storageBucket: 'materikas-e152b.appspot.com',
+    apiKey: 'AIzaSyAxVEl2fJK_yLYIBQM7e3onHY5rRPkiUfY',
+    appId: '1:969054215392:android:723d71b5cec680dbcbc485',
+    messagingSenderId: '969054215392',
+    projectId: 'materi-kas',
+    databaseURL: 'https://materi-kas-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'materi-kas.appspot.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAuNCilrbDyF1eSdqpRZMXWAO6_ibXGO1I',
-    appId: '1:13933506648:web:cacc4669b1ba5d3d989a2d',
-    messagingSenderId: '13933506648',
-    projectId: 'materikas-e152b',
-    authDomain: 'materikas-e152b.firebaseapp.com',
-    storageBucket: 'materikas-e152b.appspot.com',
+    apiKey: 'AIzaSyDg2bs6T8npgh2RkFGDxU4xf3-Ts6wxSkU',
+    appId: '1:969054215392:web:b6f73d3d7c50dc79cbc485',
+    messagingSenderId: '969054215392',
+    projectId: 'materi-kas',
+    authDomain: 'materi-kas.firebaseapp.com',
+    databaseURL: 'https://materi-kas-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'materi-kas.appspot.com',
   );
 
 }
