@@ -300,7 +300,8 @@ void detailDialogInvoiceSales(
                             ),
                             Expanded(
                               flex: 2,
-                              child: Text('${purchaseItem.totalQuantity}',
+                              child: Text(
+                                  decimal.format(purchaseItem.totalQuantity),
                                   textAlign: TextAlign.right),
                             ),
                             Expanded(

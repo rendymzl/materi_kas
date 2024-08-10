@@ -144,7 +144,7 @@ class ProductController extends GetxController {
           //   max: csvData.length,
           //   // completed: Completed()
           // );
-          for (var i = 1; i < csvData.length; i++) {
+          for (var i = 0; i < csvData.length; i++) {
             var data = csvData[i];
 
             double parseToDouble(dynamic value) {
@@ -157,17 +157,16 @@ class ProductController extends GetxController {
                   return 0;
                 }
 
-                // Try to parse the string to an integer
+                // Try to parse the string to a double
                 try {
                   return double.parse(value);
                 } catch (e) {
                   return 0;
                 }
-              } else if (value is double) {
-                // If the value is already an integer, return it
-                return value;
+              } else if (value is int) {
+                // Convert int to double
+                return value.toDouble();
               } else {
-                // For any other type, return 0
                 return 0;
               }
             }
@@ -177,6 +176,7 @@ class ProductController extends GetxController {
             String unit = data[2] as String;
             double stock = parseToDouble(data[3]);
             double stockMin = parseToDouble(data[4]);
+            debugPrint(stockMin.toString());
             double costPrice = parseToDouble(data[5]);
             double sellPrice1 = parseToDouble(data[6]);
             double sellPrice2 = parseToDouble(data[7]);

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
+import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/product_model.dart';
@@ -47,7 +48,9 @@ class BuyProductController extends GetxController {
   final foundProductEdit = <Product>[].obs;
   List<Product> updatedStockProducts = [];
 
-  final currency = NumberFormat('#,##0', 'id_ID');
+  final isComa = false.obs;
+
+  // final currency = NumberFormat('#,##0', 'id_ID');
 
   // final reload = 0.obs;
 

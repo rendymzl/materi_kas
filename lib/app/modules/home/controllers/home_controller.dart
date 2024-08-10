@@ -86,11 +86,6 @@ class HomeController extends GetxController {
       updatedStockProducts.add(newItem.product);
     }
 
-    // final dbg =
-    //     updatedStockProducts.firstWhereOrNull((item) => item.id == product.id);
-
-    // debugPrint(dbg!.stock.value.toString());
-
     int index = cart.value.items
         .indexWhere((selectItem) => selectItem.product.id == product.id);
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 // import '../../../data/models/customer_model.dart';
 // import '../../../data/models/invoice_model.dart';
@@ -127,7 +128,7 @@ class ProductListCard extends StatelessWidget {
                         style: context.textTheme.titleLarge,
                       ),
                       trailing: Text(
-                        'Rp${controller.currency.format(foundProducts.costPrice.value)}',
+                        'Rp${currency.format(foundProducts.costPrice.value)}',
                         style: const TextStyle(fontSize: 14),
                       ),
                       onTap: () => controller.addToCart(foundProducts),
@@ -324,16 +325,16 @@ class SelectedProductCard extends StatelessWidget {
                           itemBuilder: (BuildContext context, int index) {
                             final item = cartItems[index];
                             final discountTextC = TextEditingController();
-                            discountTextC.text = controller.currency
-                                .format(item.individualDiscount.value);
+                            discountTextC.text =
+                                currency.format(item.individualDiscount.value);
                             discountTextC.selection =
                                 TextSelection.fromPosition(
                               TextPosition(offset: discountTextC.text.length),
                             );
 
                             final costPriceTextC = TextEditingController();
-                            costPriceTextC.text = controller.currency
-                                .format(item.individualDiscount.value);
+                            costPriceTextC.text =
+                                currency.format(item.individualDiscount.value);
                             costPriceTextC.selection =
                                 TextSelection.fromPosition(
                               TextPosition(offset: costPriceTextC.text.length),
@@ -447,14 +448,16 @@ class CartItemWidget extends StatelessWidget {
     return Obx(
       () {
         final qtyTextC = TextEditingController();
-        qtyTextC.text = '${item.quantity.value}';
+        String displayValue = item.quantity.value % 1 == 0
+            ? item.quantity.value.toInt().toString()
+            : item.quantity.value.toString().replaceAll('.', ',');
+        qtyTextC.text = displayValue;
         qtyTextC.selection = TextSelection.fromPosition(
           TextPosition(offset: qtyTextC.text.length),
         );
 
         final costPriceTextC = TextEditingController();
-        costPriceTextC.text =
-            controller.currency.format(item.product.costPrice.value);
+        costPriceTextC.text = currency.format(item.product.costPrice.value);
         costPriceTextC.selection = TextSelection.fromPosition(
           TextPosition(offset: costPriceTextC.text.length),
         );
@@ -563,12 +566,12 @@ class CartItemWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'Rp${controller.currency.format(item.product.costPrice * item.quantity.value - item.individualDiscount.value)}',
+                        'Rp${currency.format(item.product.costPrice * item.quantity.value - item.individualDiscount.value)}',
                         style: context.textTheme.titleMedium,
                       ),
                       if (item.individualDiscount.value > 0)
                         Text(
-                          'Rp${controller.currency.format(item.product.costPrice * item.quantity.value)}',
+                          'Rp${currency.format(item.product.costPrice * item.quantity.value)}',
                           style: context.textTheme.bodySmall!.copyWith(
                               fontStyle: FontStyle.italic,
                               decoration: TextDecoration.lineThrough),
@@ -603,7 +606,7 @@ class QuantityTextField extends StatelessWidget {
     return TextField(
         controller: qtyTextC,
         textAlign: TextAlign.center,
-        maxLength: 3,
+        maxLength: 7,
         decoration: InputDecoration(
           labelText: 'Jumlah',
           labelStyle: context.textTheme.bodySmall!
@@ -618,11 +621,19 @@ class QuantityTextField extends StatelessWidget {
           isDense: true,
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'^\d*\,?\d*'))
+        ],
         onChanged: (value) {
-          value == '' ? 0 : value;
-          qtyTextC.text = value;
-          controller.quantityHandle(item, value);
+          if (!value.endsWith(',')) {
+            controller.isComa.value = false;
+            value == '' ? 0 : value;
+            String unformattedValue = value.replaceAll('.', '');
+            String processedValue = unformattedValue.replaceAll(',', '.');
+            controller.quantityHandle(item, processedValue);
+          } else {
+            controller.isComa.value = true;
+          }
         });
   }
 }
@@ -740,7 +751,7 @@ class CalculatePrice extends StatelessWidget {
                     children: [
                       PropertiesRowWidget(
                         title: 'Total Harga (${cartItems.length} Barang)',
-                        value: controller.currency.format(
+                        value: currency.format(
                           cart.getSubTotalCost(),
                         ),
                       ),
@@ -748,7 +759,7 @@ class CalculatePrice extends StatelessWidget {
                         PropertiesRowWidget(
                           title: 'Total Diskon',
                           value:
-                              '-${controller.currency.format(cart.totalIndividualDiscount)}',
+                              '-${currency.format(cart.totalIndividualDiscount)}',
                           // value:
                           //     '-${controller.currency.format(controller.totalDiscount.value)}',
                         ),
@@ -765,7 +776,7 @@ class CalculatePrice extends StatelessWidget {
                                   )),
                             ),
                             Text(
-                              'Rp${controller.currency.format(cart.getTotalCost())}',
+                              'Rp${currency.format(cart.getTotalCost())}',
                               style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
@@ -781,27 +792,39 @@ class CalculatePrice extends StatelessWidget {
                             child: ElevatedButton(
                                 onPressed: controller.nomorInvoice.value != ''
                                     ? () async {
-                                        if (controller.totalBill > 0) {
-                                          SalesInvoice invoice =
-                                              await controller.createInvoice();
+                                        if (!controller.isComa.value) {
+                                          if (controller.totalBill > 0) {
+                                            SalesInvoice invoice =
+                                                await controller
+                                                    .createInvoice();
 
-                                          invoice.updateIsDebtPaid();
-                                          if (context.mounted) {
-                                            salesPaymentDialog(
-                                                context, invoice);
+                                            invoice.updateIsDebtPaid();
+                                            if (context.mounted) {
+                                              salesPaymentDialog(
+                                                  context,
+                                                  invoice,
+                                                  controller
+                                                      .updatedStockProducts);
+                                            }
+                                            // await controller.saveInvoice();
+                                            // controller.asignPayment();
+                                            // paymentDialog(context, invo);
+                                          } else {
+                                            Get.defaultDialog(
+                                              title: 'Error',
+                                              middleText:
+                                                  'Tidak ada Barang yang ditambahkan.',
+                                              confirm: TextButton(
+                                                onPressed: () => Get.back(),
+                                                child: const Text('OK'),
+                                              ),
+                                            );
                                           }
-                                          // await controller.saveInvoice();
-                                          // controller.asignPayment();
-                                          // paymentDialog(context, invo);
                                         } else {
                                           Get.defaultDialog(
                                             title: 'Error',
                                             middleText:
-                                                'Tidak ada Barang yang ditambahkan.',
-                                            confirm: TextButton(
-                                              onPressed: () => Get.back(),
-                                              child: const Text('OK'),
-                                            ),
+                                                'Jumlah yang dimasukkan tidak valid.',
                                           );
                                         }
                                       }

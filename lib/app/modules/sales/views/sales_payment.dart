@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 // import '../../../data/models/invoice_model.dart';
+import '../../../data/models/product_model.dart';
 import '../../../data/models/sales_invoice_model.dart';
 import '../../../data/providers/product_services.dart';
 import '../../../data/providers/sales_invoice_services.dart';
@@ -11,7 +12,11 @@ import '../../sales/controllers/sales_controller.dart';
 import 'sales_payment_card.dart';
 import 'sales_payment_controller.dart';
 
-void salesPaymentDialog(BuildContext context, SalesInvoice invoice) {
+void salesPaymentDialog(
+  BuildContext context,
+  SalesInvoice invoice,
+  List<Product> updatedProducts,
+) {
   late ProductService productService = Get.find();
   late SalesController salesC = Get.find();
   late SalesInvoiceService salesInvoiceServices =
@@ -27,6 +32,18 @@ void salesPaymentDialog(BuildContext context, SalesInvoice invoice) {
   Future process() async {
     await paymentController.addPayment(invoice);
     Map<String, Map<String, dynamic>> invoicesMap = {};
+
+    List<Product> updatedProductList = [];
+    for (var stockP in updatedProducts) {
+      final invProduct = invoice.purchaseList.value.items
+          .firstWhereOrNull((inv) => inv.product.id == stockP.id);
+      // debugPrint(invProduct.toString());
+      if (invProduct != null) {
+        invProduct.product.updateStock(stockP.stock.value, null);
+        updatedProductList.add(invProduct.product);
+        // debugPrint(invProduct.toString());
+      }
+    }
     String newInvioceId = await productService.getId();
     invoice.id = newInvioceId;
     invoicesMap[newInvioceId] = invoice.toJson();
@@ -37,6 +54,10 @@ void salesPaymentDialog(BuildContext context, SalesInvoice invoice) {
     );
     try {
       await salesInvoiceServices.addInvoices(invoicesMap);
+      if (updatedProducts.isNotEmpty) {
+        await productService.updateMultipleProducts(updatedProductList);
+        updatedProducts.clear();
+      }
       Get.back();
       return Get.defaultDialog(
         title: 'Berhasil',
