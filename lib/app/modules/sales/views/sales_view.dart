@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../main.dart';
-import '../../../data/models/sales_invoice_model.dart';
+// import '../../../data/models/sales_invoice_model.dart';
 import '../../../widget/add_sales_customer.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../../product/views/buy_product_dialog.dart';
@@ -215,11 +215,13 @@ class SelectedSalesInvoiceCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Obx(
           () {
-            List<SalesInvoice> invoiceById =
-                controller.selectedSales.value != null
-                    ? controller.selectedSales.value!
-                        .getInvoiceListBySalesId(controller.salesInvoices)
-                    : [];
+            var invoiceById = controller.invoiceById;
+            //     controller.selectedSales.value != null
+            //         ? controller.selectedSales.value!
+            //             .getInvoiceListBySalesId(controller.salesInvoices)
+            //         : [];
+
+            debugPrint(invoiceById.length.toString());
 
             // String totalDebt = controller.selectedSales.value != null
             //     ? 'Rp${currency.format(controller.selectedSales.value!.getTotalDebt(controller.salesInvoices))}'
@@ -267,10 +269,7 @@ class SelectedSalesInvoiceCard extends StatelessWidget {
                             String invoiceCreatedAt =
                                 invoiceById[index].createdAt.value != null
                                     ? DateFormat('dd MMM', 'id').format(
-                                        invoiceById[index]
-                                            .createdAt
-                                            .value!
-                                            .toDate())
+                                        invoiceById[index].createdAt.value!)
                                     : '';
                             double remainingDebt =
                                 invoiceById[index].remainingDebt;

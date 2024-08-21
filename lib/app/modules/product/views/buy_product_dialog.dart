@@ -9,6 +9,7 @@ import '../../../data/models/cart_item_model.dart';
 // import '../../../data/models/invoice_model.dart';
 import '../../../data/models/sales_invoice_model.dart';
 import '../../../data/models/sales_model.dart';
+import '../../../widget/add_product.dart';
 import '../../../widget/date_picker_widget.dart';
 import '../../../widget/properties_row_widget.dart';
 import '../../sales/views/sales_payment.dart';
@@ -81,24 +82,48 @@ class ProductListCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            // color: Colors.amber,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: const BorderRadius.all(
-                Radius.circular(12),
-              ),
-            ),
-            height: 50,
-            child: TextField(
-              decoration: const InputDecoration(
-                labelText: "Cari Barang",
-                labelStyle: TextStyle(color: Colors.grey),
-                prefixIcon: Icon(Symbols.search),
-                border: InputBorder.none,
-              ),
-              onChanged: (value) => controller.filterProducts(value),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    // color: Colors.amber,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(12),
+                      ),
+                    ),
+                    height: 50,
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: "Cari Barang",
+                        labelStyle: TextStyle(color: Colors.grey),
+                        prefixIcon: Icon(Symbols.search),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (value) => controller.filterProducts(value),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: const BorderRadius.all(Radius.circular(5))),
+                  child: IconButton(
+                    onPressed: () => addEditDialogProduct(context, null),
+                    icon: const Icon(
+                      Symbols.add,
+                      // size: 24,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -673,7 +698,7 @@ class DiscountTextfield extends StatelessWidget {
         onChanged: (value) {
           // value == '' ? 0 : value;
           // discount.text = value;
-          controller.discountHandle(item.product.id, discountTextC, value);
+          controller.discountHandle(item.product.id!, discountTextC, value);
         });
   }
 }

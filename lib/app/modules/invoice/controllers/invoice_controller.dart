@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:ffi';
+// import 'dart:ffi';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -12,16 +12,15 @@ import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/models/product_model.dart';
 import '../../../data/providers/invoice_services.dart';
 import '../../../data/providers/product_services.dart';
-import '../../../data/providers/stores_services.dart';
 import '../../../widget/customer_input_field_controller.dart';
 import '../../../widget/date_picker_controller.dart';
+import '../../../widget/side_menu_controller.dart';
 import '../../product/controllers/product_controller.dart';
 
 class InvoiceController extends GetxController {
-  late StoreServices storeService = Get.find();
+  late SideMenuController sideMenuC = Get.find();
   late InvoiceService invoiceServices = Get.find();
   late ProductService productServices = Get.find();
   late CustomerInputFieldController customerInputFieldC =
@@ -33,9 +32,11 @@ class InvoiceController extends GetxController {
   late final products = productServices.products;
   late final foundProducts = productServices.foundProducts;
 
-  late final isAdmin = storeService.isOwner;
+  late final isAdmin = sideMenuC.isAdmin.value;
 
   final isComa = false.obs;
+
+  final editedCart = Cart(items: <CartItem>[].obs).obs;
 
   List<CartItem> initCartItems = [];
   List<CartItem> updatedInvQty = [];
@@ -236,7 +237,7 @@ class InvoiceController extends GetxController {
   final displayTime = TimeOfDay.now().toString().obs;
 
   //! Cart Data
-  final createdAt = Timestamp.now().obs;
+  final createdAt = DateTime.now().obs;
   final customer = Customer().obs;
   // final purchaseList = Cart(items: items).obs;
 
@@ -331,7 +332,6 @@ class InvoiceController extends GetxController {
       forUpdateCartItem.quantity.value = cartItem.totalQuantity - 0;
     } else {
       cartItem.quantity.value = 0;
-      debugPrint('qty ${cartItem.quantity.value}');
       forUpdateCartItem!.quantity.value = 0;
       forUpdateCartItem.quantityReturn.value = cartItem.totalQuantity - 0;
     }
@@ -405,9 +405,9 @@ class InvoiceController extends GetxController {
     }
 
     invoice.purchaseList.value.updateQuantity(
-        cartItem.product.id, initCartItem.totalQuantity - qtyReturn);
+        cartItem.product.id!, initCartItem.totalQuantity - qtyReturn);
     invoice.purchaseList.value
-        .updateQuantityReturn(cartItem.product.id, qtyReturn);
+        .updateQuantityReturn(cartItem.product.id!, qtyReturn);
     invoice.updateIsDebtPaid();
 
     //!process Stock
@@ -489,7 +489,7 @@ class InvoiceController extends GetxController {
     productController.filterProducts(productName);
   }
 
-  void addToCart(CartItem cartItem, Invoice invoice) {
+  void addToCart(CartItem cartItem, Invoice editInvoice) {
     //!registerCartItem
     var initCartItem = initCartItems
         .firstWhereOrNull((item) => item.product.id == cartItem.product.id);
@@ -514,10 +514,69 @@ class InvoiceController extends GetxController {
     }
 
     //!process Quantity
-    invoice.purchaseList.value.addItem(cartItem);
+    final existingItem = editInvoice.purchaseList.value.items
+        .firstWhereOrNull((item) => item.product.id == cartItem.product.id);
+    if (existingItem != null) {
+      // existingItem.quantity.value += 1;
+    } else {
+      editInvoice.purchaseList.value.items.add(cartItem);
+    }
 
     //!process Stock
     forUpdateCartItem!.product.stock.value += 1;
+
+    debugPrint('qty ${cartItem.quantity.value}');
+    debugPrint('rtn qty ${cartItem.quantityReturn.value}');
+    debugPrint('Stok ${forUpdateCartItem.product.stock.value}');
+  }
+
+  void addToReturnCart(CartItem cartItem, Invoice editInvoice) {
+    //!registerCartItem
+    var initCartItem = initCartItems
+        .firstWhereOrNull((item) => item.product.id == cartItem.product.id);
+
+    if (initCartItem == null) {
+      CartItem newCartItem = CartItem.fromJson(cartItem.toJson());
+      initCartItems.add(newCartItem);
+      initCartItem = initCartItems.firstWhereOrNull(
+          (item) => item.product.id == newCartItem.product.id);
+    }
+
+    //!registerNewCartItem
+    var forUpdateCartItem = updatedInvQty
+        .firstWhereOrNull((item) => item.product.id == cartItem.product.id);
+
+    if (forUpdateCartItem == null) {
+      CartItem newCartItem = CartItem.fromJson(cartItem.toJson());
+      newCartItem.product.stock.value = 0;
+      updatedInvQty.add(newCartItem);
+      forUpdateCartItem = updatedInvQty.firstWhereOrNull(
+          (item) => item.product.id == newCartItem.product.id);
+    }
+
+    //!process Quantity
+    Cart cartReturn = Cart(items: <CartItem>[].obs);
+    CartItem returnCartItemReturn = CartItem.fromJson(cartItem.toJson());
+    returnCartItemReturn.quantityReturn.value =
+        returnCartItemReturn.quantity.value;
+    returnCartItemReturn.quantity.value = 0;
+    cartReturn.addItem(returnCartItemReturn);
+    if (editInvoice.returnList.value != null) {
+      editInvoice.returnList.value!.items.add(returnCartItemReturn);
+    } else {
+      editInvoice.returnList.value = cartReturn;
+    }
+    // final existingItem = editInvoice.purchaseList.value.items
+    //     .firstWhereOrNull((item) => item.product.id == cartItem.product.id);
+    // if (existingItem != null) {
+    //   // existingItem.quantity.value += 1;
+    // } else {
+    //   editInvoice.returnList.value = cartItem;
+    // }
+
+    //!process Stock
+    forUpdateCartItem!.product.stock.value += 1;
+
     debugPrint('qty ${cartItem.quantity.value}');
     debugPrint('rtn qty ${cartItem.quantityReturn.value}');
     debugPrint('Stok ${forUpdateCartItem.product.stock.value}');
@@ -549,7 +608,7 @@ class InvoiceController extends GetxController {
           (item) => item.product.id == newCartItem.product.id);
     }
 
-    //!process Stock
+    //!process Quantity
     cartItem.quantity.value += value * (isReturn ? 1 : -1);
     cartItem.quantityReturn.value -= value * (isReturn ? 1 : -1);
 
@@ -630,7 +689,7 @@ class InvoiceController extends GetxController {
     // totalPurchase.value = invoice.payment!.totalBill!;
     showPaymentCard.value = false;
 
-    DateTime invoiceDateTime = invoice.createdAt.value!.toDate();
+    DateTime invoiceDateTime = invoice.createdAt.value!;
 
     DateTime date = DateTime(
       invoiceDateTime.year,
@@ -723,7 +782,8 @@ class InvoiceController extends GetxController {
         middleText: 'Hapus Invoice ini?',
         confirm: TextButton(
           onPressed: () async {
-            invoiceServices.deleteInvoice(invoice.id!);
+            await invoice.delete();
+            // invoiceServices.deleteInvoice(invoice.id!);
             // refreshFetch(await InvoiceProvider.destroy(invoice));
             Get.back();
             Get.back();

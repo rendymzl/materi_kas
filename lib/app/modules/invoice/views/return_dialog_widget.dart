@@ -1,4 +1,4 @@
-import 'dart:ffi';
+// import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/providers/invoice_services.dart';
+// import '../../../data/providers/invoice_services.dart';
 import 'add_product_dialog.dart';
 import 'list_cart_widget.dart';
 import '../controllers/invoice_controller.dart';
@@ -16,7 +16,7 @@ void returnDialogWidget(
   InvoiceController controller,
   Invoice invoice,
 ) async {
-  late InvoiceService invoiceServices = Get.find();
+  // late InvoiceService invoiceServices = Get.find();
   Invoice editInvoice = await controller.reCreateInvoice(invoice);
   if (!context.mounted) return;
 
@@ -96,6 +96,26 @@ void returnDialogWidget(
                               controller: controller,
                               isReturn: true,
                             ),
+                            if (editInvoice.returnList.value != null)
+                              Divider(color: Colors.grey[200]),
+                            if (editInvoice.returnList.value != null)
+                              const SizedBox(height: 12),
+                            if (editInvoice.returnList.value != null)
+                              Text('Tambahan Return',
+                                  style: Theme.of(Get.context!)
+                                      .textTheme
+                                      .titleLarge,
+                                  textAlign: TextAlign.end),
+                            if (editInvoice.returnList.value != null)
+                              const SizedBox(height: 12),
+                            if (editInvoice.returnList.value != null)
+                              ListCartWidget(
+                                invoice: editInvoice,
+                                isEdit: controller.editReturnManual.value,
+                                controller: controller,
+                                isReturn: true,
+                                additionalReturn: true,
+                              ),
                             const SizedBox(height: 12),
                             Padding(
                               padding:
@@ -103,6 +123,46 @@ void returnDialogWidget(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
+                                  ListTile(
+                                    title: Row(
+                                      children: [
+                                        const Expanded(
+                                            flex: 5, child: Text('')),
+                                        Expanded(
+                                          flex: 5,
+                                          child: Text(
+                                            'NOMINAL RETURN',
+                                            textAlign: TextAlign.right,
+                                            style: Theme.of(Get.context!)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                    color:
+                                                        Theme.of(Get.context!)
+                                                            .colorScheme
+                                                            .primary),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 4,
+                                          child: Obx(
+                                            () => Text(
+                                              'Rp${currency.format(editInvoice.totalReturn + editInvoice.returnFee.value)}',
+                                              textAlign: TextAlign.end,
+                                              style: Theme.of(Get.context!)
+                                                  .textTheme
+                                                  .bodyLarge!
+                                                  .copyWith(
+                                                      color:
+                                                          Theme.of(Get.context!)
+                                                              .colorScheme
+                                                              .primary),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                   SizedBox(
                                     width: 150,
                                     child: TextField(
@@ -256,17 +316,31 @@ void returnDialogWidget(
                   );
                   try {
                     invoice.updateIsDebtPaid();
-                    debugPrint(editInvoice.isDebtPaid.value.toString());
+                    // debugPrint(editInvoice.isDebtPaid.value.toString());
                     invoice.id = editInvoice.id;
                     invoice.invoiceId = editInvoice.invoiceId;
                     invoice.purchaseList.value = editInvoice.purchaseList.value;
-                    invoice.returnFee.value = editInvoice.purchaseList.value
-                                .getTotalReturn(editInvoice.priceType.value) ==
-                            0
-                        ? 0
-                        : editInvoice.returnFee.value;
+                    // debugPrint(editInvoice.returnFee.value.toString());
+                    // debugPrint(editInvoice.purchaseList.value
+                    //     .getTotalReturn(editInvoice.priceType.value)
+                    //     .toString());
+
+                    if (editInvoice.returnFee.value >= 0) {
+                      invoice.returnFee.value = editInvoice.returnFee.value;
+                      debugPrint(invoice.returnFee.value.toString());
+                    }
+
+                    if (editInvoice.returnList.value != null) {
+                      invoice.returnList.value = editInvoice.returnList.value;
+                    }
+
+                    // invoice.returnFee.value = editInvoice.purchaseList.value
+                    //             .getTotalReturn(editInvoice.priceType.value) ==
+                    //         0
+                    //     ? 0
+                    //     : editInvoice.returnFee.value;
                     invoice.isDebtPaid.value = editInvoice.isDebtPaid.value;
-                    await invoiceServices.updateInvoice(invoice);
+                    invoice.update();
                     Get.back();
                     return Get.defaultDialog(
                       title: 'Berhasil',

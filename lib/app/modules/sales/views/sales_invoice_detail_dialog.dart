@@ -185,7 +185,7 @@ void detailDialogInvoiceSales(
                                 Expanded(
                                   child: Text(
                                     DateFormat('dd MMMM y, HH:mm', 'id').format(
-                                      invoice.createdAt.value!.toDate(),
+                                      invoice.createdAt.value!,
                                     ),
                                     style: Theme.of(Get.context!)
                                         .textTheme
@@ -626,7 +626,7 @@ void detailDialogInvoiceSales(
                                           Expanded(
                                               flex: 5,
                                               child: Text(
-                                                  'Pembayaran ${(!invoice.isDebtPaid.value || invoice.payments.length > 1) ? '${index + 1}' ' (${DateFormat('dd MMMM y', 'id').format(invoice.payments[index].date!.toDate())})' : ''}',
+                                                  'Pembayaran ${(!invoice.isDebtPaid.value || invoice.payments.length > 1) ? '${index + 1}' ' (${DateFormat('dd MMMM y', 'id').format(invoice.payments[index].date!)})' : ''}',
                                                   style: Theme.of(Get.context!)
                                                       .textTheme
                                                       .titleSmall!

@@ -155,18 +155,22 @@ class BarChartWidget extends GetView<StatisticController> {
                                       value: currency.format(sell),
                                       primary: true,
                                     ),
-                                    Divider(color: Colors.grey[400]),
-                                    // PropertiesRowWidget(
-                                    //   title: 'Total Penjualan',
-                                    //   value: currency.format(grossProfit),
-                                    //   subValue: '',
-                                    //   primary: true,
-                                    // ),
                                     PropertiesRowWidget(
                                       title: 'Total Harga Modal',
                                       value: currency.format(cost * -1),
                                       color: Colors.red,
                                     ),
+                                    Divider(color: Colors.grey[400]),
+                                    PropertiesRowWidget(
+                                      title: 'Laba Kotor',
+                                      value: currency.format(sell - cost),
+                                      primary: true,
+                                    ),
+                                    // PropertiesRowWidget(
+                                    //   title: 'Total Harga Modal',
+                                    //   value: currency.format(cost * -1),
+                                    //   color: Colors.red,
+                                    // ),
                                     PropertiesRowWidget(
                                       title: 'Biaya Operasional',
                                       value: currency
@@ -283,50 +287,83 @@ class BarChartWidget extends GetView<StatisticController> {
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 12),
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    // mainAxisAlignment:
+                                    //     MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Column(
-                                        children: [
-                                          const Text('Biaya Operasional'),
-                                          ListView.builder(
-                                            itemCount: controller
-                                                .operatingCosts.length,
-                                            shrinkWrap: true,
-                                            itemBuilder: (context, index) {
-                                              var operatingCost = controller
-                                                  .operatingCosts[index];
-                                              return ListTile(
-                                                title: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(operatingCost.name!),
-                                                    Text(
-                                                        'Rp${currency.format(operatingCost.amount!)}')
-                                                  ],
+                                      const SizedBox(
+                                          height: 40,
+                                          child: Text('Biaya Operasional')),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: controller
+                                              .dailyOperatingCosts.length,
+                                          shrinkWrap: true,
+                                          itemBuilder: (context, index) {
+                                            var operatingCost = controller
+                                                .dailyOperatingCosts[index];
+                                            return ListTile(
+                                              title: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(operatingCost.name!),
+                                                  Text(
+                                                      'Rp${currency.format(operatingCost.amount!)}')
+                                                ],
+                                              ),
+                                              subtitle: Text(
+                                                operatingCost.note!,
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontStyle: FontStyle.italic,
                                                 ),
-                                                subtitle: Text(
-                                                  operatingCost.note!,
-                                                  style: TextStyle(
-                                                    color: Colors.grey[400],
-                                                    fontStyle: FontStyle.italic,
+                                              ),
+                                              leading: IconButton(
+                                                onPressed: () async =>
+                                                    await Get.defaultDialog(
+                                                  title: 'Hapus',
+                                                  middleText: 'Hapus Biaya?',
+                                                  confirm: TextButton(
+                                                    onPressed: () async {
+                                                      controller
+                                                          .deleteOperatingCost(
+                                                              operatingCost);
+                                                      // controller
+                                                      //     .rangePickerHandle(
+                                                      //         controller
+                                                      //             .args.value);
+                                                      // controller.selectedSection
+                                                      //     .value = 'daily';
+                                                      // await controller
+                                                      //     .fetchData(
+                                                      //         DateTime.now(),
+                                                      //         'weekly');
+                                                      Get.back();
+                                                    },
+                                                    child: const Text('Hapus'),
+                                                  ),
+                                                  cancel: TextButton(
+                                                    onPressed: () {
+                                                      Get.back();
+                                                    },
+                                                    child: Text(
+                                                      'Batal',
+                                                      style: TextStyle(
+                                                          color: Colors.black
+                                                              .withOpacity(
+                                                                  0.5)),
+                                                    ),
                                                   ),
                                                 ),
-                                                leading: IconButton(
-                                                  onPressed: () => controller
-                                                      .deleteOperatingCost(
-                                                          operatingCost.id!),
-                                                  icon: const Icon(
-                                                    Symbols.close,
-                                                    color: Colors.red,
-                                                  ),
+                                                icon: const Icon(
+                                                  Symbols.close,
+                                                  color: Colors.red,
                                                 ),
-                                              );
-                                            },
-                                          ),
-                                        ],
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
                                       ElevatedButton(
                                         onPressed: () => addOperatingCostDialog(
@@ -487,7 +524,7 @@ class BarChartWidget extends GetView<StatisticController> {
               rodIndex == 0
                   ? rod.toY == 0
                       ? '0'
-                      : 'Rp${controller.formatter.format(controller.invoiceChart[groupIndex].totalSellPrice)}'
+                      : 'Rp${currency.format(controller.invoiceChart[groupIndex].totalSellPrice)}'
                   : controller.invoiceChart[groupIndex].totalInvoice.toString(),
               TextStyle(
                 color: rodIndex == 0 ? Colors.red : Colors.orange,
@@ -816,9 +853,8 @@ class BarChartDialog extends StatelessWidget {
                       child: DisplayDataListTile(
                         controller: controller,
                         title: 'Tagihan',
-                        subtitle1: 'Rp.${controller.formatter.format(sell)}',
-                        subtitle2:
-                            'Rp.${controller.formatter.format(prevSell)}',
+                        subtitle1: 'Rp.${currency.format(sell)}',
+                        subtitle2: 'Rp.${currency.format(prevSell)}',
                         subtitle3:
                             controller.percentage(sell, prevSell, context),
                       ),
@@ -828,9 +864,8 @@ class BarChartDialog extends StatelessWidget {
                       child: DisplayDataListTile(
                         controller: controller,
                         title: 'Keuntungan',
-                        subtitle1: 'Rp.${controller.formatter.format(profit)}',
-                        subtitle2:
-                            'Rp.${controller.formatter.format(prevProfit)}',
+                        subtitle1: 'Rp.${currency.format(profit)}',
+                        subtitle2: 'Rp.${currency.format(prevProfit)}',
                         subtitle3:
                             controller.percentage(profit, prevProfit, context),
                       ),
@@ -840,8 +875,8 @@ class BarChartDialog extends StatelessWidget {
                       child: DisplayDataListTile(
                         controller: controller,
                         title: 'Dibayar',
-                        subtitle1: 'Rp.${controller.formatter.format(pay)}',
-                        subtitle2: 'Rp.${controller.formatter.format(prevPay)}',
+                        subtitle1: 'Rp.${currency.format(pay)}',
+                        subtitle2: 'Rp.${currency.format(prevPay)}',
                         subtitle3:
                             controller.percentage(profit, prevProfit, context),
                       ),

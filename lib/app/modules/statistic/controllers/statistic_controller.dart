@@ -18,15 +18,18 @@ import '../../../widget/model/chart_model.dart';
 
 class StatisticController extends GetxController {
   final InvoiceService invoiceServices = Get.find();
-  final SalesInvoiceService salesInvoiceServices = Get.find();
-  final OperatingCostServices operatingCostServices = Get.find();
+  final SalesInvoiceService salesInvoiceServices =
+      Get.put(SalesInvoiceService());
+  final OperatingCostServices operatingCostServices =
+      Get.put(OperatingCostServices());
 
   late final invoices = invoiceServices.invoices;
   late final salesInvoices = salesInvoiceServices.invoices;
   late final operatingCosts = operatingCostServices.operatingCosts;
+  late final dailyOperatingCosts = <OperatingCost>[].obs;
   // InvoiceController invoiceController = Get.put(InvoiceController());
   // late final String uuid;
-  final formatter = NumberFormat('#,##0', 'id_ID');
+  // final formatter = NumberFormat('#,##0', 'id_ID');
   // late final RxList<Invoice> invoiceList = RxList<Invoice>();
   final isDaily = true.obs;
   final selectedSection = 'daily'.obs;
@@ -96,9 +99,14 @@ class StatisticController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
+    ever(operatingCosts, (_) {
+      rangePickerHandle(DateTime.now());
+      selectedSection.value = 'daily';
+    });
     // uuid = supabase.auth.currentUser!.id;
     // List<Invoice> newData = await InvoiceProvider.fetchData(uuid, null);
     // invoiceList.assignAll(newData);
+
     await fetchData(DateTime.now(), 'weekly');
   }
 
@@ -143,6 +151,20 @@ class StatisticController extends GetxController {
     monthlyRangeController.value.selectedDate = pickedDate;
     yearlyRangeController.value.selectedDate = pickedDate;
     await fetchData(pickedDate, 'weekly');
+
+    // invoiceDate.isAfter(invoiceCreatedAt.startDate!) &&
+    //           invoiceDate.isBefore(invoiceCreatedAt.endDate!)
+
+    dailyOperatingCosts.value = operatingCosts.where((cost) {
+      debugPrint(selectedDate.value.toString());
+      debugPrint(cost.createdAt!.toString());
+      return cost.createdAt!.day == selectedDate.value.day &&
+          cost.createdAt!.month == selectedDate.value.month &&
+          cost.createdAt!.year == selectedDate.value.year;
+    }).toList();
+    // dailyOperatingCosts.value.forEach((cost) {
+    //   cost.createdAt = cost.createdAt!.toLocal().subtract(Duration(hours: cost.createdAt!.toLocal().hour, minutes: cost.createdAt!.toLocal().minute));
+    // });
   }
 
   final selectedWeeklyRange = PickerDateRange(
@@ -158,15 +180,15 @@ class StatisticController extends GetxController {
     DateTime prevStartOfWeek = await getStartofWeek(prevWeekPickedDay);
 
     currentAndPrevFilteredInvoices = invoices.where((invoice) {
-      return invoice.createdAt.value!.toDate().isAfter(prevStartOfWeek);
+      return invoice.createdAt.value!.isAfter(prevStartOfWeek);
     }).toList();
 
     currentAndPrevFilteredSalesInvoices = salesInvoices.where((invoice) {
-      return invoice.createdAt.value!.toDate().isAfter(prevStartOfWeek);
+      return invoice.createdAt.value!.isAfter(prevStartOfWeek);
     }).toList();
 
     currentAndPrevFilteredOperatingCosts = operatingCosts.where((invoice) {
-      return invoice.createdAt!.toDate().isAfter(prevStartOfWeek);
+      return invoice.createdAt!.isAfter(prevStartOfWeek);
     }).toList();
 
     selectedWeeklyRange.value = PickerDateRange(
@@ -209,29 +231,22 @@ class StatisticController extends GetxController {
 
     currentAndPrevFilteredInvoices = invoices.where((invoice) {
       return invoice.createdAt.value!
-              .toDate()
               .isAfter(startOfPrevMonth.subtract(const Duration(days: 1))) &&
           invoice.createdAt.value!
-              .toDate()
               .isBefore(endOfMonth.add(const Duration(days: 1)));
     }).toList();
 
     currentAndPrevFilteredSalesInvoices = salesInvoices.where((invoice) {
       return invoice.createdAt.value!
-              .toDate()
               .isAfter(startOfPrevMonth.subtract(const Duration(days: 1))) &&
           invoice.createdAt.value!
-              .toDate()
               .isBefore(endOfMonth.add(const Duration(days: 1)));
     }).toList();
 
     currentAndPrevFilteredOperatingCosts = operatingCosts.where((invoice) {
       return invoice.createdAt!
-              .toDate()
               .isAfter(startOfPrevMonth.subtract(const Duration(days: 1))) &&
-          invoice.createdAt!
-              .toDate()
-              .isBefore(endOfMonth.add(const Duration(days: 1)));
+          invoice.createdAt!.isBefore(endOfMonth.add(const Duration(days: 1)));
     }).toList();
 
     currentMonthInvoiceChart =
@@ -263,29 +278,22 @@ class StatisticController extends GetxController {
 
     currentAndPrevFilteredInvoices = invoices.where((invoice) {
       return invoice.createdAt.value!
-              .toDate()
               .isAfter(startOfPrevYear.subtract(const Duration(days: 1))) &&
           invoice.createdAt.value!
-              .toDate()
               .isBefore(endOfYear.add(const Duration(days: 1)));
     }).toList();
 
     currentAndPrevFilteredSalesInvoices = salesInvoices.where((invoice) {
       return invoice.createdAt.value!
-              .toDate()
               .isAfter(startOfPrevYear.subtract(const Duration(days: 1))) &&
           invoice.createdAt.value!
-              .toDate()
               .isBefore(endOfYear.add(const Duration(days: 1)));
     }).toList();
 
     currentAndPrevFilteredOperatingCosts = operatingCosts.where((invoice) {
       return invoice.createdAt!
-              .toDate()
               .isAfter(startOfPrevYear.subtract(const Duration(days: 1))) &&
-          invoice.createdAt!
-              .toDate()
-              .isBefore(endOfYear.add(const Duration(days: 1)));
+          invoice.createdAt!.isBefore(endOfYear.add(const Duration(days: 1)));
     }).toList();
 
     currentYearInvoiceChart = await getChartData(startOfCurrentYear, 'current');
@@ -315,13 +323,13 @@ class StatisticController extends GetxController {
       final invoicesGroup = groupDate.value == 'yearly'
           ? currentAndPrevFilteredInvoices.where((invoice) {
               // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
-              DateTime localDate = invoice.createdAt.value!.toDate();
+              DateTime localDate = invoice.createdAt.value!;
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month;
             }).toList()
           : currentAndPrevFilteredInvoices.where((invoice) {
               // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
-              DateTime localDate = invoice.createdAt.value!.toDate();
+              DateTime localDate = invoice.createdAt.value!;
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month &&
                   localDate.day == currentDate.day;
@@ -330,13 +338,13 @@ class StatisticController extends GetxController {
       final salesInvoicesGroup = groupDate.value == 'yearly'
           ? currentAndPrevFilteredSalesInvoices.where((invoice) {
               // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
-              DateTime localDate = invoice.createdAt.value!.toDate();
+              DateTime localDate = invoice.createdAt.value!;
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month;
             }).toList()
           : currentAndPrevFilteredSalesInvoices.where((invoice) {
               // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
-              DateTime localDate = invoice.createdAt.value!.toDate();
+              DateTime localDate = invoice.createdAt.value!;
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month &&
                   localDate.day == currentDate.day;
@@ -345,13 +353,13 @@ class StatisticController extends GetxController {
       final operatingCostsGroup = groupDate.value == 'yearly'
           ? currentAndPrevFilteredOperatingCosts.where((invoice) {
               // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
-              DateTime localDate = invoice.createdAt!.toDate();
+              DateTime localDate = invoice.createdAt!;
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month;
             }).toList()
           : currentAndPrevFilteredOperatingCosts.where((invoice) {
               // DateTime localDate = convertToLocal(invoice.createdAt!.toDate());
-              DateTime localDate = invoice.createdAt!.toDate();
+              DateTime localDate = invoice.createdAt!;
               return localDate.year == currentDate.year &&
                   localDate.month == currentDate.month &&
                   localDate.day == currentDate.day;
@@ -386,7 +394,7 @@ class StatisticController extends GetxController {
 
       for (var inv in invoicesGroup) {
         double sellPrice = inv.subtotal;
-        double returnPrice = inv.subtotalReturn;
+        double returnPrice = inv.subtotalReturn + inv.subtotalAdditionalReturn;
         double reurnFee = inv.returnFee.value;
         double discount = inv.totalDiscount;
 
@@ -499,10 +507,11 @@ class StatisticController extends GetxController {
     return listChartData;
   }
 
-  void deleteOperatingCost(String id) async {
-    await operatingCostServices.deleteOperatingCost(id);
-    await operatingCostServices.fetchOperatingCost();
-    rangePickerHandle(args.value);
+  void deleteOperatingCost(OperatingCost operatingCost) async {
+    await operatingCost.delete();
+    // await operatingCostServices.deleteOperatingCost(id);
+    // await operatingCostServices.fetch();
+    rangePickerHandle(DateTime.now());
     selectedSection.value = 'daily';
   }
 

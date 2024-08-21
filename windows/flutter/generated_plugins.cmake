@@ -4,10 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-  cloud_firestore
-  firebase_auth
-  firebase_core
+  powersync_flutter_libs
   screen_retriever
+  sqlite3_flutter_libs
   thermal_printer
   url_launcher_windows
   window_manager

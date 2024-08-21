@@ -1,19 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 import '../../main.dart';
 import '../data/models/product_model.dart';
 import '../data/models/sales_model.dart';
 import '../data/providers/product_services.dart';
 import '../data/providers/sales_customer_services.dart';
-import '../data/providers/stores_services.dart';
+import 'side_menu_controller.dart';
 
 class AddProductController extends GetxController {
-  late StoreServices storeService = Get.find();
-  final ProductService productService = Get.find();
-  final SalesCustomerServices salesCustomerServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
+  late ProductService productService = Get.find();
+  late SalesCustomerServices salesCustomerServices = Get.find();
 
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
@@ -21,7 +19,7 @@ class AddProductController extends GetxController {
   late final lastCode = productService.lastProductCode;
 
   late final sales = salesCustomerServices.customers;
-  late final isAdmin = storeService.isOwner;
+  late final isAdmin = sideMenuC.isAdmin.value;
   Rx<Sales?> selectedSales = Rx<Sales?>(null);
 
   @override
@@ -55,7 +53,6 @@ class AddProductController extends GetxController {
     'sold': false,
   }.obs;
 
-  final NumberFormat numberFormat = NumberFormat("#,##0", "id_ID");
   final TextEditingController codeTextC = TextEditingController();
   final TextEditingController productNameTextC = TextEditingController();
   final TextEditingController unitTextC = TextEditingController();
@@ -87,8 +84,7 @@ class AddProductController extends GetxController {
     clickedField[field] = true;
 
     if (value.isNotEmpty) {
-      String newValue =
-          numberFormat.format(int.parse(value.replaceAll('.', '')));
+      String newValue = currency.format(int.parse(value.replaceAll('.', '')));
 
       final textController = textControllers[field];
 
@@ -101,6 +97,119 @@ class AddProductController extends GetxController {
     }
   }
 
+  //! binding data
+  void bindingEditData(Product? foundProduct) {
+    int numberId =
+        (lastCode.value != '') ? int.parse(lastCode.value.substring(2)) : 0;
+    // numberId = generateNumberId(numberId);
+    Product product = foundProduct ??
+        Product(
+          id: '',
+          productId: 'BR${generateNumberId(numberId + 1)}',
+          storeId: sideMenuC.store.value!.id!,
+          productName: '',
+          unit: '',
+          costPrice: 0,
+          sellPrice1: 0,
+          sellPrice2: 0,
+          sellPrice3: 0,
+          stock: 0,
+          sold: 0,
+        );
+
+    selectedSales.value = product.sales;
+    codeTextC.text = product.productId;
+    productNameTextC.text = product.productName;
+    unitTextC.text = product.unit;
+    salesTextC.text = product.sales?.name ?? '';
+    costPriceTextC.text = product.costPrice.value == 0
+        ? ''
+        : currency.format(product.costPrice.value);
+    sellPriceTextC1.text =
+        product.sellPrice1 == 0 ? '' : currency.format(product.sellPrice1);
+    sellPriceTextC2.text = product.sellPrice2 == 0
+        ? ''
+        : currency.format(product.sellPrice2 ?? 0.0);
+    sellPriceTextC3.text = product.sellPrice2 == 0
+        ? ''
+        : currency.format(product.sellPrice3 ?? 0.0);
+    stockTextC.text =
+        product.stock.value == 0 ? '' : decimal.format(product.stock.value);
+    minStockTextC.text = product.stockMin.value == 0
+        ? ''
+        : decimal.format(product.stockMin.value);
+    soldTextC.text = product.sold == 0 ? '' : product.sold?.toString() ?? '';
+  }
+
+  String generateNumberId(int number) {
+    return number.toString().padLeft(4, '0');
+  }
+
+  // String getNumberAfterChar() {
+  //   RegExp regExp = RegExp(r'(\D+)(\d+)');
+  //   Match? match = regExp.firstMatch(lastCode.value.toUpperCase());
+
+  //   if (match != null) {
+  //     String charPart = match.group(1)!;
+  //     String numberPart = match.group(2)!;
+  //     int number = int.parse(numberPart);
+
+  //     number++;
+
+  //     return '$charPart$number';
+  //   } else {
+  //     return '';
+  //   }
+  // }
+
+  //! create
+  Future addProduct(Product product) async {
+    bool isProductExist =
+        products.any((item) => item.productId == product.productId);
+    if (isProductExist) {
+      await Get.defaultDialog(
+        title: 'Gagal',
+        middleText: 'ID barang sudah ada',
+        confirm: TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('OK'),
+        ),
+      );
+    } else {
+      await Product.insert(product);
+      await Get.defaultDialog(
+        title: 'Berhasil',
+        middleText: 'Barang berhasil ditambahkan',
+        confirm: TextButton(
+          onPressed: () {
+            Get.back();
+            Get.back();
+          },
+          child: const Text('OK'),
+        ),
+      );
+      Get.back();
+    }
+  }
+
+  //! update
+  Future updateProduct(
+    Product newProduct,
+    Product currentProduct,
+  ) async {
+    newProduct.id = currentProduct.id;
+    await newProduct.update();
+    await Get.defaultDialog(
+      title: 'Berhasil',
+      middleText: 'Product berhasil diupdate',
+      confirm: TextButton(
+        onPressed: () => Get.back(),
+        child: const Text('OK'),
+      ),
+    );
+    Get.back();
+  }
+
   //! delete
   destroyHandle(Product product) async {
     try {
@@ -109,7 +218,7 @@ class AddProductController extends GetxController {
         middleText: 'Hapus barang ini?',
         confirm: TextButton(
           onPressed: () async {
-            await productService.deleteProduct(product.id);
+            product.delete();
             Get.back();
             Get.back();
           },
@@ -132,146 +241,7 @@ class AddProductController extends GetxController {
     }
   }
 
-  //! addSales
-  Future<void> addSalses() async {
-    final existingSales = sales.firstWhere(
-      (customer) =>
-          customer.name?.toLowerCase() ==
-          selectedSales.value?.name?.toLowerCase(),
-      orElse: () => Sales(name: '', createdAt: Timestamp.now()),
-    );
-
-    if ((existingSales.name == '') && (selectedSales.value?.name != '')) {
-      Map<String, Map<String, dynamic>> customersMap = {};
-      String newCustomerId = await salesCustomerServices.getId();
-      selectedSales.value?.id = newCustomerId;
-      customersMap[newCustomerId] = selectedSales.toJson();
-      await addSales(selectedSales.value!, customersMap);
-    }
-  }
-
-  Future<void> addSales(Sales salesCustomer,
-      Map<String, Map<String, dynamic>> customerData) async {
-    bool isCustomerExists = sales.any((item) => item.id == salesCustomer.id);
-    debugPrint(salesCustomer.id);
-    if (isCustomerExists) {
-      await Get.defaultDialog(
-        title: 'Gagal',
-        middleText: 'Kode yang dimasukkan sudah ada',
-        confirm: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('OK'),
-        ),
-      );
-    } else {
-      try {
-        await salesCustomerServices.addCustomers(customerData);
-        // List<Customer> newData = await CustomerProvider.create(customer);
-        await Get.defaultDialog(
-          title: 'Berhasil',
-          middleText: 'Sales berhasil ditambahkan',
-          confirm: TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('OK'),
-          ),
-        );
-        // refreshFetch(newData);
-        Get.back();
-      } catch (e) {
-        Get.defaultDialog(
-          title: 'Error',
-          middleText: e.toString(),
-          confirm: TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('OK'),
-          ),
-        );
-      }
-    }
-  }
-
-  List<Product> checkexistingProduct(String newProductId) {
-    var existingProduct = <Product>[];
-    existingProduct =
-        products.where((product) => product.productId == newProductId).toList();
-    return existingProduct;
-  }
-
-  //! update
-  void updateSuccessDialog() async {
-    await Get.defaultDialog(
-      title: 'Berhasil',
-      middleText: 'Product berhasil diupdate',
-      confirm: TextButton(
-        onPressed: () {
-          Get.back();
-          Get.back();
-        },
-        child: const Text('OK'),
-      ),
-    );
-  }
-
-  void addSuccessDialog() async {
-    await Get.defaultDialog(
-      title: 'Berhasil',
-      middleText: 'Product berhasil ditambahkan',
-      confirm: TextButton(
-        onPressed: () {
-          Get.back();
-          Get.back();
-        },
-        child: const Text('OK'),
-      ),
-    );
-  }
-
-  String getNumberAfterChar() {
-    RegExp regExp = RegExp(r'(\D+)(\d+)');
-    Match? match = regExp.firstMatch(lastCode.value.toUpperCase());
-
-    if (match != null) {
-      String charPart = match.group(1)!;
-      String numberPart = match.group(2)!;
-      int number = int.parse(numberPart);
-
-      number++;
-
-      return '$charPart$number';
-    } else {
-      return '';
-    }
-  }
-
-  void bindingEditData(Product? foundProduct) {
-    Product product = foundProduct ??
-        Product(
-          id: '',
-          productId: getNumberAfterChar(),
-          productName: '',
-          unit: '',
-          costPrice: 0,
-          sellPrice1: 0,
-          sellPrice2: 0,
-          sellPrice3: 0,
-          stock: 0,
-          sold: 0,
-        );
-
-    selectedSales.value = product.sales;
-    codeTextC.text = product.productId;
-    productNameTextC.text = product.productName;
-    unitTextC.text = product.unit;
-    salesTextC.text = product.sales?.name ?? '';
-    costPriceTextC.text = numberFormat.format(product.costPrice.value);
-    sellPriceTextC1.text = numberFormat.format(product.sellPrice1);
-    sellPriceTextC2.text = numberFormat.format(product.sellPrice2 ?? 0.0);
-    sellPriceTextC3.text = numberFormat.format(product.sellPrice3 ?? 0.0);
-    stockTextC.text = decimal.format(product.stock.value);
-    minStockTextC.text = decimal.format(product.stockMin.value);
-    soldTextC.text = product.sold == 0 ? '' : product.sold?.toString() ?? '';
-  }
-
+  //! handle save
   Future handleSave(Product? currentProduct) async {
     clickedField.assignAll({
       'code': true,
@@ -288,12 +258,10 @@ class AddProductController extends GetxController {
     });
 
     if (formkey.currentState!.validate()) {
-      Map<String, Map<String, dynamic>> productsMap = {};
-
       final newProduct = Product(
-        id: await productService.getId(),
         productId: codeTextC.text.toUpperCase(),
-        createdAt: Timestamp.now(),
+        createdAt: DateTime.now(),
+        storeId: sideMenuC.store.value!.id!,
         featured: false,
         productName: productNameTextC.text,
         unit: unitTextC.text,
@@ -319,53 +287,9 @@ class AddProductController extends GetxController {
         sold: soldTextC.text == '' ? 0 : int.parse(soldTextC.text),
       );
 
-      List existingProduct = checkexistingProduct(newProduct.productId);
-
-      if (currentProduct != null) {
-        if (existingProduct.isNotEmpty &&
-            newProduct.productId != currentProduct.productId) {
-          Get.defaultDialog(
-            title: 'Gagal',
-            middleText: 'Kode yang dimasukkan sudah ada',
-            confirm: TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          );
-        } else {
-          newProduct.id = currentProduct.id;
-          Get.defaultDialog(
-            title: 'Menyimpan Perubahan Barang...',
-            content: const CircularProgressIndicator(),
-            barrierDismissible: false,
-          );
-
-          await productService.updateProduct(newProduct, currentProduct);
-          if (newProduct.sales != null) {
-            await addSalses();
-          }
-          Get.back();
-          updateSuccessDialog();
-        }
-      } else {
-        if (existingProduct.isNotEmpty) {
-          Get.defaultDialog(
-            title: 'Gagal menambahkan barang',
-            middleText: 'Kode barang sudah ada.',
-            confirm: TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          );
-        } else {
-          productsMap[newProduct.id] = newProduct.toJson();
-          await productService.addProducts(productsMap);
-          if (newProduct.sales != null) {
-            await addSalses();
-          }
-          addSuccessDialog();
-        }
-      }
+      currentProduct == null
+          ? addProduct(newProduct)
+          : updateProduct(newProduct, currentProduct);
     }
   }
 }

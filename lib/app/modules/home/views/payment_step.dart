@@ -3,8 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/invoice_services.dart';
-import '../../../data/providers/product_services.dart';
 import '../../../widget/customer_input_field_controller.dart';
 import '../../../widget/customer_input_field_widget.dart';
 import '../../../widget/payment_card.dart';
@@ -17,20 +15,19 @@ void paymentStep(
   Invoice invoice,
   List<Product> updatedProducts,
 ) {
-  late ProductService productService = Get.find();
   late HomeController homeC = Get.find();
-  late InvoiceService invoiceServices = Get.find();
-  late CustomerInputFieldController customerInputFieldC = Get.find();
+  late CustomerInputFieldController customerInputFieldC =
+      Get.put(CustomerInputFieldController());
   late PaymentController paymentController = Get.put(PaymentController());
 
   customerInputFieldC.clear();
   paymentController.clear();
 
-  // void saveInvoice(Invoice invoice) async {
   Future process() async {
     await customerInputFieldC.addCustomer(invoice);
+    invoice.invoiceId = await homeC.generateInvoiceId(invoice.customer.value!);
+    // debugPrint(invoice.customer.value!.id!);
     await paymentController.addPayment(invoice);
-    Map<String, Map<String, dynamic>> invoicesMap = {};
 
     List<Product> updatedProductList = [];
     for (var stockP in updatedProducts) {
@@ -43,9 +40,6 @@ void paymentStep(
     }
 
     Invoice printInvoice = Invoice.fromJson(invoice.toJson());
-    String newInvioceId = await productService.getId();
-    invoice.id = newInvioceId;
-    invoicesMap[newInvioceId] = invoice.toJson();
 
     Get.defaultDialog(
       title: 'Menyimpan Invoice...',
@@ -53,10 +47,12 @@ void paymentStep(
       barrierDismissible: false,
     );
     try {
-      await invoiceServices.addInvoices(invoicesMap);
+      await Invoice.insert(invoice);
 
       if (updatedProducts.isNotEmpty) {
-        await productService.updateMultipleProducts(updatedProductList);
+        for (var updatedProduct in updatedProductList) {
+          await updatedProduct.update();
+        }
         updatedProducts.clear();
       }
       Get.back();
@@ -69,10 +65,6 @@ void paymentStep(
             Get.back();
             Get.back();
             homeC.lastInvoice.value = invoice;
-            // await Future.delayed(const Duration(milliseconds: 1000));
-            // if (context.mounted) {
-
-            // }
           },
           child: const Text('OK'),
         ),
@@ -83,8 +75,6 @@ void paymentStep(
         middleText: 'Cetak invoice?',
         confirm: TextButton(
           onPressed: () async {
-            debugPrint(printInvoice.purchaseList.value.items.length.toString());
-
             printInvoiceDialog(
               context,
               printInvoice,
@@ -103,45 +93,75 @@ void paymentStep(
         ),
       );
     } catch (e) {
-      // Get.back();
-      Get.defaultDialog(
+      await Get.defaultDialog(
         title: 'Gagal Menyimpan Invoice!',
         middleText: e.toString(),
-        // barrierDismissible: false,
       );
+      Get.back();
+      Get.back();
     }
   }
 
-  Future validate(String validateCode) async {
-    Get.defaultDialog(
-      title: 'Ups',
-      middleText: validateCode == 'debt'
-          ? 'Total tagihan belum terpenuhi. lanjutkan?'
-          : 'Data Customer tidak lengkap. lanjutkan?',
-      confirm: TextButton(
-        onPressed: () async {
-          await process();
-          Get.back();
-        },
-        child: const Text('Simpan'),
-      ),
-      cancel: TextButton(
-        onPressed: () {
-          Get.back();
-        },
-        child: Text(
-          'Batal',
-          style: TextStyle(color: Colors.black.withOpacity(0.5)),
+  bool validateCustomer = false;
+  bool validateTotal = false;
+  void saveInvoice() async {
+    if (customerInputFieldC.validateCustomer()) {
+      await Get.defaultDialog(
+        title: 'Ups',
+        middleText: 'Data Customer tidak lengkap. lanjutkan?',
+        confirm: TextButton(
+          onPressed: () async {
+            validateCustomer = true;
+            Get.back();
+          },
+          child: const Text('Simpan'),
         ),
-      ),
-    );
+        cancel: TextButton(
+          onPressed: () {
+            Get.back();
+            validateCustomer = false;
+          },
+          child: Text(
+            'Batal',
+            style: TextStyle(color: Colors.black.withOpacity(0.5)),
+          ),
+        ),
+      );
+    } else {
+      validateCustomer = true;
+    }
+    double pay = paymentController.paymentTextC.text == ''
+        ? 0
+        : double.parse(paymentController.paymentTextC.text.replaceAll('.', ''));
+    if (validateCustomer & (pay < invoice.remainingDebt)) {
+      await Get.defaultDialog(
+        title: 'Ups',
+        middleText: 'Total tagihan belum terpenuhi. lanjutkan?',
+        confirm: TextButton(
+          onPressed: () async {
+            validateTotal = true;
+            Get.back();
+          },
+          child: const Text('Simpan'),
+        ),
+        cancel: TextButton(
+          onPressed: () {
+            validateTotal = false;
+            Get.back();
+          },
+          child: Text(
+            'Batal',
+            style: TextStyle(color: Colors.black.withOpacity(0.5)),
+          ),
+        ),
+      );
+    } else {
+      validateTotal = true;
+    }
+    if (validateCustomer & validateTotal) {
+      process();
+    }
   }
-
-  void saveInvoice() {
-    customerInputFieldC.validateCustomer() ? validate('Customer') : process();
-    // debugPrint('wdwad');
-  }
-  // }
 
   Get.defaultDialog(
     title: 'Pembayaran',

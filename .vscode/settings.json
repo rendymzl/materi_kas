@@ -1,4 +1,10 @@
 {
-  "cmake.sourceDirectory": "D:/flutter-app/MateriKas/materi_kas/windows/flutter",
-  "dart.flutterSdkPath": ".fvm/versions/3.22.0"
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "cmake.sourceDirectory": "F:/project/materi_kas/windows",
+  "dart.flutterSdkPath": ".fvm/versions/3.22.0",
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": true
 }

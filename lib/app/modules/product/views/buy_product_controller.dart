@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -21,8 +20,10 @@ import '../../../data/providers/sales_invoice_services.dart';
 import '../../../widget/customer_input_field_controller.dart';
 import '../../../widget/date_picker_controller.dart';
 import '../../../widget/payment_controller.dart';
+import '../../../widget/side_menu_controller.dart';
 
 class BuyProductController extends GetxController {
+  late SideMenuController sideMenuC = Get.find();
   late ProductService productService = Get.find();
   late SalesCustomerServices salesCustomerSecvice = Get.find();
   late SalesInvoiceService salesInvoiceSecvice = Get.find();
@@ -65,7 +66,7 @@ class BuyProductController extends GetxController {
   }
 
   void filterProducts(String productName) {
-    productService.searchProducts(productName);
+    productService.search(productName);
     // if (productName.isEmpty) {
     //   // List<Product> productsList = [];
     //   foundProductsBySalesName.clear();
@@ -80,7 +81,7 @@ class BuyProductController extends GetxController {
   }
 
   void filterSales(String salesName) {
-    salesCustomerSecvice.searchCustomers(salesName);
+    salesCustomerSecvice.search(salesName);
   }
 
   void selectedSalesHandle(Sales sales) {
@@ -160,7 +161,7 @@ class BuyProductController extends GetxController {
   }
 
   void removeFromCart(CartItem cartItem) {
-    cart.value.removeItem(cartItem.product.id);
+    cart.value.removeItem(cartItem.product.id!);
     final existingProduct = updatedStockProducts
         .firstWhereOrNull((item) => item.id == cartItem.product.id);
 
@@ -249,7 +250,7 @@ class BuyProductController extends GetxController {
         middleText: 'Hapus barang ini?',
         confirm: TextButton(
           onPressed: () async {
-            await productService.deleteProduct(invoice.id!);
+            // await productService.deleteProduct(invoice.id!);
             Get.back();
           },
           child: const Text('OK'),
@@ -284,7 +285,7 @@ class BuyProductController extends GetxController {
     final existingupdatedProducts = updatedStockProducts
         .firstWhereOrNull((item) => item.id == newItem.product.id);
 
-    cart.value.updateQuantity(cartItem.product.id, qty);
+    cart.value.updateQuantity(cartItem.product.id!, qty);
 
     if (existingupdatedProducts != null) {
       existingupdatedProducts.stock = newItem.product.stock;
@@ -452,7 +453,7 @@ class BuyProductController extends GetxController {
       selectedTime.value.minute,
     );
 
-    Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
+    // Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
 
     if (selectedSales.value != null) {
       customer = Sales(
@@ -474,7 +475,8 @@ class BuyProductController extends GetxController {
 
     final invoice = SalesInvoice(
       invoiceId: nomorInvoice.value,
-      createdAt: timestampDateTime,
+      storeId: sideMenuC.store.value!.id,
+      createdAt: dateTime,
       sales: customer,
       purchaseList: cart.value,
       priceType: priceType.value,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 // import '../../../data/models/invoice_model.dart';
+import '../../../../main.dart';
 import '../../../data/models/sales_invoice_model.dart';
 // import '../../../widget/payment_controller.dart';
 import 'sales_payment_controller.dart';
@@ -48,6 +49,7 @@ class SalesPaymentCard extends StatelessWidget {
                             groupValue: controller.selectedPaymentMethod.value,
                             onChanged: (value) {
                               controller.setPaymentMethod(value!);
+                              controller.textFocusNode.requestFocus();
                             },
                           ),
                           const Text('Cash'),
@@ -69,6 +71,7 @@ class SalesPaymentCard extends StatelessWidget {
                             groupValue: controller.selectedPaymentMethod.value,
                             onChanged: (value) {
                               controller.setPaymentMethod(value!);
+                              controller.textFocusNode.requestFocus();
                             },
                           ),
                           const Text('Transfer'),
@@ -100,7 +103,7 @@ class SalesPaymentCard extends StatelessWidget {
                       children: [
                         Obx(
                           () => Text(
-                            'Rp${controller.currency.format(invoice.totalCost)}',
+                            'Rp${currency.format(invoice.totalCost)}',
                             style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
@@ -117,7 +120,7 @@ class SalesPaymentCard extends StatelessWidget {
               if (invoice.totalDiscount > 0 &&
                   invoice.totalCost == invoice.remainingDebt)
                 Text(
-                  'Rp${controller.currency.format(invoice.subtotalCost)}',
+                  'Rp${currency.format(invoice.subtotalCost)}',
                   style: context.textTheme.bodySmall!.copyWith(
                       fontStyle: FontStyle.italic,
                       decoration: TextDecoration.lineThrough),
@@ -138,6 +141,7 @@ class SalesPaymentCard extends StatelessWidget {
                     Expanded(
                       child: SizedBox(
                         child: TextField(
+                          focusNode: controller.textFocusNode,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -198,7 +202,7 @@ class SalesPaymentCard extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.only(right: 3),
                                 child: Text(
-                                  controller.currency.format(
+                                  currency.format(
                                       controller.moneyChange.value * -1),
                                   style: TextStyle(
                                     fontSize: 18,

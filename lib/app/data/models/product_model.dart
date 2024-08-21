@@ -1,12 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'sales_model.dart';
 
 class Product {
-  String id;
+  String? id;
+  String storeId;
   String productId;
-  Timestamp? createdAt;
+  DateTime? createdAt;
   bool? featured;
   String productName;
   String unit;
@@ -20,7 +23,8 @@ class Product {
   int? sold;
 
   Product({
-    required this.id,
+    this.id,
+    required this.storeId,
     required this.productId,
     this.createdAt,
     this.featured,
@@ -40,8 +44,11 @@ class Product {
 
   Product.fromJson(Map<String, dynamic> json)
       : id = json['id'],
+        storeId = json['store_id'],
         productId = json['product_id'],
-        createdAt = json['created_at'],
+        createdAt = json['created_at'] != null
+            ? DateTime.parse(json['created_at']).toLocal()
+            : null,
         featured = json['featured'],
         productName = json['product_name'],
         unit = json['unit'],
@@ -65,9 +72,10 @@ class Product {
         sold = json['sold'];
 
   Map<String, dynamic> toJson() => {
-        'id': id,
+        if (id != null) 'id': id,
+        'store_id': storeId,
         'product_id': productId,
-        'created_at': createdAt,
+        'created_at': createdAt?.toIso8601String(),
         'featured': featured,
         'product_name': productName,
         'unit': unit,
@@ -115,5 +123,84 @@ class Product {
     return stockMin.value % 1 == 0
         ? stockMin.value.toInt().toString()
         : stockMin.value.toString().replaceAll('.', ',');
+  }
+
+  // CRUD operations
+
+  // Insert (Create)
+  static Future<void> insert(Product product) async {
+    try {
+      await Supabase.instance.client.from('products').insert(product.toJson());
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  static Future<void> insertMapList(List<Map<String, dynamic>> mapList) async {
+    try {
+      await Supabase.instance.client.from('products').insert(mapList);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Update
+  Future<void> update() async {
+    try {
+      await Supabase.instance.client
+          .from('products')
+          .update(toJson())
+          .eq('id', id!);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  static Future<void> updateList(List<Product> updatedProductList) async {
+    try {
+      for (var update in updatedProductList) {
+        debugPrint('Stok ${update.toJson()}');
+        // var id = update['id']!;
+        await Supabase.instance.client
+            .from('products')
+            .update(update.toJson())
+            .eq('id', update.id!);
+      }
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Delete
+  Future<void> delete() async {
+    try {
+      await Supabase.instance.client.from('products').delete().eq('id', id!);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Fetch all products by storeId
+  static Future<List<Product>> getAllByStoreId(String storeId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('products')
+          .select()
+          .eq('store_id', storeId);
+
+      return (response as List).map((json) => Product.fromJson(json)).toList();
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+      return [];
+    }
+  }
+
+  // Real-time subscription to changes in the products table
+  static Future<Stream<List<Product>>> subscribe(String storeId) async {
+    return Supabase.instance.client
+        .from('products')
+        .stream(primaryKey: ['id'])
+        .eq('store_id', storeId)
+        .map((data) => data.map((json) => Product.fromJson(json)).toList());
   }
 }

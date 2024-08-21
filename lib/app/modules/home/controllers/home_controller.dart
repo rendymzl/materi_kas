@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:materi_kas/app/data/providers/invoice_services.dart';
 import 'package:materi_kas/app/modules/login/controllers/login_controller.dart';
 
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -14,22 +13,22 @@ import '../../../data/models/cart_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/customer_services.dart';
-import '../../../data/providers/invoice_services.dart';
 import '../../../data/providers/product_services.dart';
-import '../../../data/providers/sales_customer_services.dart';
-import '../../../data/providers/sales_invoice_services.dart';
-import '../../../data/providers/stores_services.dart';
 import '../../../widget/customer_input_field_controller.dart';
 import '../../../widget/date_picker_controller.dart';
+import '../../../widget/side_menu_controller.dart';
+// import '../../init/controllers/init_controller.dart';
 
 class HomeController extends GetxController {
-  late StoreServices storeService = Get.find();
+  late SideMenuController sideMenuC = Get.find();
   late ProductService productService = Get.find();
   late InvoiceService invoiceService = Get.find();
-  late SalesInvoiceService salesInvoiceService = Get.find();
-  late CustomerServices customerServices = Get.find();
-  late SalesCustomerServices salesCustomerServices = Get.find();
+  // late ProductController productC = Get.put(ProductController());
+  // late StoreServices storeService = Get.find();
+  // late InvoiceService invoiceService = Get.find();
+  // late SalesInvoiceService salesInvoiceService = Get.find();
+  // late CustomerServices customerServices = Get.find();
+  // late SalesCustomerServices salesCustomerServices = Get.find();
 
   late CustomerInputFieldController customerInputFieldC =
       Get.put(CustomerInputFieldController());
@@ -51,24 +50,17 @@ class HomeController extends GetxController {
 
   @override
   void onInit() {
+    debugPrint(sideMenuC.account.value!.name);
     super.onInit();
-    // Get.lazyPut(() => DatePickerController());
-    // Get.lazyPut(() => CustomerInputFieldController());
     filterProducts('');
   }
 
-  void fetchAll() async {
-    debugPrint('fetchings');
-    await loginC.fetchData();
-  }
-
   void filterProducts(String productName) {
-    productService.searchProducts(productName);
+    productService.search(productName);
   }
 
   late ScrollController scrollController = ScrollController();
 
-// final addToCartCount = 0.obs;
   void addToCart(Product product) async {
     CartItem newItemToCart = CartItem(product: product, quantity: 1);
     cart.value.addItem(newItemToCart);
@@ -101,11 +93,9 @@ class HomeController extends GetxController {
   }
 
   void removeFromCart(CartItem cartItem) {
-    cart.value.removeItem(cartItem.product.id);
+    cart.value.removeItem(cartItem.product.id!);
     final existingProduct = updatedStockProducts
         .firstWhereOrNull((item) => item.id == cartItem.product.id);
-
-    // cartItem.product.stock = cartItem.product.stock + cartItem.quantity.value;
 
     if (existingProduct != null) {
       existingProduct.stock.value = 0;
@@ -183,23 +173,23 @@ class HomeController extends GetxController {
   }
 
   //! delete
-  destroyHandle(Invoice invoice) async {
-    Get.defaultDialog(
-      title: 'Error',
-      middleText: 'Hapus barang ini?',
-      confirm: TextButton(
-        onPressed: () async {
-          await productService.deleteProduct(invoice.id!);
-          Get.back();
-        },
-        child: const Text('OK'),
-      ),
-      cancel: TextButton(
-        onPressed: () => Get.back(),
-        child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
-      ),
-    );
-  }
+  // destroyHandle(Invoice invoice) async {
+  //   Get.defaultDialog(
+  //     title: 'Error',
+  //     middleText: 'Hapus barang ini?',
+  //     confirm: TextButton(
+  //       onPressed: () async {
+  //         await productService.deleteProduct(invoice.id!);
+  //         Get.back();
+  //       },
+  //       child: const Text('OK'),
+  //     ),
+  //     cancel: TextButton(
+  //       onPressed: () => Get.back(),
+  //       child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+  //     ),
+  //   );
+  // }
 
   //! MoneyHandle
   //* quantity
@@ -336,9 +326,19 @@ class HomeController extends GetxController {
   //   return serialPart;
   // }
 
-  Future<String> generateInvoice(Customer? customer) async {
-    String clientCode =
-        (customer != null) ? customer.customerId!.toUpperCase() : 'G';
+  Future<String> generateInvoiceId(Customer? customer) async {
+    String clientCode = customer != null
+        ? customer.customerId != null
+            ? customer.customerId!.toUpperCase()
+            : 'G'
+        : 'G';
+
+    //         String clientCode = '';
+    // if (customer != null) {
+    //   clientCode = customer.id!.toUpperCase();
+    // } else {
+    //   clientCode = 'G';
+    // }
 
     DateTime date = selectedDate.value;
     String year = date.year.toString().substring(2);
@@ -348,7 +348,7 @@ class HomeController extends GetxController {
     String dateCode = '$clientCode$month$day$year';
 
     List<Invoice> result = invoices
-        .where((element) => element.invoiceId!.contains(dateCode))
+        .where((element) => element.invoiceId!.contains('$month$day$year'))
         .toList();
 
     int lastSerialNumber = result.length;
@@ -363,6 +363,7 @@ class HomeController extends GetxController {
 
   Future<Invoice> createInvoice() async {
     late final Customer customer;
+    selectedTime.value = TimeOfDay.now();
     DateTime dateTime = DateTime(
       datePickerC.selectedDate.value.year,
       datePickerC.selectedDate.value.month,
@@ -371,8 +372,6 @@ class HomeController extends GetxController {
       selectedTime.value.minute,
     );
 
-    Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
-
     if (selectedCustomer.value != null) {
       customer = Customer(
         id: selectedCustomer.value!.id,
@@ -380,21 +379,20 @@ class HomeController extends GetxController {
         name: selectedCustomer.value!.name,
         phone: selectedCustomer.value!.phone,
         address: selectedCustomer.value!.address,
-        // uuid: selectedCustomer.value!.uuid,
       );
     } else {
       customer = Customer(
         name: customerInputFieldC.customerNameController.text,
         phone: customerInputFieldC.customerPhoneController.text,
         address: customerInputFieldC.customerAddressController.text,
-        // uuid: authService.uid.value,
       );
     }
 
     final invoice = Invoice(
-      invoiceId: await generateInvoice(selectedCustomer.value),
-      account: storeService.account.value,
-      createdAt: timestampDateTime,
+      invoiceId: await generateInvoiceId(selectedCustomer.value),
+      storeId: sideMenuC.store.value!.id,
+      account: sideMenuC.account.value!,
+      createdAt: dateTime,
       customer: customer,
       purchaseList: cart.value,
       priceType: priceType.value,
@@ -408,13 +406,9 @@ class HomeController extends GetxController {
 
   void resetData() {
     cart.value.items.clear();
-    // payTextC.text = '';
     moneyChange.value = 0;
     totalBill.value = 0;
     totalDiscount.value = 0;
-    // cash.value = 0;
-    // transfer.value = 0;
-    // totalPay.value = 0;
 
     customerInputFieldC.clear();
 
@@ -424,101 +418,4 @@ class HomeController extends GetxController {
     selectedDate.value = DateTime.now();
     selectedTime.value = TimeOfDay.now();
   }
-
-  // Future<void> saveInvoice(Invoice invoice) async {
-  //   Future success() async {
-  //     Map<String, Map<String, dynamic>> invoicesMap = {};
-  //     String newInvioceId = await productService.getId();
-  //     invoice.id = newInvioceId;
-  //     invoicesMap[newInvioceId] = invoice.toJson();
-  //     Get.defaultDialog(
-  //       title: 'Menyimpan Invoice...',
-  //       content: const CircularProgressIndicator(),
-  //       barrierDismissible: false,
-  //     );
-  //     try {
-  //       await invoiceServices.addInvoices(invoicesMap);
-  //       Get.back();
-  //       return Get.defaultDialog(
-  //         title: 'Berhasil',
-  //         middleText: 'Invoice berhasil disimpan.',
-  //         confirm: TextButton(
-  //           onPressed: () {
-  //             cart.value.items.clear();
-  //             // payTextC.text = '';
-  //             moneyChange.value = 0;
-  //             totalBill.value = 0;
-  //             totalDiscount.value = 0;
-  //             // cash.value = 0;
-  //             // transfer.value = 0;
-  //             // totalPay.value = 0;
-
-  //             customerInputFieldC.resetCustomerField();
-
-  //             displayDate.value = DateTime.now().toString();
-  //             displayTime.value = TimeOfDay.now().toString();
-
-  //             selectedDate.value = DateTime.now();
-  //             selectedTime.value = TimeOfDay.now();
-  //             Get.back();
-  //             Get.back();
-  //           },
-  //           child: const Text('OK'),
-  //         ),
-  //       );
-  //     } catch (e) {
-  //       Get.back();
-  //       Get.defaultDialog(
-  //         title: 'Gagal Menyimpan Invoice!',
-  //         middleText: e.toString(),
-  //         barrierDismissible: false,
-  //       );
-  //     }
-  //   }
-
-  //   Future validate(String validateCode) async {
-  //     Get.defaultDialog(
-  //       title: 'Ups',
-  //       middleText: validateCode == 'debt'
-  //           ? 'Total tagihan belum terpenuhi. lanjutkan?'
-  //           : 'Data Customer tidak lengkap. lanjutkan?',
-  //       confirm: TextButton(
-  //         onPressed: () async {
-  //           await success();
-  //           Get.back();
-  //         },
-  //         child: const Text('Simpan'),
-  //       ),
-  //       cancel: TextButton(
-  //         onPressed: () {
-  //           Get.back();
-  //         },
-  //         child: Text(
-  //           'Batal',
-  //           style: TextStyle(color: Colors.black.withOpacity(0.5)),
-  //         ),
-  //       ),
-  //     );
-  //   }
-
-  //   try {
-  //     debugPrint('clicked');
-  //     (customerInputFieldC.customerNameController.text == '' ||
-  //             customerInputFieldC.customerPhoneController.text == '' ||
-  //             customerInputFieldC.customerAddressController.text == '')
-  //         ? validate('Customer')
-  //         : moneyChange.value < 0
-  //             ? validate('debt')
-  //             : success();
-  //   } on PostgrestException catch (e) {
-  //     Get.defaultDialog(
-  //       title: 'Error',
-  //       middleText: e.message,
-  //       confirm: TextButton(
-  //         onPressed: () => Get.back(),
-  //         child: const Text('OK'),
-  //       ),
-  //     );
-  //   }
-  // }
 }

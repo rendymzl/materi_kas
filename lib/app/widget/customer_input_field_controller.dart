@@ -3,11 +3,11 @@ import 'package:get/get.dart';
 
 import '../data/models/customer_model.dart';
 import '../data/models/invoice_model.dart';
-import '../data/providers/auth_services.dart';
+// import '../data/providers/auth_services.dart';
 import '../data/providers/customer_services.dart';
 
 class CustomerInputFieldController extends GetxController {
-  final AuthService authService = Get.find();
+  // final AuthService authService = Get.find();
   late CustomerServices customerServices = Get.find();
   late final customers = customerServices.customers;
 

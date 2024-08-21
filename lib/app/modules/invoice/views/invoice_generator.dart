@@ -8,7 +8,8 @@ import 'package:intl/intl.dart';
 import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/providers/stores_services.dart';
+// import '../../../data/providers/stores_services.dart';
+import '../../../widget/side_menu_controller.dart';
 import 'generator.dart';
 import 'invoice_print_controller.dart';
 import 'print_column_model.dart';
@@ -19,22 +20,23 @@ var divider = Uint8List.fromList(
 var space = Uint8List.fromList([27, 74, 24]);
 
 Future<List<int>> generateInvoiceBytes(Invoice invoice) async {
-  StoreServices storeServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
   final PrinterController printerController = Get.put(PrinterController());
-  late final account = storeServices.account;
+  late final account = sideMenuC.account.value;
+  late final store = sideMenuC.store.value;
   Generator generator = Generator();
   List<int> bytes = [];
 
   //!widht 80
   bytes += generator.row([
     PrintColumn(
-        text: account.value.stores.value!.name.value.toUpperCase(),
+        text: store!.name.value.toUpperCase(),
         width: 27,
         bold: true,
         size: 'large'),
     PrintColumn(
         text: '${DateFormat('dd-MM-y', 'id').format(
-          invoice.createdAt.value!.toDate(),
+          invoice.createdAt.value!,
         )} ${invoice.invoiceId!}',
         width: 26,
         // bold: false,
@@ -66,7 +68,7 @@ Future<List<int>> generateInvoiceBytes(Invoice invoice) async {
 
   bytes += generator.row([
     PrintColumn(
-      text: account.value.stores.value!.address.value,
+      text: store.address.value,
       width: 35,
     ),
     PrintColumn(
@@ -88,8 +90,8 @@ Future<List<int>> generateInvoiceBytes(Invoice invoice) async {
         width: 30),
   ]);
 
-  String phone = invoice.account.value.stores.value!.phone.value;
-  String telp = invoice.account.value.stores.value!.telp.value;
+  String phone = store.phone.value;
+  String telp = store.telp.value;
   String slash = (phone.isNotEmpty && telp.isNotEmpty) ? '/' : '';
   bytes += generator.row([
     PrintColumn(
@@ -117,7 +119,7 @@ Future<List<int>> generateInvoiceBytes(Invoice invoice) async {
 
   bytes += generator.row([
     PrintColumn(
-      text: 'Kasir: ${account.value.name}',
+      text: 'Kasir: ${account!.name}',
       width: 35,
     ),
   ]);

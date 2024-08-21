@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:material_symbols_icons/symbols.dart';
 // import 'package:path/path.dart';
 
 import '../../../widget/side_menu_widget.dart';
@@ -30,7 +31,7 @@ class ProfileView extends GetView<ProfileController> {
                   flex: 4,
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(8.0),
                       child: Obx(
                         () => Column(
                           children: [
@@ -42,11 +43,30 @@ class ProfileView extends GetView<ProfileController> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
+                                      const Text('Data Toko'),
+                                      IconButton(
+                                        onPressed: () {},
+                                        icon: Icon(
+                                          Symbols.edit,
+                                          // size: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                ListTile(
+                                  title: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
                                       const Text('Nama Toko'),
                                       SizedBox(
                                         width: 200,
                                         child: Text(
-                                          controller.stores.value!.name.value,
+                                          controller.stores!.name.value,
                                         ),
                                       ),
                                     ],
@@ -63,8 +83,7 @@ class ProfileView extends GetView<ProfileController> {
                                       SizedBox(
                                         width: 200,
                                         child: Text(
-                                          controller
-                                              .stores.value!.address.value,
+                                          controller.stores!.address.value,
                                         ),
                                       ),
                                     ],
@@ -79,7 +98,7 @@ class ProfileView extends GetView<ProfileController> {
                                       SizedBox(
                                         width: 200,
                                         child: Text(
-                                          controller.stores.value!.phone.value,
+                                          controller.stores!.phone.value,
                                         ),
                                       ),
                                     ],
@@ -94,7 +113,7 @@ class ProfileView extends GetView<ProfileController> {
                                       SizedBox(
                                         width: 200,
                                         child: Text(
-                                          controller.stores.value!.telp.value,
+                                          controller.stores!.telp.value,
                                         ),
                                       ),
                                     ],
@@ -132,84 +151,90 @@ class ProfileView extends GetView<ProfileController> {
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: controller.formCashierKey,
-                        child: Column(
-                          children: [
-                            Text('Tambah Kasir',
-                                style: context.textTheme.titleLarge),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(8),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Form(
+                            key: controller.formCashierKey,
+                            child: Column(
+                              children: [
+                                Text('Tambah Kasir',
+                                    style: context.textTheme.titleLarge),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: const BorderRadius.all(
+                                      Radius.circular(8),
+                                    ),
+                                  ),
+                                  height: 50,
+                                  child: TextFormField(
+                                    controller: controller.nameController,
+                                    decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        labelText: 'Nama Kasir'),
+                                    validator: (value) =>
+                                        controller.validateCashierName(value),
+                                  ),
                                 ),
-                              ),
-                              height: 50,
-                              child: TextFormField(
-                                controller: controller.nameController,
-                                decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: 'Nama Kasir'),
-                                validator: (value) =>
-                                    controller.validateCashierName(value),
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(8),
+                                const SizedBox(height: 16.0),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: const BorderRadius.all(
+                                      Radius.circular(8),
+                                    ),
+                                  ),
+                                  height: 50,
+                                  child: TextFormField(
+                                    controller: controller.emailController,
+                                    decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        labelText: 'Email Kasir'),
+                                    validator: (value) =>
+                                        controller.validateEmail(value),
+                                  ),
                                 ),
-                              ),
-                              height: 50,
-                              child: TextFormField(
-                                controller: controller.emailController,
-                                decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: 'Email Kasir'),
-                                validator: (value) =>
-                                    controller.validateEmail(value),
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(8),
+                                const SizedBox(height: 16.0),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: const BorderRadius.all(
+                                      Radius.circular(8),
+                                    ),
+                                  ),
+                                  height: 50,
+                                  child: TextFormField(
+                                    controller: controller.passwordController,
+                                    decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        labelText: 'Password'),
+                                    obscureText: true,
+                                    validator: (value) =>
+                                        controller.validatePassword(value),
+                                  ),
                                 ),
-                              ),
-                              height: 50,
-                              child: TextFormField(
-                                controller: controller.passwordController,
-                                decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: 'Password'),
-                                obscureText: true,
-                                validator: (value) =>
-                                    controller.validatePassword(value),
-                              ),
+                                const SizedBox(height: 16.0),
+
+                                // ElevatedButton(
+                                //   onPressed: () => controller.registerWorker(),
+                                //   child: const Text('tes'),
+                                // ),
+                              ],
                             ),
-                            const SizedBox(height: 16.0),
-                            ElevatedButton(
-                              onPressed: () => controller.registerWorker(),
-                              child: const Text('Tambah Kasir'),
-                            ),
-                            // ElevatedButton(
-                            //   onPressed: () => controller.registerWorker(),
-                            //   child: const Text('tes'),
-                            // ),
-                          ],
-                        ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => controller.registerWorker(),
+                            child: const Text('Tambah Kasir'),
+                          ),
+                        ],
                       ),
                     ),
                   ),

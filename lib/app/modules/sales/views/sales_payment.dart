@@ -4,11 +4,11 @@ import 'package:get/get.dart';
 // import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/sales_invoice_model.dart';
-import '../../../data/providers/product_services.dart';
-import '../../../data/providers/sales_invoice_services.dart';
+// import '../../../data/providers/product_services.dart';
+// import '../../../data/providers/sales_invoice_services.dart';
 // import '../../../widget/payment_card.dart';
 // import '../../../widget/payment_controller.dart';
-import '../../sales/controllers/sales_controller.dart';
+// import '../../sales/controllers/sales_controller.dart';
 import 'sales_payment_card.dart';
 import 'sales_payment_controller.dart';
 
@@ -17,10 +17,10 @@ void salesPaymentDialog(
   SalesInvoice invoice,
   List<Product> updatedProducts,
 ) {
-  late ProductService productService = Get.find();
-  late SalesController salesC = Get.find();
-  late SalesInvoiceService salesInvoiceServices =
-      Get.put(SalesInvoiceService());
+  // late ProductService productService = Get.find();
+  // late SalesController salesC = Get.find();
+  // late SalesInvoiceService salesInvoiceServices =
+  //     Get.put(SalesInvoiceService());
   final SalesPaymentController paymentController =
       Get.put(SalesPaymentController());
 
@@ -31,31 +31,37 @@ void salesPaymentDialog(
   // void saveInvoice(Invoice invoice) async {
   Future process() async {
     await paymentController.addPayment(invoice);
-    Map<String, Map<String, dynamic>> invoicesMap = {};
+    // Map<String, Map<String, dynamic>> invoicesMap = {};
 
     List<Product> updatedProductList = [];
     for (var stockP in updatedProducts) {
       final invProduct = invoice.purchaseList.value.items
           .firstWhereOrNull((inv) => inv.product.id == stockP.id);
-      // debugPrint(invProduct.toString());
+
       if (invProduct != null) {
         invProduct.product.updateStock(stockP.stock.value, null);
         updatedProductList.add(invProduct.product);
+        // updatedProductList.add({'stock': invProduct.product.stock.value, 'id': invProduct.product.id});
+        // debugPrint('Stok ${invProduct.product.stock.value}');
         // debugPrint(invProduct.toString());
       }
     }
-    String newInvioceId = await productService.getId();
-    invoice.id = newInvioceId;
-    invoicesMap[newInvioceId] = invoice.toJson();
+    // String newInvioceId = await productService.getId();
+    // invoice.id = newInvioceId;
+    // invoicesMap[newInvioceId] = invoice.toJson();
+    debugPrint(updatedProductList.toString());
     Get.defaultDialog(
       title: 'Menyimpan Invoice...',
       content: const CircularProgressIndicator(),
       barrierDismissible: false,
     );
     try {
-      await salesInvoiceServices.addInvoices(invoicesMap);
+      await SalesInvoice.insert(invoice);
+      // await salesInvoiceServices.addInvoices(invoicesMap);
       if (updatedProducts.isNotEmpty) {
-        await productService.updateMultipleProducts(updatedProductList);
+        await Product.updateList(updatedProductList);
+        // await Product.
+        // await productService.updateMultipleProducts(updatedProductList);
         updatedProducts.clear();
       }
       Get.back();

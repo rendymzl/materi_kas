@@ -1,97 +1,32 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
+import '../../widget/side_menu_controller.dart';
 import '../models/invoice_model.dart';
-// import 'auth_services.dart';
-import 'stores_services.dart';
 
 class InvoiceService extends GetxController {
-  final StoreServices storesService = Get.find();
-  final CollectionReference _invoicesCollection =
-      FirebaseFirestore.instance.collection('invoices');
+  late SideMenuController sideMenuC = Get.find();
 
   var invoices = <Invoice>[].obs;
   var foundInvoices = <Invoice>[].obs;
 
-  Future<void> fetchInvoices() async {
-    try {
-      DocumentSnapshot docSnapshot = await _invoicesCollection
-          .doc(storesService.account.value.ownerUid)
-          .get();
-      if (docSnapshot.exists) {
-        var invoiceData = docSnapshot.data() as Map<String, dynamic>;
-        invoices.value = invoiceData.values
-            .map((invoiceJson) => Invoice.fromJson(invoiceJson))
-            .toList();
-        searchInvoicesByName('');
-      } else {
-        invoices.value = [];
-        foundInvoices.value = [];
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  Future<String> getId() async {
-    return _invoicesCollection.doc().id;
-  }
-
-  Future<void> addInvoices(
-      Map<String, Map<String, dynamic>> invoicesMap) async {
-    try {
-      DocumentReference docRef =
-          _invoicesCollection.doc(storesService.account.value.ownerUid);
-      debugPrint('sebelum add');
-      debugPrint(invoicesMap.toString());
-      await docRef.set(invoicesMap, SetOptions(merge: true));
-      debugPrint('sesudah add');
-      await fetchInvoices();
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  Future<void> updateInvoice(Invoice newInvoice) async {
-    if (newInvoice.id == null) {
-      debugPrint('Invoice ID is null');
-      return;
-    }
-
-    try {
-      await _invoicesCollection
-          .doc(storesService.account.value.ownerUid)
-          .update({newInvoice.id!: newInvoice.toJson()});
-      await fetchInvoices();
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  Future<void> deleteInvoice(String invoiceId) async {
-    try {
-      await _invoicesCollection
-          .doc(storesService.account.value.ownerUid)
-          .update({invoiceId: FieldValue.delete()});
-      invoices.removeWhere((invoice) => invoice.id == invoiceId);
-      foundInvoices.removeWhere((invoice) => invoice.id == invoiceId);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+  Future<void> subscribe() async {
+    final subs = await Invoice.subscribe(sideMenuC.store.value!.id!);
+    subs.listen((updatedInvoices) {
+      invoices.assignAll(updatedInvoices);
+      searchInvoicesByName('');
+    });
   }
 
   void searchInvoicesByName(String invoiceName) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (invoiceName == '') {
-        Timestamp sevenDaysAgo = Timestamp.fromDate(
-            DateTime.now().subtract(const Duration(days: 7)));
+        DateTime sevenDaysAgo =
+            DateTime.now().subtract(const Duration(days: 7));
 
         List<Invoice> subList = invoices.where((invoice) {
-          return invoice.createdAt.value!
-              .toDate()
-              .isAfter(sevenDaysAgo.toDate());
+          return invoice.createdAt.value!.isAfter(sevenDaysAgo);
         }).toList();
         List<Invoice> sortInvoice = sortByDate(subList);
         foundInvoices.clear();
@@ -99,8 +34,11 @@ class InvoiceService extends GetxController {
       } else {
         List<Invoice> sortList = invoices.where((invoice) {
           return invoice.invoiceId!
-              .toLowerCase()
-              .contains(invoiceName.toLowerCase());
+                  .toLowerCase()
+                  .contains(invoiceName.toLowerCase()) ||
+              invoice.customer.value!.name!
+                  .toLowerCase()
+                  .contains(invoiceName.toLowerCase());
         }).toList();
         List<Invoice> sortInvoice = sortByDate(sortList);
         foundInvoices.clear();
@@ -114,7 +52,7 @@ class InvoiceService extends GetxController {
       foundInvoices.clear();
       foundInvoices.value = invoices.where((invoice) {
         if (invoice.createdAt.value != null) {
-          DateTime invoiceDate = invoice.createdAt.value!.toDate();
+          DateTime invoiceDate = invoice.createdAt.value!;
           return invoiceDate.isAfter(invoiceCreatedAt.startDate!) &&
               invoiceDate.isBefore(invoiceCreatedAt.endDate!);
         }

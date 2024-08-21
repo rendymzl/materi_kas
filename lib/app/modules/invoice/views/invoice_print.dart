@@ -12,10 +12,14 @@ import 'invoice_print_controller.dart';
 void printInvoiceDialog(BuildContext context, Invoice invoice) {
   final PrinterController printerController = Get.put(PrinterController());
   printerController.connected.value = false;
-  List<CartItem> purchase = printerController.filterPurchase(invoice);
+  // List<CartItem> purchase = printerController.filterPurchase(invoice);
   List<CartItem> returned = printerController.filterReturn(invoice);
-
-  printerController.selectedDeviceIndex.value = -1;
+  if (invoice.returnList.value != null) {
+    //! RETURN LIST
+    returned.addAll(invoice.returnList.value!.items);
+  }
+  // printerController.selectedDeviceIndex.value = -1;
+  printerController.setDefaultPrinter();
   Get.defaultDialog(
     title: 'Print Invoice',
     content: Builder(builder: (context) {
@@ -34,16 +38,29 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Pilih Printer',
-                          style: context.textTheme.titleLarge,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Pilih Printer',
+                              style: context.textTheme.titleLarge,
+                            ),
+                            IconButton(
+                              onPressed: () =>
+                                  printerController.scan(PrinterType.usb),
+                              icon: const Icon(
+                                Symbols.refresh,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
                         ),
+
                         const SizedBox(height: 12),
                         Obx(
                           () {
-                            String promo = printerController
-                                    .account.value.stores.value!.promo.value ??
-                                '';
+                            String promo =
+                                printerController.store!.promo.value ?? '';
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               printerController.textPromo.text = promo;
                             });
@@ -81,21 +98,21 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                             );
                           },
                         ),
-                        ElevatedButton(
-                          onPressed: () =>
-                              printerController.scan(PrinterType.usb),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Symbols.refresh,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 12),
-                              Text('Perbarui daftar printer'),
-                            ],
-                          ),
-                        ),
+                        // ElevatedButton(
+                        //   onPressed: () =>
+                        //       printerController.scan(PrinterType.usb),
+                        //   child: const Row(
+                        //     mainAxisAlignment: MainAxisAlignment.center,
+                        //     children: [
+                        //       Icon(
+                        //         Symbols.refresh,
+                        //         color: Colors.white,
+                        //       ),
+                        //       SizedBox(width: 12),
+                        //       Text('Perbarui daftar printer'),
+                        //     ],
+                        //   ),
+                        // ),
                         Divider(color: Colors.grey[200]),
                         Row(
                           children: [
@@ -129,19 +146,6 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                 child: const Text('Simpan')),
                           ],
                         ),
-                        // Row(
-                        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        //   children: [
-                        //     IconButton(
-                        //       onPressed: () =>
-                        //           printerController.scan(PrinterType.usb),
-                        //       icon: const Icon(
-                        //         Symbols.refresh,
-                        //         color: Colors.red,
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
                       ],
                     ),
                   ),
@@ -170,7 +174,8 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          buildHeader(invoice),
+                                          buildHeader(
+                                              invoice, printerController),
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -180,8 +185,7 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                               buildText(DateFormat(
                                                       'dd-MM-y, HH:mm', 'id')
                                                   .format(
-                                                invoice.createdAt.value!
-                                                    .toDate(),
+                                                invoice.createdAt.value!,
                                               )),
                                             ],
                                           ),
@@ -203,7 +207,11 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                           buildText(
                                               'Alamat: ${invoice.customer.value!.address}'),
                                           const SizedBox(height: 10),
+                                          if (invoice.isReturn)
+                                            buildText('-- Pesanan Awal --',
+                                                bold: true),
                                           const Divider(thickness: 1),
+
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -224,9 +232,11 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                           const Divider(thickness: 1),
                                           ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: purchase.length,
+                                            itemCount: invoice.purchaseList
+                                                .value.items.length,
                                             itemBuilder: (context, index) {
-                                              var item = purchase[index];
+                                              var item = invoice.purchaseList
+                                                  .value.items[index];
                                               var price = currency.format(
                                                   item.product.getPrice(
                                                       invoice.priceType.value));
@@ -235,52 +245,52 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                               // var discount = isDiscount
                                               //     ? '(-${currency.format(item.individualDiscount.value)})'
                                               //     : '';
-                                              return item.quantity.value > 0
-                                                  ? Column(
-                                                      children: [
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Row(
-                                                              children: [
-                                                                SizedBox(
-                                                                    width: 35,
-                                                                    child: buildText(
-                                                                        '${index + 1}')),
-                                                                buildText(
-                                                                    '${item.product.productName},'),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Row(
-                                                              children: [
-                                                                SizedBox(
-                                                                    width: 35,
-                                                                    child:
-                                                                        buildText(
-                                                                            '')),
-                                                                buildText(
-                                                                    '$price x ${decimal.format(item.quantity.value)} ${item.product.unit}'),
-                                                              ],
-                                                            ),
-                                                            buildText(currency.format(
-                                                                item.getSubtotal(
-                                                                    invoice
-                                                                        .priceType
-                                                                        .value))),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    )
-                                                  : const SizedBox();
+                                              return
+                                                  // item.quantity.value > 0
+                                                  //     ?
+                                                  Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width: 35,
+                                                              child: buildText(
+                                                                  '${index + 1}')),
+                                                          buildText(
+                                                              '${item.product.productName},'),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width: 35,
+                                                              child: buildText(
+                                                                  '')),
+                                                          buildText(
+                                                              '$price x ${decimal.format(item.totalQuantity)} ${item.product.unit}'),
+                                                        ],
+                                                      ),
+                                                      buildText(currency.format(
+                                                          item.getSubTotalPurchase(
+                                                              invoice.priceType
+                                                                  .value))),
+                                                    ],
+                                                  ),
+                                                ],
+                                              );
+                                              // : const SizedBox();
                                             },
                                           ),
                                           const Divider(thickness: 1),
@@ -289,8 +299,8 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               buildText('Subtotal:'),
-                                              buildText(currency
-                                                  .format(invoice.subtotal)),
+                                              buildText(currency.format(
+                                                  invoice.subTotalPurchase)),
                                             ],
                                           ),
                                           Row(
@@ -321,23 +331,33 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                             ),
                                           Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                                MainAxisAlignment.end,
                                             children: [
-                                              buildText('Total belanja:',
-                                                  bold: true),
-                                              buildText(
-                                                  currency
-                                                      .format(invoice.total),
+                                              buildText('----------',
                                                   bold: true),
                                             ],
                                           ),
-                                          const SizedBox(height: 20),
-                                          if (invoice.totalReturn > 0)
-                                            buildText('Barang yang direturn',
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              buildText('Total tagihan:',
+                                                  bold: true),
+                                              buildText(
+                                                  currency.format(
+                                                      invoice.totalPurchase),
+                                                  bold: true),
+                                            ],
+                                          ),
+                                          if (invoice.isReturn)
+                                            const SizedBox(height: 20),
+                                          if (invoice.isReturn)
+                                            buildText(
+                                                '-- Barang yang direturn --',
                                                 bold: true),
-                                          if (invoice.totalReturn > 0)
+                                          if (invoice.isReturn)
                                             const Divider(thickness: 1),
-                                          if (invoice.totalReturn > 0)
+                                          if (invoice.isReturn)
                                             ListView.builder(
                                               shrinkWrap: true,
                                               itemCount: returned.length,
@@ -391,22 +411,23 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                                     : const SizedBox();
                                               },
                                             ),
-                                          if (invoice.totalReturn > 0)
+                                          if (invoice.isReturn)
                                             const Divider(thickness: 1),
-                                          if (invoice.totalReturn > 0)
+                                          if (invoice.isReturn)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                buildText('Total return:'),
+                                                buildText('Subtotal return:'),
                                                 buildText(invoice.totalReturn >
                                                         0
-                                                    ? '-${currency.format((invoice.subtotalReturn))}'
+                                                    ? '-${currency.format((invoice.totalReturn + invoice.returnFee.value))}'
                                                     : '0'),
                                               ],
                                             ),
-                                          if (invoice.totalReturn > 0)
+
+                                          if (invoice.isReturn)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
@@ -417,30 +438,73 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                                     invoice.returnFee.value)),
                                               ],
                                             ),
-                                          if (invoice.totalReturn > 0)
-                                            const SizedBox(height: 10),
-                                          if (invoice.totalReturn > 0)
+                                          if (invoice.isReturn)
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                buildText('----------',
+                                                    bold: true),
+                                              ],
+                                            ),
+                                          if (invoice.isReturn)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                buildText('Total:'),
-                                                buildText(currency.format(
-                                                    invoice.totalReturn)),
+                                                buildText('Total return:',
+                                                    bold: true),
+                                                buildText(
+                                                    '-${currency.format(invoice.totalReturn)}',
+                                                    bold: true),
                                               ],
                                             ),
-                                          if (invoice.totalReturn > 0)
+                                          // if (invoice.totalReturn > 0)
+                                          //   const SizedBox(
+                                          //       height: 20), //! RETURN LIST
+                                          if (invoice.isReturn)
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                buildText('Total tagihan:',
+                                                    bold: true),
+                                                buildText(
+                                                    currency.format(
+                                                        invoice.totalPurchase),
+                                                    bold: true),
+                                              ],
+                                            ),
+                                          // if (invoice.isReturn &&
+                                          //     invoice.totalPaid > 0)
+                                          //   Row(
+                                          //     mainAxisAlignment:
+                                          //         MainAxisAlignment
+                                          //             .spaceBetween,
+                                          //     children: [
+                                          //       buildText(
+                                          //           'Total pembayaran masuk:'),
+                                          //       buildText(
+                                          //           '-${currency.format(invoice.totalPaid)}'),
+                                          //     ],
+                                          //   ),
+                                          if (invoice.isReturn)
+                                            const Divider(thickness: 1),
+                                          if (invoice.isReturn)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
                                                 buildText(
-                                                    'Total setelah return:'),
-                                                buildText(currency.format(
-                                                    invoice.total -
-                                                        invoice.totalReturn)),
+                                                    'Total setelah return:',
+                                                    bold: true),
+                                                buildText(
+                                                    currency.format(
+                                                        invoice.totalFinal),
+                                                    bold: true),
                                               ],
                                             ),
                                           // if (invoice.totalOtherCosts > 0)
@@ -457,7 +521,7 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                           //           bold: true),
                                           //     ],
                                           //   ),
-                                          if (invoice.totalReturn <= 0)
+                                          if (!invoice.isReturn)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
@@ -470,9 +534,9 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                                     bold: true),
                                               ],
                                             ),
-                                          if (invoice.totalReturn <= 0)
+                                          if (!invoice.isReturn)
                                             const Divider(thickness: 1),
-                                          if (invoice.totalReturn <= 0)
+                                          if (!invoice.isReturn)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
@@ -511,8 +575,8 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
                                       const SizedBox(height: 10),
                                       Obx(
                                         () => Text(
-                                          printerController.account.value.stores
-                                                  .value!.promo.value ??
+                                          printerController
+                                                  .store!.promo.value ??
                                               '',
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
@@ -608,15 +672,15 @@ void printInvoiceDialog(BuildContext context, Invoice invoice) {
   );
 }
 
-Widget buildHeader(Invoice invoice) {
-  String phone = invoice.account.value.stores.value!.phone.value;
-  String telp = invoice.account.value.stores.value!.telp.value;
+Widget buildHeader(Invoice invoice, PrinterController controller) {
+  String phone = controller.store!.phone.value;
+  String telp = controller.store!.telp.value;
   String slash = (phone.isNotEmpty && telp.isNotEmpty) ? '/' : '';
   return Column(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Text(
-        invoice.account.value.stores.value!.name.value,
+        controller.store!.name.value,
         style: const TextStyle(
           fontFamily: 'Courier',
           fontSize: 18,
@@ -624,7 +688,7 @@ Widget buildHeader(Invoice invoice) {
         ),
       ),
       Text(
-        invoice.account.value.stores.value!.address.value,
+        controller.store!.address.value,
         textAlign: TextAlign.center,
         style: const TextStyle(
           fontFamily: 'Courier',

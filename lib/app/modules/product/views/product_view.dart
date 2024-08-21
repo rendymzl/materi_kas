@@ -9,7 +9,7 @@ import '../../../../main.dart';
 import '../../../widget/add_product.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/product_controller.dart';
-import 'buy_product_dialog.dart';
+// import 'buy_product_dialog.dart';
 
 class ProductView extends GetView<ProductController> {
   const ProductView({super.key});
@@ -63,20 +63,20 @@ class ProductView extends GetView<ProductController> {
                             ),
                             Row(
                               children: [
-                                if (controller.isAdmin.value)
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        controller.destroyAllHandle(),
-                                    child: const Text('HAPUS SEMUA'),
-                                  ),
-                                if (controller.isAdmin.value)
-                                  const SizedBox(width: 16),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    buyProductDialog(context, null);
-                                  },
-                                  child: const Text('Beli Barang'),
-                                ),
+                                // if (controller.isAdmin)
+                                //   ElevatedButton(
+                                //     onPressed: () =>
+                                //         controller.destroyAllHandle(),
+                                //     child: const Text('HAPUS SEMUA'),
+                                //   ),
+                                // if (controller.isAdmin)
+                                //   const SizedBox(width: 16),
+                                // ElevatedButton(
+                                //   onPressed: () {
+                                //     buyProductDialog(context, null);
+                                //   },
+                                //   child: const Text('Beli Barang'),
+                                // ),
                                 const SizedBox(width: 16),
                                 ElevatedButton(
                                   onPressed: () {

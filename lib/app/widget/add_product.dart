@@ -55,7 +55,7 @@ void addEditDialogProduct(
                           controller.handleSave(foundProduct),
                     ),
                   ),
-                  if (controller.isAdmin.value)
+                  if (controller.isAdmin)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: IconButton(

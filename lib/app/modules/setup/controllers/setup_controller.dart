@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:materi_kas/app/data/models/account_model.dart';
+// import 'package:materi_kas/app/data/models/account_model.dart';
 
+// import '../../../data/models/store_model.dart';
 import '../../../data/models/store_model.dart';
-import '../../../data/providers/customer_services.dart';
-import '../../../data/providers/invoice_services.dart';
-import '../../../data/providers/operating_cost_services.dart';
-import '../../../data/providers/product_services.dart';
-import '../../../data/providers/sales_customer_services.dart';
-import '../../../data/providers/sales_invoice_services.dart';
-import '../../../data/providers/stores_services.dart';
+// import '../../../data/providers/customer_services.dart';
+// import '../../../data/providers/invoice_services.dart';
+// import '../../../data/providers/operating_cost_services.dart';
+// import '../../../data/providers/product_services.dart';
+// import '../../../data/providers/sales_customer_services.dart';
+// import '../../../data/providers/sales_invoice_services.dart';
+// import '../../../data/providers/stores_services.dart';
 import '../../../routes/app_pages.dart';
+import '../../../widget/side_menu_controller.dart';
 
 class SetupController extends GetxController {
-  late StoreServices storeService = Get.put(StoreServices());
-  late ProductService productService = Get.find();
-  late InvoiceService invoiceService = Get.find();
-  late SalesInvoiceService salesInvoiceService = Get.find();
-  late CustomerServices customerServices = Get.find();
-  late SalesCustomerServices salesCustomerServices = Get.find();
-  late OperatingCostServices operatingCostServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
+  // late StoreServices storeService = Get.put(StoreServices());
+  // late ProductService productService = Get.find();
+  // late InvoiceService invoiceService = Get.find();
+  // late SalesInvoiceService salesInvoiceService = Get.find();
+  // late CustomerServices customerServices = Get.find();
+  // late SalesCustomerServices salesCustomerServices = Get.find();
+  // late OperatingCostServices operatingCostServices = Get.find();
   final formKey = GlobalKey<FormState>();
 
   final storeNameController = TextEditingController();
@@ -67,26 +70,37 @@ class SetupController extends GetxController {
     if (formKey.currentState?.validate() ?? false) {
       try {
         Stores store = Stores(
-          uid: '',
+          createdAt: DateTime.now(),
           name: storeNameController.text.trim(),
           address: storeAddressController.text.trim(),
           phone: storePhoneController.text.trim(),
           telp: storeTelpController.text.trim(),
+          ownerId: sideMenuC.account.value!.accountId,
         );
 
-        storeService.addStore(store);
+        await Stores.insert(store);
 
-        await storeService.fetchStore();
-        await productService.fetchProducts();
-        await invoiceService.fetchInvoices();
-        await salesCustomerServices.fetchCustomers();
-        await customerServices.fetchCustomers();
-        await salesInvoiceService.fetchInvoices();
-        await salesInvoiceService.fetchInvoices();
-        await operatingCostServices.fetchOperatingCost();
+        sideMenuC.store.value =
+            await Stores.getByOwner(sideMenuC.account.value!.accountId);
+        sideMenuC.account.value!.storeId = sideMenuC.store.value!.id;
+        await sideMenuC.account.value!.update();
 
-        Get.offNamed(Routes.HOME); // Arahkan ke halaman utama setelah setup
+        await sideMenuC.fetchData();
+
+        // storeService.addStore(store);
+
+        // await storeService.fetchStore();
+        // await productService.fetchProducts();
+        // await invoiceService.fetchInvoices();
+        // await salesCustomerServices.fetch();
+        // await customerServices.fetchCustomers();
+        // await salesInvoiceService.fetchInvoices();
+        // await salesInvoiceService.fetchInvoices();
+        // await operatingCostServices.fetchOperatingCost();
+
+        Get.offNamed(Routes.PROFILE);
       } catch (e) {
+        debugPrint(e.toString());
         Get.defaultDialog(
           title: 'Error',
           middleText:

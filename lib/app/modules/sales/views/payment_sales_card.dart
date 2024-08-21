@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../../main.dart';
 import '../../../data/models/sales_invoice_model.dart';
 import 'payment_sales_controller.dart';
 // import 'package:material_symbols_icons/symbols.dart';
@@ -100,7 +101,7 @@ class PaymentSalesCard extends StatelessWidget {
                         children: [
                           Obx(
                             () => Text(
-                              'Rp${controller.currency.format(invoice.remainingDebt)}',
+                              'Rp${currency.format(invoice.remainingDebt)}',
                               style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
@@ -118,7 +119,7 @@ class PaymentSalesCard extends StatelessWidget {
               if (invoice.totalDiscount > 0 &&
                   invoice.totalCost == invoice.remainingDebt)
                 Text(
-                  'Rp${controller.currency.format(invoice.subtotalCost)}',
+                  'Rp${currency.format(invoice.subtotalCost)}',
                   style: context.textTheme.bodySmall!.copyWith(
                       fontStyle: FontStyle.italic,
                       decoration: TextDecoration.lineThrough),
@@ -199,7 +200,7 @@ class PaymentSalesCard extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.only(right: 3),
                                 child: Text(
-                                  controller.currency.format(
+                                  currency.format(
                                       controller.moneyChange.value * -1),
                                   style: TextStyle(
                                     fontSize: 18,

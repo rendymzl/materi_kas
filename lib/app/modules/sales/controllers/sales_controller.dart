@@ -10,26 +10,42 @@ import '../../../data/providers/sales_invoice_services.dart';
 
 class SalesController extends GetxController {
   //! Front View
-  late SalesCustomerServices salesCustomerSecvice = Get.find();
-  late SalesInvoiceService salesInvoiceService = Get.find();
+  late SalesCustomerServices salesCustomerSecvice =
+      Get.put(SalesCustomerServices());
+  late SalesInvoiceService salesInvoiceService = Get.put(SalesInvoiceService());
 
   late final foundSalesCustomer = salesCustomerSecvice.foundCustomers;
 
   Rx<Sales?> selectedSales = Rx<Sales?>(null);
 
+  late final salesInvoices = salesInvoiceService.invoices;
+  final invoiceById = <SalesInvoice>[].obs;
+
   final salesTextC = TextEditingController();
   final showSuffixClear = false.obs;
 
+  @override
+  void onInit() async {
+    ever(salesInvoices, (_) {
+      if (selectedSales.value != null) {
+        invoiceById.value =
+            selectedSales.value!.getInvoiceListBySalesId(salesInvoices);
+      }
+    });
+    super.onInit();
+  }
+
   void filterSales(String salesName) {
     debugPrint(salesName);
-    salesCustomerSecvice.searchCustomers(salesName);
+    salesCustomerSecvice.search(salesName);
   }
 
   void selectedSalesHandle(Sales sales) {
     selectedSales.value = sales;
     showSuffixClear.value = true;
     salesTextC.text = selectedSales.value!.name!;
-    debugPrint(salesTextC.text);
+    invoiceById.value =
+        selectedSales.value!.getInvoiceListBySalesId(salesInvoices);
   }
 
   destroySales(Sales sales) async {
@@ -38,7 +54,9 @@ class SalesController extends GetxController {
       middleText: 'Hapus Sales ini?',
       confirm: TextButton(
         onPressed: () async {
-          await salesCustomerSecvice.deleteCustomer(sales.id!);
+          await sales.delete();
+          await salesCustomerSecvice.fetch();
+          // await salesCustomerSecvice.deleteCustomer(sales.id!);
           // await salesCustomerServices.fetchCustomers();
           selectedSales.value = null;
           Get.back();
@@ -53,7 +71,7 @@ class SalesController extends GetxController {
   }
 
   //! Invoice Sales
-  late final salesInvoices = salesInvoiceService.invoices;
+
   final cart = Cart(items: <CartItem>[].obs).obs;
 
   destroyInvoice(SalesInvoice invoice) async {
@@ -62,7 +80,8 @@ class SalesController extends GetxController {
       middleText: 'Hapus Invoice ini?',
       confirm: TextButton(
         onPressed: () async {
-          salesInvoiceService.deleteInvoice(invoice.id!);
+          // salesInvoiceService.deleteInvoice(invoice.id!);
+          invoice.delete();
           Get.back();
           Get.back();
         },

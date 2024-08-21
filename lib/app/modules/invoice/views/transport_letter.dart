@@ -6,13 +6,15 @@ import 'package:intl/intl.dart';
 import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/providers/stores_services.dart';
+// import '../../../data/providers/stores_services.dart';
+import '../../../widget/side_menu_controller.dart';
 import 'invoice_print_controller.dart';
 
 Future<List<int>> generateTransportBytes(Invoice invoice) async {
-  StoreServices storeServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
   final PrinterController printerController = Get.put(PrinterController());
-  late final account = storeServices.account;
+  // late final account = storeServices.account;
+  late final store = sideMenuC.store.value;
   final profile = await CapabilityProfile.load();
   final generator = Generator(PaperSize.mm80, profile);
 
@@ -20,7 +22,7 @@ Future<List<int>> generateTransportBytes(Invoice invoice) async {
 
   // Add header
   bytes += generator.text(
-    invoice.account.value.stores.value!.name.value,
+    store!.name.value,
     styles: const PosStyles(
       align: PosAlign.center,
       bold: true,
@@ -29,13 +31,13 @@ Future<List<int>> generateTransportBytes(Invoice invoice) async {
     ),
   );
   bytes += generator.text(
-    invoice.account.value.stores.value!.address.value,
+    store.address.value,
     styles: const PosStyles(
       align: PosAlign.center,
     ),
   );
-  String phone = invoice.account.value.stores.value!.phone.value;
-  String telp = invoice.account.value.stores.value!.telp.value;
+  String phone = store.phone.value;
+  String telp = store.telp.value;
   String slash = (phone.isNotEmpty && telp.isNotEmpty) ? '/' : '';
   bytes += generator.text(
     '$phone $slash $telp',
@@ -62,7 +64,7 @@ Future<List<int>> generateTransportBytes(Invoice invoice) async {
     ),
     PosColumn(
       text: DateFormat('dd-MM-y, HH:mm', 'id').format(
-        invoice.createdAt.value!.toDate(),
+        invoice.createdAt.value!,
       ),
       width: 6,
     ),
@@ -168,6 +170,9 @@ Future<List<int>> generateTransportBytes(Invoice invoice) async {
     ]);
     bytes += generator.hr();
     List<CartItem> returned = printerController.filterReturn(invoice);
+    if (invoice.returnList.value != null) {
+      returned.addAll(invoice.returnList.value!.items);
+    }
     for (var i = 0; i < returned.length; i++) {
       var item = returned[i];
       if (item.quantityReturn.value > 0) {

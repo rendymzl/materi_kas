@@ -6,7 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
-import '../../../data/models/cart_model.dart';
+// import '../../../data/models/cart_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../controllers/invoice_controller.dart';
 
@@ -17,8 +17,9 @@ class ListCartWidget extends StatelessWidget {
     required this.controller,
     // this.priceType,
     // required this.cartList,
-    required this.isEdit,
-    required this.isReturn,
+    this.isEdit = false,
+    this.isReturn = false,
+    this.additionalReturn = false,
   });
 
   // final int? priceType;
@@ -27,27 +28,31 @@ class ListCartWidget extends StatelessWidget {
   final InvoiceController controller;
   final bool isEdit;
   final bool isReturn;
+  final bool additionalReturn;
 
   @override
   Widget build(BuildContext context) {
     return Obx(
       () => ListView.separated(
         shrinkWrap: true,
-        separatorBuilder: (BuildContext context, int index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Divider(
-            color: Colors.grey[200],
-          ),
+        separatorBuilder: (BuildContext context, int index) => Divider(
+          color: Colors.grey[200],
         ),
-        itemCount: invoice.purchaseList.value.items.length,
+        itemCount: additionalReturn
+            ? invoice.returnList.value!.items.length
+            : invoice.purchaseList.value.items.length,
         itemBuilder: (BuildContext context, int index) {
-          final productCart = invoice.purchaseList.value.items[index];
-
+          invoice.update();
+          final productCart = additionalReturn
+              ? invoice.returnList.value!.items[index]
+              : invoice.purchaseList.value.items[index];
+          debugPrint(productCart.totalQuantity.toString());
           final quantityTextC = TextEditingController();
           String displayQtyValue = productCart.quantity.value % 1 == 0
               ? productCart.quantity.value.toInt().toString()
               : productCart.quantity.value.toString().replaceAll('.', ',');
           quantityTextC.text = displayQtyValue;
+          // debugPrint('qty1212121212 $displayQtyValue');
           // quantityTextC.selection = TextSelection.fromPosition(
           //   TextPosition(offset: quantityTextC.text.length),
           // );
@@ -209,57 +214,70 @@ class ListCartWidget extends StatelessWidget {
                                                       isReturn);
                                                 }
                                               : null,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 4, horizontal: 8),
-                                            decoration: BoxDecoration(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: const Row(
-                                              children: [
-                                                Text(
-                                                  'Batal Return',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontStyle: FontStyle.italic,
+                                          child: !additionalReturn
+                                              ? Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 8),
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .primary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4),
                                                   ),
-                                                ),
-                                                Icon(
-                                                  Symbols.arrow_right,
-                                                  color: Colors.white,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+                                                  child: const Row(
+                                                    children: [
+                                                      Text(
+                                                        'Batal Return',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontStyle:
+                                                              FontStyle.italic,
+                                                        ),
+                                                      ),
+                                                      Icon(
+                                                        Symbols.arrow_right,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              : const SizedBox(),
                                         )
-                              : const SizedBox()
-                          // Container(
-                          //     height: 28,
-                          //     width: 28,
-                          //     decoration: BoxDecoration(
-                          //         color:
-                          //             Theme.of(context).colorScheme.primary,
-                          //         borderRadius: const BorderRadius.all(
-                          //             Radius.circular(5))),
-                          //     child: IconButton(
-                          //       onPressed: () {
-                          //         // invoice.purchaseList.value
-                          //         //     .removeItem(productCart.product.id);
-                          //         // invoice.updateIsDebtPaid();
-                          //         controller.removeFromCart(
-                          //             productCart, invoice, isReturn);
-                          //       },
-                          //       icon: const Icon(
-                          //         Symbols.close,
-                          //         size: 12,
-                          //         color: Colors.white,
-                          //       ),
-                          //     ),
-                          //   )
+                              : const SizedBox(),
+                          const SizedBox(width: 12),
+                          Container(
+                            height: 28,
+                            width: 28,
+                            decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(5))),
+                            child: IconButton(
+                              onPressed: () {
+                                if (additionalReturn) {
+                                  invoice.returnList.value!
+                                      .removeItem(productCart.product.id!);
+                                  invoice.updateIsDebtPaid();
+                                } else {
+                                  invoice.purchaseList.value
+                                      .removeItem(productCart.product.id!);
+                                  invoice.updateIsDebtPaid();
+                                }
+
+                                // controller.removeFromCart(
+                                //     productCart, invoice, isReturn);
+                              },
+                              icon: const Icon(
+                                Symbols.close,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
                         ],
                       ),
                     ],
@@ -457,10 +475,10 @@ class DiscountTextfield extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
       onChanged: (value) {
-        String newValue =
-            currency.format(double.parse(value.replaceAll('.', '')));
-        productCart.individualDiscount.value =
+        double valueint =
             value == '' ? 0 : double.parse(value.replaceAll('.', ''));
+        String newValue = currency.format(valueint);
+        productCart.individualDiscount.value = valueint;
         if (newValue != discountTextC.text) {
           discountTextC.value = TextEditingValue(
             text: newValue,

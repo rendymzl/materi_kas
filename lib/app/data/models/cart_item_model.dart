@@ -84,6 +84,14 @@ class CartItem {
     return getSubtotal(priceType) - individualDiscount.value;
   }
 
+  double getTotalPurchase(int priceType) {
+    return getTotal(priceType) + getTotalReturn(priceType);
+  }
+
+  double getSubTotalPurchase(int priceType) {
+    return getSubtotal(priceType) + getTotalReturn(priceType);
+  }
+
   double getTotalReturn(int priceType) {
     double price = getPrice(priceType);
     return price * quantityReturn.value;
@@ -97,6 +105,18 @@ class CartItem {
     return quantity.value % 1 == 0
         ? quantity.value.toInt().toString()
         : quantity.value.toString().replaceAll('.', ',');
+  }
+
+  String get qtyPurchaseDisplay {
+    return quantity.value % 1 == 0
+        ? totalQuantity.toInt().toString()
+        : totalQuantity.toString().replaceAll('.', ',');
+  }
+
+  String get qtyReturnDisplay {
+    return quantityReturn.value % 1 == 0
+        ? quantityReturn.value.toInt().toString()
+        : quantityReturn.value.toString().replaceAll('.', ',');
   }
 
   //   int get totalDiscount {

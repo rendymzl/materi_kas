@@ -33,7 +33,7 @@ class SideMenuWidget extends GetView<SideMenuController> {
                 shrinkWrap: true,
                 scrollDirection: Axis.horizontal,
                 itemCount:
-                    (data.menu.length - (controller.isAdmin.value ? 0 : 3)),
+                    (data.menu.length - (controller.isAdmin.value ? 0 : 4)),
                 itemBuilder: (context, index) =>
                     buildMenuEntry(data, index, context),
               ),

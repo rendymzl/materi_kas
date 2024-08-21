@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
+import '../../main.dart';
 import '../data/models/invoice_model.dart';
 
 // import '../data/models/customer_model.dart';
@@ -15,7 +14,6 @@ class PaymentController extends GetxController {
 
   // late final customers = customerServices.customers;
 
-  final currency = NumberFormat('#,##0', 'id_ID');
   final paymentMethod = ['cash', 'transfer'].obs;
   final selectedPaymentMethod = ''.obs;
   final moneyChange = 0.0.obs;
@@ -23,6 +21,7 @@ class PaymentController extends GetxController {
   final paymentTextC = TextEditingController();
 
   final scrollC = ScrollController();
+  final textFocusNode = FocusNode();
 
   // final status = ''.obs;
   Future addPayment(Invoice invoice) async {
@@ -30,7 +29,7 @@ class PaymentController extends GetxController {
       invoice.addPayment(
         double.parse(paymentTextC.text.replaceAll('.', '')),
         method: selectedPaymentMethod.value,
-        date: Timestamp.now(),
+        date: DateTime.now(),
       );
     }
   }
@@ -38,6 +37,7 @@ class PaymentController extends GetxController {
 
   void setPaymentMethod(String method) async {
     selectedPaymentMethod.value = method;
+    textFocusNode.requestFocus();
     await Future.delayed(const Duration(milliseconds: 50), () async {
       if (scrollC.hasClients) {
         await scrollC.animateTo(

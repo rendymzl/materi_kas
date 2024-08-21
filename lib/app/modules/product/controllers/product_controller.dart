@@ -1,27 +1,29 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'dart:async' show Future;
 import 'package:csv/csv.dart';
-import 'package:intl/intl.dart';
 import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
 import '../../../data/models/product_model.dart';
 import '../../../data/models/sales_model.dart';
 import '../../../data/providers/product_services.dart';
-import '../../../data/providers/sales_customer_services.dart';
-import '../../../data/providers/stores_services.dart';
+// import '../../../data/providers/sales_customer_services.dart';
+// import '../../../data/providers/stores_services.dart';
 import '../../../widget/date_picker_controller.dart';
+import '../../../widget/side_menu_controller.dart';
 import '../views/buy_product_controller.dart';
 
 class ProductController extends GetxController {
-  late StoreServices storeService = Get.find();
+  late SideMenuController sideMenuC = Get.find();
+  // late StoreServices storeService = Get.find();
   final ProductService productService = Get.find();
-  final SalesCustomerServices salesCustomerServices = Get.find();
+  // final SalesCustomerServices salesCustomerServices = Get.find();
+
+  late DatePickerController datePickerC = Get.put(DatePickerController());
 
   late final products = productService.products;
   late final foundProducts = productService.foundProducts;
@@ -29,25 +31,18 @@ class ProductController extends GetxController {
   late final totalProduct = productService.productsLenght;
   late final lastCode = productService.lastProductCode;
 
-  late final isAdmin = storeService.isOwner;
+  late final isAdmin = sideMenuC.isAdmin.value;
 
-  late final sales = salesCustomerServices.customers;
+  // late final sales = salesCustomerServices.customers;
 
   // final provider = ProductProvider();
   final csvList = <Product>[].obs;
-  // late final String uuid;
-  // late final List<Product> productList = <Product>[].obs;
-  // late final List<Product> allProductList = <Product>[].obs;
-  // final totalProduct = 0.obs;
-  // final lastCode = ''.obs;
   final isLowStock = false.obs;
   final isLoading = false.obs;
   final totalCsvData = 0.obs;
   final currentCsvData = 0.obs;
   final emptyCsv = 0.obs;
   late ProgressDialog _progressDialog;
-  // final foundProducts = <Product>[].obs;
-  final NumberFormat numberFormat = NumberFormat("#,##0", "id_ID");
   final TextEditingController codeTextC = TextEditingController();
   final TextEditingController productNameTextC = TextEditingController();
   final TextEditingController unitTextC = TextEditingController();
@@ -89,7 +84,6 @@ class ProductController extends GetxController {
   void onInit() async {
     super.onInit();
     _progressDialog = ProgressDialog(context: Get.context!);
-    Get.put(DatePickerController(), permanent: true);
     Get.lazyPut(() => BuyProductController());
     filterProducts('');
     textControllers = {
@@ -111,7 +105,7 @@ class ProductController extends GetxController {
   }
 
   void filterProducts(String productName) {
-    productService.searchProducts(productName);
+    productService.search(productName);
   }
 
   //! pickCSV
@@ -129,8 +123,8 @@ class ProductController extends GetxController {
         if (filePath != null) {
           List<List<dynamic>> csvData = await readCSV(filePath);
           // totalCsvData.value = csvData.length;
-          // List<Product> productList = [];
-          Map<String, Map<String, dynamic>> productsMap = {};
+          List<Map<String, dynamic>> productList = [];
+          // Map<String, Map<String, dynamic>> productsMap = {};
           if (!context.mounted) return;
 
           _progressDialog.show(
@@ -144,7 +138,7 @@ class ProductController extends GetxController {
           //   max: csvData.length,
           //   // completed: Completed()
           // );
-          for (var i = 0; i < csvData.length; i++) {
+          for (var i = 1; i < csvData.length; i++) {
             var data = csvData[i];
 
             double parseToDouble(dynamic value) {
@@ -186,45 +180,45 @@ class ProductController extends GetxController {
               var existingProduct = checkexistingProduct(code);
 
               if (existingProduct.isEmpty) {
-                // int costPrice = 0;
-                // int sellPrice1 = 0;
-                // int sellPrice2 = 0;
-                // int sellPrice3 = 0;
+                // costPrice = 0;
+                // sellPrice1 = 0;
+                // sellPrice2 = 0;
+                // sellPrice3 = 0;
 
                 // if (data.length > 5 &&
                 //     costPriceString.contains("Rp") &&
                 //     !costPriceString.contains("-")) {
-                //   costPrice = int.parse(
+                //   costPrice = double.parse(
                 //       costPriceString.replaceAll(RegExp(r'[Rp,]'), ''));
                 // }
 
                 // if (data.length > 7 &&
                 //     sellPrice1String.contains("Rp") &&
                 //     !sellPrice1String.contains("-")) {
-                //   sellPrice1 = int.parse(
+                //   sellPrice1 = double.parse(
                 //       sellPrice1String.replaceAll(RegExp(r'[Rp,]'), ''));
                 // }
 
                 // if (data.length > 8 &&
                 //     sellPrice2String.contains("Rp") &&
                 //     !sellPrice2String.contains("-")) {
-                //   sellPrice2 = int.parse(
+                //   sellPrice2 = double.parse(
                 //       sellPrice2String.replaceAll(RegExp(r'[Rp,]'), ''));
                 // }
 
                 // if (data.length > 6 &&
                 //     sellPrice3String.contains("Rp") &&
                 //     !sellPrice3String.contains("-")) {
-                //   sellPrice3 = int.parse(
+                //   sellPrice3 = double.parse(
                 //       sellPrice3String.replaceAll(RegExp(r'[Rp,]'), ''));
                 // }
 
-                String newProductId = await productService.getId();
+                // String newProductId = await productService.getId();
 
                 final product = Product(
-                  id: newProductId,
+                  // id: newProductId,
                   productId: data[0],
-                  createdAt: Timestamp.now(),
+                  createdAt: DateTime.now().toLocal(),
                   featured: false,
                   productName: productName,
                   unit: unit,
@@ -234,9 +228,11 @@ class ProductController extends GetxController {
                   sellPrice3: sellPrice3,
                   stock: stock,
                   stockMin: stockMin,
+                  storeId: sideMenuC.store.value!.id!,
                   sold: 0,
                 );
-                productsMap[newProductId] = product.toJson();
+                productList.add(product.toJson());
+                // productsMap = product.toJson();
               }
             } else {
               // emptyCsv.value = i + 1;
@@ -252,10 +248,12 @@ class ProductController extends GetxController {
             middleText: "Menyimpan data...",
             barrierDismissible: true,
           );
-          await productService.addProducts(productsMap);
+          // debugPrint('products list ${productList.length}');
+          await Product.insertMapList(productList);
+          // await productService.addProducts(productsMap);
           Get.back();
-          await productService.fetchProducts();
-          productService.searchProducts('');
+          // await productService.fetchProducts();
+          productService.search('');
           _progressDialog.close();
         }
       }
@@ -401,7 +399,7 @@ class ProductController extends GetxController {
         middleText: 'Hapus semua barang?',
         confirm: TextButton(
           onPressed: () async {
-            await productService.deleteAllProduct();
+            // await productService.deleteAllProduct();
             Get.back();
             Get.back();
           },

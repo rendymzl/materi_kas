@@ -1,19 +1,15 @@
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/models/account_model.dart';
-import '../../../data/models/store_model.dart';
-import '../../../data/providers/add_cashier_service.dart';
-import '../../../data/providers/auth_services.dart';
-import '../../../data/providers/stores_services.dart';
+// import '../../../data/providers/add_cashier_service.dart';
 import '../../../routes/app_pages.dart';
+import '../../../widget/side_menu_controller.dart';
 
 class ProfileController extends GetxController {
-  final AuthService authService = Get.find();
-  final AddCashier addCashierApi = AddCashier();
-  late StoreServices storeService = Get.put(StoreServices());
+  late SideMenuController sideMenuC = Get.find();
+  // final AddCashier addCashierApi = AddCashier();
   final formKey = GlobalKey<FormState>();
   final formCashierKey = GlobalKey<FormState>();
 
@@ -26,8 +22,8 @@ class ProfileController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  late final stores = storeService.account.value.stores;
-  late final cashiers = storeService.cashier;
+  late final stores = sideMenuC.store.value;
+  late final cashiers = <Account>[].obs;
 
   var storeName = ''.obs;
   var storeAddress = ''.obs;
@@ -35,7 +31,9 @@ class ProfileController extends GetxController {
   var storeTelp = ''.obs;
 
   @override
-  void onInit() {
+  void onInit() async {
+    cashiers.assignAll(await Account.getCashier(sideMenuC.store.value!.id!));
+    debugPrint('akunid sekarang: ${sideMenuC.account.value!.id!}');
     super.onInit();
     storeNameController.addListener(() {
       storeName.value = storeNameController.text;
@@ -68,15 +66,15 @@ class ProfileController extends GetxController {
   Future<void> submitData() async {
     if (formKey.currentState?.validate() ?? false) {
       try {
-        Stores store = Stores(
-          uid: '',
-          name: storeNameController.text.trim(),
-          address: storeAddressController.text.trim(),
-          phone: storePhoneController.text.trim(),
-          telp: storeTelpController.text.trim(),
-        );
+        // Stores store = Stores(
+        //   uid: '',
+        //   name: storeNameController.text.trim(),
+        //   address: storeAddressController.text.trim(),
+        //   phone: storePhoneController.text.trim(),
+        //   telp: storeTelpController.text.trim(),
+        // );
 
-        await storeService.addStore(store);
+        // await storeService.addStore(store);
 
         Get.offNamed(Routes.HOME); // Arahkan ke halaman utama setelah setup
       } catch (e) {
@@ -125,49 +123,58 @@ class ProfileController extends GetxController {
 
   //   debugPrint(response.toString());
   // }
+  // Future<void> addAdminRoleToUser(String userId) async {
+  //   final response = await Supabase.instance.client.auth.admin.updateUserById(
+  //     userId,
+  //     attributes: AdminUserAttributes(
+  //       userMetadata: {
+  //         'role': 'admin',
+  //       },
+  //     ),
+  //   );
+
+  //   if (response.user != null) {
+  //     debugPrint(
+  //         'Role admin berhasil ditambahkan pada pengguna dengan ID: $userId');
+  //   }
+  // }
 
   Future<void> registerWorker() async {
-    // debugPrint(formKey.currentState?.validate().toString());
     if (formCashierKey.currentState?.validate() ?? false) {
+      Get.defaultDialog(
+        title: 'Menambahkan kasir...',
+        content: const CircularProgressIndicator(),
+        barrierDismissible: false,
+      );
       try {
-        Get.defaultDialog(
-          title: 'Menambahkan kasir...',
-          content: const CircularProgressIndicator(),
-          barrierDismissible: false,
+        final AuthResponse userCredential =
+            await Supabase.instance.client.auth.signUp(
+          email: emailController.text.trim(),
+          password: passwordController.text,
         );
-        final result = await addCashierApi.createAccount(
-          emailController.text.trim(),
-          passwordController.text.trim(),
-          authService.uid.value,
+        debugPrint('awdawd');
+        Account account = Account(
+          accountId: userCredential.user!.id,
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          role: 'worker',
+          createdAt: DateTime.now().toLocal(),
+          storeId: sideMenuC.store.value!.id,
         );
-        final newWorkerUid = result['uid'];
 
-        Account cashier = Account(
-            uid: newWorkerUid,
-            ownerUid: authService.uid.value,
-            name: nameController.text.trim(),
-            email: emailController.text.trim(),
-            role: 'worker',
-            stores: storeService.account.value.stores.value);
-        // Simpan data worker ke Firestore
-        await storeService.addCashier(cashier);
-        Get.back();
+        await Account.insert(account);
+
+        debugPrint('daftar berhasil: ${account.name}');
+        debugPrint('store sekarang: ${sideMenuC.store.value!.id!}');
+        cashiers
+            .assignAll(await Account.getCashier(sideMenuC.store.value!.id!));
+        debugPrint('cashiers: $cashiers');
         nameController.text = '';
         emailController.text = '';
         passwordController.text = '';
-      } on FirebaseAuthException catch (e) {
-        Get.defaultDialog(
-          title: 'Error',
-          middleText: e.message ?? 'Terjadi kesalahan saat mendaftar worker',
-          confirm: TextButton(
-            onPressed: () {
-              Get.back();
-              Get.back();
-            },
-            child: const Text('OK'),
-          ),
-        );
+        Get.back();
       } catch (e) {
+        Get.back();
         debugPrint(e.toString());
         Get.defaultDialog(
           title: 'Error',

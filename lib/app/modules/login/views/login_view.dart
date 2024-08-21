@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+// import 'package:flutter_svg/svg.dart';
 
 import 'package:get/get.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -45,8 +45,8 @@ class LoginView extends GetView<LoginController> {
                           TextFormField(
                             controller: controller.emailFieldC,
                             decoration: InputDecoration(
-                              prefixIcon: const Icon(Symbols.email, fill: 1),
                               labelText: "Email",
+                              prefixIcon: const Icon(Symbols.email, fill: 1),
                               labelStyle: const TextStyle(color: Colors.grey),
                               floatingLabelStyle:
                                   const TextStyle(color: Colors.black),
@@ -69,6 +69,7 @@ class LoginView extends GetView<LoginController> {
                           TextFormField(
                             controller: controller.passwordFieldC,
                             decoration: InputDecoration(
+                              labelText: "Password",
                               prefixIcon: const Icon(Symbols.lock, fill: 1),
                               suffixIcon: IconButton(
                                 icon:
@@ -76,7 +77,6 @@ class LoginView extends GetView<LoginController> {
                                 onPressed: () =>
                                     controller.toggleHidePassword(),
                               ),
-                              labelText: "Password",
                               labelStyle: const TextStyle(color: Colors.grey),
                               floatingLabelStyle:
                                   const TextStyle(color: Colors.black),

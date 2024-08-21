@@ -1,9 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'account_model.dart';
 import 'cart_model.dart';
 import 'customer_model.dart';
-// import 'store_model.dart';
+import 'payment_model.dart';
 
 class OtherCost {
   String name;
@@ -26,36 +27,12 @@ class OtherCost {
   }
 }
 
-class PaymentTransaction {
-  String? method;
-  double amountPaid;
-  Timestamp? date;
-
-  PaymentTransaction({
-    this.method,
-    this.amountPaid = 0,
-    this.date,
-  });
-
-  PaymentTransaction.fromJson(Map<String, dynamic> json)
-      : method = json['method'],
-        amountPaid = json['amount_paid'].toDouble(),
-        date = json['date'];
-
-  Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['method'] = method;
-    data['amount_paid'] = amountPaid;
-    data['date'] = date;
-    return data;
-  }
-}
-
 class Invoice {
   String? id;
+  String? storeId;
   String? invoiceId;
   Rx<Account> account;
-  Rx<Timestamp?> createdAt;
+  Rx<DateTime?> createdAt;
   Rx<Customer?> customer;
   Rx<Cart> purchaseList;
   Rx<Cart?> returnList;
@@ -65,16 +42,16 @@ class Invoice {
   RxDouble tax;
   RxDouble returnFee;
   RxList<PaymentTransaction> payments;
-  // RxDouble change;
   RxDouble debtAmount;
   RxBool isDebtPaid;
   RxList<OtherCost> otherCosts;
 
   Invoice({
     this.id,
+    this.storeId,
     this.invoiceId,
     required Account account,
-    Timestamp? createdAt,
+    DateTime? createdAt,
     Customer? customer,
     required Cart purchaseList,
     Cart? returnList,
@@ -84,12 +61,11 @@ class Invoice {
     double tax = 0,
     double returnFee = 0,
     List<PaymentTransaction>? payments,
-    // double change = 0,
     double debtAmount = 0,
     bool isDebtPaid = false,
     List<OtherCost>? otherCosts,
   })  : account = Rx<Account>(account),
-        createdAt = Rx<Timestamp?>(createdAt),
+        createdAt = Rx<DateTime?>(createdAt),
         customer = Rx<Customer?>(customer),
         purchaseList = Rx<Cart>(purchaseList),
         returnList = Rx<Cart?>(returnList),
@@ -107,8 +83,9 @@ class Invoice {
   Invoice.fromJson(Map<String, dynamic> json)
       : account = Rx<Account>(Account.fromJson(json['account'])),
         id = json['id'],
+        storeId = json['store_id'],
         invoiceId = json['invoice_id'],
-        createdAt = Rx<Timestamp?>(json['created_at']),
+        createdAt = Rx<DateTime?>(DateTime.parse(json['created_at']).toLocal()),
         customer = Rx<Customer?>(Customer.fromJson(json['customer'])),
         purchaseList = Rx<Cart>(Cart.fromJson(json['purchase_list'])),
         returnList = Rx<Cart?>(json['return_list'] != null
@@ -133,10 +110,11 @@ class Invoice {
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
-    data['id'] = id;
+    if (id != null) data['id'] = id;
+    data['store_id'] = storeId;
     data['invoice_id'] = invoiceId;
     data['account'] = account.value.toJson();
-    data['created_at'] = createdAt.value;
+    data['created_at'] = createdAt.value?.toIso8601String();
     data['customer'] = customer.value?.toJson();
     data['purchase_list'] = purchaseList.value.toJson();
     data['return_list'] = returnList.value?.toJson();
@@ -173,13 +151,34 @@ class Invoice {
         .fold(0, (prev, item) => prev + item.getTotalReturn(priceType.value));
   }
 
+  double get subtotalAdditionalReturn {
+    double value = 0;
+    if (returnList.value != null) {
+      value = returnList.value!.items
+          .fold(0, (prev, item) => prev + item.getTotalReturn(priceType.value));
+    }
+    return value;
+  }
+
   double get totalIndividualDiscount {
     return purchaseList.value.items
         .fold(0, (prev, item) => prev + (item.individualDiscount.value));
   }
 
+  double get subTotalPurchase {
+    return subtotal + subtotalReturn;
+  }
+
+  double get totalPurchase {
+    return subTotalPurchase - totalDiscount + totalOtherCosts;
+  }
+
   double get totalReturn {
-    return subtotalReturn - returnFee.value;
+    return subtotalReturn + subtotalAdditionalReturn - returnFee.value;
+  }
+
+  bool get isReturn {
+    return subtotalReturn + subtotalAdditionalReturn > 0;
   }
 
   double get remainingReturn {
@@ -203,7 +202,7 @@ class Invoice {
   }
 
   double get totalFinal {
-    return total - totalReturn;
+    return totalPurchase - totalReturn;
   }
 
   double get totalPaid {
@@ -211,20 +210,27 @@ class Invoice {
   }
 
   double get remainingDebt {
-    return debtAmount.value - totalPaid;
+    return totalFinal - totalPaid;
   }
 
   double get change {
-    double firstPayment = payments.isNotEmpty ? payments[0].amountPaid : 0;
+    // double firstPayment = payments.isNotEmpty ? payments[0].amountPaid : 0;
 
-    return totalFinal - firstPayment;
+    return totalFinal - totalPaid;
   }
 
-  void addPayment(double amount, {String? method, Timestamp? date}) {
+  void addPayment(double amount, {String? method, DateTime? date}) {
     // double amountPaid = totalPaid + amount <= total ? amount : total - totalPaid;
 
-    payments.add(
-        PaymentTransaction(method: method, amountPaid: amount, date: date));
+    payments.add(PaymentTransaction(
+        method: method,
+        amountPaid: amount,
+        remain: total - (totalPaid + amount),
+        finalAmountPaid: (totalPaid + amount) > total
+            ? amount + (total - (totalPaid + amount))
+            : (totalPaid + amount),
+        date: date));
+    debtAmount.value = totalFinal - totalPaid;
     isDebtPaid.value = remainingDebt <= 0;
   }
 
@@ -273,5 +279,62 @@ class Invoice {
 
   double get totalProfit {
     return subtotal - subtotalCost - totalDiscount - totalTax - totalOtherCosts;
+  }
+
+  // CRUD operations
+
+  // Insert (Create)
+  static Future<void> insert(Invoice invoice) async {
+    try {
+      await Supabase.instance.client.from('invoices').insert(invoice.toJson());
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Update
+  Future<void> update() async {
+    try {
+      // debugPrint(toJson().toString());
+      await Supabase.instance.client
+          .from('invoices')
+          .update(toJson())
+          .eq('id', id!);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Delete
+  Future<void> delete() async {
+    try {
+      await Supabase.instance.client.from('invoices').delete().eq('id', id!);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Fetch all invoices by storeId
+  static Future<List<Invoice>> getAllByStoreId(String storeId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('invoices')
+          .select()
+          .eq('store_id', storeId);
+
+      return (response as List).map((json) => Invoice.fromJson(json)).toList();
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+      return [];
+    }
+  }
+
+  // Real-time subscription to changes in the invoices table
+  static Future<Stream<List<Invoice>>> subscribe(String storeId) async {
+    return Supabase.instance.client
+        .from('invoices')
+        .stream(primaryKey: ['id'])
+        .eq('store_id', storeId)
+        .map((data) => data.map((json) => Invoice.fromJson(json)).toList());
   }
 }

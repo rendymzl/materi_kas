@@ -6,7 +6,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_rx/get_rx.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:intl/intl.dart';
 // import 'package:thermal_printer/esc_pos_utils_platform/esc_pos_utils_platform.dart';
 import 'package:thermal_printer/thermal_printer.dart';
@@ -14,29 +14,50 @@ import 'package:thermal_printer/thermal_printer.dart';
 // import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/providers/stores_services.dart';
+import '../../../widget/side_menu_controller.dart';
 import 'invoice_generator.dart';
 import 'receipt_generator.dart';
 import 'transport_letter.dart';
 
 class PrinterController extends GetxController {
-  StoreServices storeServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
   var devices = <PrinterDevice>[].obs;
   var connected = false.obs;
   final textPromo = TextEditingController();
   late ScrollController scrollController = ScrollController();
-  late final account = storeServices.account;
+  late final account = sideMenuC.account.value;
+  late final store = sideMenuC.store.value;
 
   final isPrinting = false.obs;
-  final selectedDeviceIndex = (-1).obs;
+  late final selectedDeviceIndex = (-1).obs;
 
   // final purchase = <Invoice>[].obs;
   // final returned = <Invoice>[].obs;
 
   @override
-  void onInit() {
+  void onInit() async {
+    ever(devices, (_) async {
+      setDefaultPrinter();
+    });
     super.onInit();
-    scan(PrinterType.usb);
+    await scan(PrinterType.usb);
+  }
+
+  void setDefaultPrinter() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? name = prefs.getString('default_printer_name');
+    final String? address = prefs.getString('default_printer_address');
+
+    if (name != null && address != null) {
+      PrinterDevice selectedPrinter =
+          PrinterDevice(name: name, address: address);
+      connect(selectedPrinter, PrinterType.usb);
+      debugPrint(name);
+      debugPrint(address);
+      selectedDeviceIndex.value =
+          devices.indexWhere((device) => device.name == selectedPrinter.name);
+      debugPrint(selectedDeviceIndex.value.toString());
+    }
   }
 
   List<CartItem> filterPurchase(Invoice invoice) {
@@ -55,8 +76,12 @@ class PrinterController extends GetxController {
     return workerData;
   }
 
-  void selectedPrinterIndex(int index) {
+  void selectedPrinterIndex(int index) async {
     selectedDeviceIndex.value = index;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('default_printer_name', devices[index].name);
+    await prefs.setString(
+        'default_printer_address', devices[index].address.toString());
   }
 
   void savePromoText() async {
@@ -67,10 +92,11 @@ class PrinterController extends GetxController {
         curve: Curves.easeInOut,
       );
     });
-    await storeServices.addPromo(textPromo.text);
+    sideMenuC.store.value!.promo.value = textPromo.text;
+    await sideMenuC.store.value!.update();
   }
 
-  void scan(PrinterType type, {bool isBle = false}) {
+  Future<void> scan(PrinterType type, {bool isBle = false}) async {
     devices.clear();
     PrinterManager.instance
         .discovery(type: type, isBle: isBle)

@@ -1,37 +1,49 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cart_model.dart';
+import 'payment_model.dart';
 import 'sales_model.dart';
 
-class PaymentTransaction {
-  String? method;
-  double amountPaid;
-  Timestamp? date;
+// class PaymentTransaction {
+//   String? method;
+//   double amountPaid;
+//   double remain;
+//   double finalAmountPaid;
+//   DateTime? date;
 
-  PaymentTransaction({
-    this.method,
-    this.amountPaid = 0,
-    this.date,
-  });
+//   PaymentTransaction({
+//     this.method,
+//     this.amountPaid = 0,
+//     this.remain = 0,
+//     this.finalAmountPaid = 0,
+//     this.date,
+//   });
 
-  PaymentTransaction.fromJson(Map<String, dynamic> json)
-      : method = json['method'],
-        amountPaid = json['amount_paid'].toDouble(),
-        date = json['date'];
+//   PaymentTransaction.fromJson(Map<String, dynamic> json)
+//       : method = json['method'],
+//         amountPaid = json['amount_paid'].toDouble(),
+//         remain = json['remain'].toDouble(),
+//         finalAmountPaid = json['final_amount_paid'].toDouble(),
+//         date = DateTime.parse(json['date']).toLocal();
 
-  Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['method'] = method;
-    data['amount_paid'] = amountPaid;
-    data['date'] = date;
-    return data;
-  }
-}
+//   Map<String, dynamic> toJson() {
+//     final data = <String, dynamic>{};
+//     data['method'] = method;
+//     data['amount_paid'] = amountPaid;
+//     data['remain'] = remain;
+//     data['final_amount_paid'] = finalAmountPaid;
+//     data['date'] = date != null ? date!.toIso8601String() : DateTime.now();
+//     return data;
+//   }
+// }
 
 class SalesInvoice {
   String? id;
+  String? storeId;
   String? invoiceId;
-  Rx<Timestamp?> createdAt;
+  Rx<DateTime?> createdAt;
   Rx<Sales?> sales;
   Rx<Cart> purchaseList;
   // RxInt priceType;
@@ -43,8 +55,9 @@ class SalesInvoice {
 
   SalesInvoice({
     this.id,
+    this.storeId,
     this.invoiceId,
-    Timestamp? createdAt,
+    DateTime? createdAt,
     Sales? sales,
     required Cart purchaseList,
     Cart? returnList,
@@ -56,7 +69,7 @@ class SalesInvoice {
     List<PaymentTransaction>? payments,
     double debtAmount = 0,
     bool isDebtPaid = false,
-  })  : createdAt = Rx<Timestamp?>(createdAt),
+  })  : createdAt = Rx<DateTime?>(createdAt),
         sales = Rx<Sales?>(sales),
         purchaseList = Rx<Cart>(purchaseList),
         // priceType = RxInt(priceType),
@@ -68,8 +81,9 @@ class SalesInvoice {
 
   SalesInvoice.fromJson(Map<String, dynamic> json)
       : id = json['id'],
+        storeId = json['store_id'],
         invoiceId = json['invoice_id'],
-        createdAt = Rx<Timestamp?>(json['created_at']),
+        createdAt = Rx<DateTime?>(DateTime.parse(json['created_at']).toLocal()),
         sales = Rx<Sales?>(Sales.fromJson(json['sales'])),
         purchaseList = Rx<Cart>(Cart.fromJson(json['purchase_list'])),
         // priceType = RxInt(json['price_type']),
@@ -83,9 +97,10 @@ class SalesInvoice {
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
-    data['id'] = id;
+    if (id != null) data['id'] = id;
+    data['store_id'] = storeId;
     data['invoice_id'] = invoiceId;
-    data['created_at'] = createdAt.value;
+    data['created_at'] = createdAt.value?.toIso8601String();
     data['sales'] = sales.value?.toJson();
     data['purchase_list'] = purchaseList.value.toJson();
     // data['price_type'] = priceType.value;
@@ -132,12 +147,18 @@ class SalesInvoice {
     return debtAmount.value - totalPaid;
   }
 
-  void addPayment(double amount, {String? method, Timestamp? date}) {
+  void addPayment(double amount, {String? method, DateTime? date}) {
     // int amountPaid =
     //     totalPaid + amount <= totalCost ? amount : totalCost - totalPaid;
 
-    payments.add(
-        PaymentTransaction(method: method, amountPaid: amount, date: date));
+    payments.add(PaymentTransaction(
+        method: method,
+        amountPaid: amount,
+        remain: totalCost - (totalPaid + amount),
+        finalAmountPaid: (totalPaid + amount) > totalCost
+            ? amount + (totalCost - (totalPaid + amount))
+            : (totalPaid + amount),
+        date: date));
     isDebtPaid.value = remainingDebt <= 0;
   }
 
@@ -166,5 +187,69 @@ class SalesInvoice {
 
   double getTotalByMethod(String method) {
     return totalPaymentsByMethod()[method] ?? 0;
+  }
+
+  // CRUD operations
+
+  // Insert (Create)
+  static Future<void> insert(SalesInvoice sales) async {
+    await Supabase.instance.client
+        .from('invoices_sales')
+        .insert(sales.toJson());
+    // if (response.error != null) {
+    //   throw Exception('Failed to insert sales: ${response.error!.message}');
+    // }
+    // sales.id = response.data[0]['id'];
+  }
+
+  // Update
+  Future<void> update() async {
+    try {
+      await Supabase.instance.client
+          .from('invoices_sales')
+          .update(toJson())
+          .eq('id', id!);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Delete
+  Future<void> delete() async {
+    try {
+      await Supabase.instance.client
+          .from('invoices_sales')
+          .delete()
+          .eq('id', id!);
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
+
+  // Fetch all invoices_sales by storeId
+  static Future<List<SalesInvoice>> getAll(String storeId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('invoices_sales')
+          .select()
+          .eq('store_id', storeId);
+      return (response as List)
+          .map((json) => SalesInvoice.fromJson(json))
+          .toList();
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+      return [];
+    }
+  }
+
+  // Real-time subscription to changes in the invoices_sales table
+  static Future<Stream<List<SalesInvoice>>> subscribe(String storeId) async {
+    debugPrint(storeId);
+    return Supabase.instance.client
+        .from('invoices_sales')
+        .stream(primaryKey: ['id'])
+        .eq('store_id', storeId)
+        .map(
+            (data) => data.map((json) => SalesInvoice.fromJson(json)).toList());
   }
 }

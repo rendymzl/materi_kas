@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../data/models/invoice_model.dart';
-import '../data/providers/invoice_services.dart';
+// import '../data/providers/invoice_services.dart';
+// import '../modules/invoice/controllers/invoice_controller.dart';
 import 'payment_card.dart';
 import 'payment_controller.dart';
 
 void paymentDialogWidget(
     BuildContext context, Invoice invoice, VoidCallback onSuccess) {
-  late InvoiceService invoiceServices = Get.find();
+  // late InvoiceService invoiceServices = Get.find();
   late PaymentController paymentController = Get.put(PaymentController());
+  // late InvoiceController controller = Get.put(InvoiceController());
 
   paymentController.clear();
 
@@ -25,7 +27,8 @@ void paymentDialogWidget(
       barrierDismissible: false,
     );
     try {
-      await invoiceServices.updateInvoice(invoice);
+      await invoice.update();
+      // await invoiceServices.updateInvoice(invoice);
       Get.back();
       return Get.defaultDialog(
         title: 'Berhasil',
@@ -72,7 +75,7 @@ void paymentDialogWidget(
     int paymentInt =
         int.parse(paymentController.paymentTextC.text.replaceAll('.', ''));
     debugPrint(paymentInt.toString());
-    paymentInt < invoice.debtAmount.value ? warning() : process();
+    paymentInt < invoice.remainingDebt ? warning() : process();
   }
 
   Get.defaultDialog(

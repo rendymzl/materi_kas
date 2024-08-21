@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:materi_kas/app/data/models/cart_item_model.dart';
-import 'package:materi_kas/app/data/models/cart_model.dart';
+// import 'package:materi_kas/app/data/models/cart_model.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 // import '../../../data/models/cart_model.dart';
@@ -80,7 +80,7 @@ class AddProductDialog extends StatelessWidget {
                                     quantity: 1,
                                   );
                                   // invoice.purchaseList.value.addItem(cartItem);
-                                  controller.addToCart(cartItem, invoice);
+                                  controller.addToReturnCart(cartItem, invoice);
                                   Get.back();
                                 }),
                           );

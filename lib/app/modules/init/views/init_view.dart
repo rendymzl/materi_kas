@@ -9,22 +9,17 @@ class InitView extends GetView<InitController> {
   const InitView({super.key});
   @override
   Widget build(BuildContext context) {
-    // const isLogin = controller.isLogin.value;
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('InitView'),
-      //   centerTitle: true,
-      // ),
       body: Obx(
         () => Center(
-          child: controller.loading.value
+          child: controller.isLoading.value
               ? const CircularProgressIndicator()
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
                       onPressed: () async {
-                        controller.handleAuthChanged();
+                        await controller.handleInit();
                       },
                       child: const Text('Mulai Aplikasi'),
                     ),

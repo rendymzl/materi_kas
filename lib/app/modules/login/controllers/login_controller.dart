@@ -1,29 +1,13 @@
-// import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:materi_kas/app/routes/app_pages.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/models/account_model.dart';
-import '../../../data/providers/auth_services.dart';
-import '../../../data/providers/customer_services.dart';
-import '../../../data/providers/invoice_services.dart';
-import '../../../data/providers/operating_cost_services.dart';
-import '../../../data/providers/product_services.dart';
-import '../../../data/providers/sales_customer_services.dart';
-import '../../../data/providers/sales_invoice_services.dart';
-import '../../../data/providers/stores_services.dart';
+import '../../../widget/side_menu_controller.dart';
 
 class LoginController extends GetxController {
-  late StoreServices storeService = Get.find();
-
-  late AuthService authService = Get.find();
-  late ProductService productService = Get.find();
-  late InvoiceService invoiceService = Get.find();
-  late SalesInvoiceService salesInvoiceService = Get.find();
-  late CustomerServices customerServices = Get.find();
-  late SalesCustomerServices salesCustomerServices = Get.find();
-  late OperatingCostServices operatingCostServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
 
   final isLoginPage = true.obs;
 
@@ -73,76 +57,49 @@ class LoginController extends GetxController {
   final passwordFieldC = TextEditingController();
 
   Future<void> signUpWithEmail() async {
-    // debugPrint('signup');
     try {
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final AuthResponse userCredential =
+          await Supabase.instance.client.auth.signUp(
         email: emailFieldC.text.trim(),
         password: passwordFieldC.text,
       );
 
       Account account = Account(
-        uid: userCredential.user!.uid,
-        ownerUid: userCredential.user!.uid,
-        name: '',
-        email: emailFieldC.text.trim(),
-        role: 'owner',
-      );
+          accountId: userCredential.user!.id,
+          name: '',
+          email: emailFieldC.text.trim(),
+          role: 'owner',
+          createdAt: DateTime.now().toLocal());
 
-      await storeService.addAccount(account);
+      await Account.insert(account);
+      await sideMenuC.handleInit();
 
-      Get.offAllNamed(Routes.SETUP);
-    } catch (e) {
-      debugPrint(e.toString());
+      debugPrint('daftar berhasil: ${account.name}');
+    } on AuthException catch (e) {
+      debugPrint(e.message);
     }
-  }
-
-  Future<void> fetchData() async {
-    debugPrint('fetchings');
-    await storeService.fetchStore();
-    await productService.fetchProducts();
-    await invoiceService.fetchInvoices();
-    await salesCustomerServices.fetchCustomers();
-    await customerServices.fetchCustomers();
-    await salesInvoiceService.fetchInvoices();
-    await salesInvoiceService.fetchInvoices();
-    await operatingCostServices.fetchOperatingCost();
   }
 
   Future<void> signInWithEmail() async {
     clicked.value = true;
     if (formkey.currentState!.validate()) {
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        await Supabase.instance.client.auth.signInWithPassword(
           email: emailFieldC.text.trim(),
           password: passwordFieldC.text,
         );
 
-        await fetchData();
+        await sideMenuC.handleInit();
 
+        debugPrint('login berhasil: ${sideMenuC.uid.value}');
         Get.offAllNamed(Routes.HOME);
-      } on FirebaseAuthException catch (e) {
-        debugPrint('Error code: ${e.code}');
+      } on AuthException catch (e) {
+        debugPrint('Unexpected error: ${e.message}');
         Get.defaultDialog(
           title: 'Oops!',
-          middleText: e.message ?? 'Terjadi kesalahan',
+          middleText: 'Email atau password salah.',
           confirm: TextButton(
             onPressed: () {
-              authService.signOut();
-              Get.back();
-            },
-            child: const Text('OK'),
-          ),
-        );
-      } catch (e) {
-        debugPrint('Unexpected error: $e');
-        Get.defaultDialog(
-          title: 'Oops!',
-          middleText:
-              'Terjadi kesalahan tidak terduga. Silakan coba lagi nanti.',
-          confirm: TextButton(
-            onPressed: () {
-              authService.signOut();
               Get.back();
             },
             child: const Text('OK'),

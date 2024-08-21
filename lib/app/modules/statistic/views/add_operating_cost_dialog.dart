@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -6,13 +6,15 @@ import 'package:get/get.dart';
 
 import '../../../../main.dart';
 import '../../../data/models/operating_costs_model.dart';
-import '../../../data/providers/operating_cost_services.dart';
+// import '../../../data/providers/operating_cost_services.dart';
+import '../../../widget/side_menu_controller.dart';
 import '../controllers/statistic_controller.dart';
 
 void addOperatingCostDialog(
     BuildContext context, StatisticController controller) {
-  late OperatingCostServices operatingCostServices =
-      Get.put(OperatingCostServices());
+  late SideMenuController sideMenuC = Get.find();
+  // late OperatingCostServices operatingCostServices =
+  //     Get.put(OperatingCostServices());
 
   final operatingCostNameTextC = TextEditingController();
   final operatingCostAmountTextC = TextEditingController();
@@ -26,16 +28,18 @@ void addOperatingCostDialog(
       barrierDismissible: false,
     );
     try {
-      Map<String, Map<String, dynamic>> operatingCostMap = {};
+      // Map<String, Map<String, dynamic>> operatingCostMap = {};
       OperatingCost operatingCost = OperatingCost(
-          createdAt: Timestamp.now(),
+          createdAt: DateTime.now(),
+          storeId: sideMenuC.store.value!.id,
           name: operatingCostNameTextC.text,
           amount: int.parse(operatingCostAmountTextC.text.replaceAll('.', '')),
           note: operatingCostNoteTextC.text);
-      String newCustomerId = await operatingCostServices.getId();
-      operatingCost.id = newCustomerId;
-      operatingCostMap[newCustomerId] = operatingCost.toJson();
-      await operatingCostServices.addOperatingCost(operatingCostMap);
+      // String newCustomerId = await operatingCostServices.getId();
+      // operatingCost.id = newCustomerId;
+      // operatingCostMap[newCustomerId] = operatingCost.toJson();
+      await OperatingCost.insert(operatingCost);
+      // await operatingCostServices.addOperatingCost(operatingCostMap);
       Get.back();
       return Get.defaultDialog(
         title: 'Berhasil',

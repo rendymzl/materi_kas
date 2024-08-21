@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../main.dart';
@@ -19,7 +18,6 @@ class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,##0', 'id_ID');
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 100,
@@ -28,12 +26,6 @@ class HomeView extends GetView<HomeController> {
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: const Color(0xFFF5F8FF),
-        // leading: IconButton(
-        //   onPressed: () async {
-        //     controller.fetchAll();
-        //   },
-        //   icon: const Icon(Symbols.refresh),
-        // ),
       ),
       body: SizedBox(
         child: Padding(
@@ -52,8 +44,7 @@ class HomeView extends GetView<HomeController> {
               ),
               Expanded(
                 flex: 4,
-                child: SelectedProductCard(
-                    controller: controller, formatter: formatter),
+                child: SelectedProductCard(controller: controller),
               ), //! 2 SelectedProductCard
             ],
           ),
@@ -68,11 +59,9 @@ class ProductListCard extends StatelessWidget {
   const ProductListCard({
     super.key,
     required this.controller,
-    // required this.formatter,
   });
 
   final HomeController controller;
-  // final NumberFormat formatter;
 
   @override
   Widget build(BuildContext context) {
@@ -146,10 +135,11 @@ class ProductListCard extends StatelessWidget {
                       ),
                       child: ListTile(
                         leading: SizedBox(
-                          width: 60,
+                          width: 80,
                           child: Text(
-                            foundProducts.productId,
+                            '${decimal.format(foundProducts.stock.value)} ${foundProducts.unit}',
                             style: context.textTheme.bodySmall,
+                            // textAlign: TextAlign.right,
                           ),
                         ),
                         title: Text(
@@ -190,11 +180,9 @@ class SelectedProductCard extends StatelessWidget {
   const SelectedProductCard({
     super.key,
     required this.controller,
-    required this.formatter,
   });
 
   final HomeController controller;
-  final NumberFormat formatter;
 
   @override
   Widget build(BuildContext context) {
@@ -292,118 +280,6 @@ class SelectedProductCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Container(
-                        //   height: 40,
-                        //   padding: const EdgeInsets.symmetric(horizontal: 12),
-                        //   decoration: const BoxDecoration(
-                        //     color: Colors.white,
-                        //     borderRadius: BorderRadius.all(
-                        //       Radius.circular(10),
-                        //     ),
-                        //   ),
-                        //   child: Row(
-                        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        //     children: [
-                        //       InkWell(
-                        //         onTap: () => controller.dateTimeCheckBox(),
-                        //         child: SizedBox(
-                        //           child: Row(
-                        //             children: [
-                        //               Checkbox(
-                        //                   value: controller.isDateTimeNow.value,
-                        //                   onChanged: (value) =>
-                        //                       controller.dateTimeCheckBox()),
-                        //               Text(
-                        //                 'Tanggal Invoice saat ini',
-                        //                 style: controller.isDateTimeNow.value
-                        //                     ? context.textTheme.bodySmall!
-                        //                         .copyWith(
-                        //                             color: Theme.of(context)
-                        //                                 .colorScheme
-                        //                                 .primary)
-                        //                     : context.textTheme.bodySmall,
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       ),
-                        //       Row(
-                        //         children: [
-                        //           InkWell(
-                        //             onTap: controller.isDateTimeNow.value
-                        //                 ? null
-                        //                 : () async =>
-                        //                     controller.handleDate(context),
-                        //             child: Container(
-                        //               padding: const EdgeInsets.symmetric(
-                        //                   vertical: 4, horizontal: 8),
-                        //               decoration: BoxDecoration(
-                        //                 color: controller.isDateTimeNow.value
-                        //                     ? Colors.white
-                        //                     : Theme.of(context)
-                        //                         .colorScheme
-                        //                         .primary,
-                        //                 borderRadius: BorderRadius.circular(4),
-                        //               ),
-                        //               child: Text(
-                        //                 controller.displayDate.value == ''
-                        //                     ? 'Pilih Tanggal'
-                        //                     : DateFormat('dd MMMM y', 'id')
-                        //                         .format(controller
-                        //                             .selectedDate.value),
-                        //                 style: controller.isDateTimeNow.value
-                        //                     ? context.textTheme.bodySmall!
-                        //                         .copyWith(
-                        //                         color: Theme.of(context)
-                        //                             .colorScheme
-                        //                             .primary,
-                        //                         fontStyle: FontStyle.italic,
-                        //                       )
-                        //                     : const TextStyle(
-                        //                         color: Colors.white),
-                        //               ),
-                        //             ),
-                        //           ),
-                        //           const SizedBox(width: 20),
-                        //           InkWell(
-                        //             onTap: controller.isDateTimeNow.value
-                        //                 ? null
-                        //                 : () async =>
-                        //                     controller.handleTime(context),
-                        //             child: Container(
-                        //               padding: const EdgeInsets.symmetric(
-                        //                   vertical: 4, horizontal: 8),
-                        //               decoration: BoxDecoration(
-                        //                 color: controller.isDateTimeNow.value
-                        //                     ? Colors.white
-                        //                     : Theme.of(context)
-                        //                         .colorScheme
-                        //                         .primary,
-                        //                 borderRadius: BorderRadius.circular(4),
-                        //               ),
-                        //               child: Text(
-                        //                 controller.displayTime.value == ''
-                        //                     ? 'Pilih Jam'
-                        //                     : DateFormat('HH:mm', 'id')
-                        //                         .format(convertedTime),
-                        //                 style: controller.isDateTimeNow.value
-                        //                     ? context.textTheme.bodySmall!
-                        //                         .copyWith(
-                        //                         color: Theme.of(context)
-                        //                             .colorScheme
-                        //                             .primary,
-                        //                         fontStyle: FontStyle.italic,
-                        //                       )
-                        //                     : const TextStyle(
-                        //                         color: Colors.white),
-                        //               ),
-                        //             ),
-                        //           ),
-                        //         ],
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
                         Divider(color: Colors.grey[100]),
                         cartItems.isNotEmpty
                             ? Expanded(
@@ -417,7 +293,7 @@ class SelectedProductCard extends StatelessWidget {
                                     final item = cartItems[index];
                                     final discountTextC =
                                         TextEditingController();
-                                    discountTextC.text = formatter
+                                    discountTextC.text = currency
                                         .format(item.individualDiscount.value);
                                     discountTextC.selection =
                                         TextSelection.fromPosition(
@@ -711,7 +587,7 @@ class DiscountTextfield extends StatelessWidget {
         onChanged: (value) {
           // value == '' ? 0 : value;
           // discount.text = value;
-          controller.discountHandle(item.product.id, discountTextC, value);
+          controller.discountHandle(item.product.id!, discountTextC, value);
         });
   }
 }
@@ -780,99 +656,6 @@ class CalculatePrice extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   children: [
-                      //     const SizedBox(
-                      //       width: 120,
-                      //       child: Text('Bayar',
-                      //           style: TextStyle(
-                      //             fontSize: 18,
-                      //             fontWeight: FontWeight.bold,
-                      //           )),
-                      //     ),
-                      //     Expanded(
-                      //       child: SizedBox(
-                      //         child: TextField(
-                      //           style: const TextStyle(
-                      //             fontSize: 18,
-                      //             fontWeight: FontWeight.bold,
-                      //           ),
-                      //           textAlign: TextAlign.right,
-                      //           controller: controller.pay,
-                      //           decoration: const InputDecoration(
-                      //             prefixIcon: Text('Rp ',
-                      //                 style: TextStyle(
-                      //                     fontSize: 18,
-                      //                     fontWeight: FontWeight.bold)),
-                      //             prefixIconConstraints:
-                      //                 BoxConstraints(minWidth: 0, minHeight: 0),
-                      //             hintText: '0',
-                      //           ),
-                      //           keyboardType:
-                      //               const TextInputType.numberWithOptions(
-                      //                   decimal: true),
-                      //           inputFormatters: [
-                      //             FilteringTextInputFormatter.allow(
-                      //                 RegExp(r'[0-9]'))
-                      //           ],
-                      //           onChanged: (value) =>
-                      //               controller.onPayChanged(value),
-                      //         ),
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
-                      // const SizedBox(height: 5),
-                      // Obx(
-                      //   () {
-                      //     int change = controller.moneyChange.value -
-                      //         controller.totalBill.value;
-                      //     // String formattedChange =
-                      //     //     change > 0 ? formatter.format(change) : '0';
-                      //     return Row(
-                      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //       children: [
-                      //         SizedBox(
-                      //           width: 120,
-                      //           child: Text(change > 0 ? 'Kembalian' : 'Kurang',
-                      //               style: TextStyle(
-                      //                 fontSize: 18,
-                      //                 fontWeight: FontWeight.bold,
-                      //                 color: Colors.grey[700],
-                      //               )),
-                      //         ),
-                      //         Expanded(
-                      //           child: Row(
-                      //             mainAxisAlignment:
-                      //                 MainAxisAlignment.spaceBetween,
-                      //             children: [
-                      //               Text(
-                      //                 'Rp ',
-                      //                 style: TextStyle(
-                      //                   fontSize: 18,
-                      //                   fontWeight: FontWeight.bold,
-                      //                   color: Colors.grey[700],
-                      //                 ),
-                      //               ),
-                      //               Padding(
-                      //                 padding: const EdgeInsets.only(right: 3),
-                      //                 child: Text(
-                      //                   controller.currency.format(change),
-                      //                   style: TextStyle(
-                      //                     fontSize: 18,
-                      //                     fontWeight: FontWeight.bold,
-                      //                     color: Colors.grey[700],
-                      //                   ),
-                      //                 ),
-                      //               ),
-                      //             ],
-                      //           ),
-                      //         )
-                      //       ],
-                      //     );
-                      //   },
-                      // ),
                       const SizedBox(height: 30),
                       Row(
                         children: [

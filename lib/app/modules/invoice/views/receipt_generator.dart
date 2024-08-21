@@ -6,13 +6,15 @@ import 'package:intl/intl.dart';
 import '../../../../main.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/invoice_model.dart';
-import '../../../data/providers/stores_services.dart';
+// import '../../../data/providers/stores_services.dart';
+import '../../../widget/side_menu_controller.dart';
 import 'invoice_print_controller.dart';
 
 Future<List<int>> generateReceiptBytes(Invoice invoice) async {
-  StoreServices storeServices = Get.find();
+  late SideMenuController sideMenuC = Get.find();
   final PrinterController printerController = Get.put(PrinterController());
-  late final account = storeServices.account;
+  // late final account = sideMenuC.account.value;
+  late final store = sideMenuC.store.value;
   final profile = await CapabilityProfile.load();
   final generator = Generator(PaperSize.mm80, profile);
 
@@ -20,7 +22,7 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
 
   // Add header
   bytes += generator.text(
-    invoice.account.value.stores.value!.name.value,
+    store!.name.value,
     styles: const PosStyles(
       align: PosAlign.center,
       bold: true,
@@ -29,13 +31,13 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
     ),
   );
   bytes += generator.text(
-    invoice.account.value.stores.value!.address.value,
+    store.address.value,
     styles: const PosStyles(
       align: PosAlign.center,
     ),
   );
-  String phone = invoice.account.value.stores.value!.phone.value;
-  String telp = invoice.account.value.stores.value!.telp.value;
+  String phone = store.phone.value;
+  String telp = store.telp.value;
   String slash = (phone.isNotEmpty && telp.isNotEmpty) ? '/' : '';
   bytes += generator.text(
     '$phone $slash $telp',
@@ -54,7 +56,7 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
     ),
     PosColumn(
       text: DateFormat('dd-MM-y, HH:mm', 'id').format(
-        invoice.createdAt.value!.toDate(),
+        invoice.createdAt.value!,
       ),
       width: 6,
     ),
@@ -84,6 +86,13 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
   bytes += generator.feed(1);
 
   // Add items
+  if (invoice.isReturn) {
+    bytes += generator.text(
+      '-- Pesanan Awal --',
+      styles: const PosStyles(bold: true),
+    );
+  }
+
   bytes += generator.hr();
   bytes += generator.row([
     PosColumn(
@@ -103,44 +112,45 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
     ),
   ]);
   bytes += generator.hr();
-  List<CartItem> purchase = printerController.filterPurchase(invoice);
+  // List<CartItem> purchase = printerController.filterPurchase(invoice);
 
-  for (var i = 0; i < purchase.length; i++) {
-    var item = purchase[i];
-    if (item.quantity.value > 0) {
-      bytes += generator.row([
-        PosColumn(
-          text: '${i + 1}',
-          width: 1,
-        ),
-        PosColumn(
-          text: item.product.productName,
-          width: 7,
-        ),
-        PosColumn(
-          text: '',
-          width: 4,
-        ),
-      ]);
-      bytes += generator.row([
-        PosColumn(
-          text:
-              '    ${currency.format(item.product.getPrice(invoice.priceType.value))} x ',
-          width: 4,
-          styles: const PosStyles(align: PosAlign.right),
-        ),
-        PosColumn(
-          text: '${decimal.format(item.quantity.value)} ${item.product.unit}',
-          width: 4,
-          // styles: const PosStyles(align: PosAlign.right),
-        ),
-        PosColumn(
-          text: currency.format(item.getSubtotal(invoice.priceType.value)),
-          width: 4,
-          styles: const PosStyles(align: PosAlign.right),
-        ),
-      ]);
-    }
+  for (var i = 0; i < invoice.purchaseList.value.items.length; i++) {
+    var item = invoice.purchaseList.value.items[i];
+    // if (item.quantity.value > 0) {
+    bytes += generator.row([
+      PosColumn(
+        text: '${i + 1}',
+        width: 1,
+      ),
+      PosColumn(
+        text: item.product.productName,
+        width: 7,
+      ),
+      PosColumn(
+        text: '',
+        width: 4,
+      ),
+    ]);
+    bytes += generator.row([
+      PosColumn(
+        text:
+            '    ${currency.format(item.product.getPrice(invoice.priceType.value))} x ',
+        width: 4,
+        styles: const PosStyles(align: PosAlign.right),
+      ),
+      PosColumn(
+        text: '${decimal.format(item.totalQuantity)} ${item.product.unit}',
+        width: 4,
+        // styles: const PosStyles(align: PosAlign.right),
+      ),
+      PosColumn(
+        text:
+            currency.format(item.getSubTotalPurchase(invoice.priceType.value)),
+        width: 4,
+        styles: const PosStyles(align: PosAlign.right),
+      ),
+    ]);
+    // }
   }
 
   // Add totals
@@ -151,7 +161,7 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
       width: 8,
     ),
     PosColumn(
-      text: currency.format(invoice.subtotal),
+      text: currency.format(invoice.subTotalPurchase),
       width: 4,
       styles: const PosStyles(align: PosAlign.right),
     ),
@@ -187,7 +197,19 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
 
   bytes += generator.row([
     PosColumn(
-      text: 'Total belanja:',
+      text: '',
+      width: 8,
+    ),
+    PosColumn(
+      text: '----------',
+      width: 4,
+      styles: const PosStyles(bold: true, align: PosAlign.right),
+    ),
+  ]);
+
+  bytes += generator.row([
+    PosColumn(
+      text: 'Total tagihan:',
       width: 8,
       styles: const PosStyles(bold: true),
     ),
@@ -197,21 +219,19 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
       styles: const PosStyles(bold: true, align: PosAlign.right),
     ),
   ]);
-  bytes += generator.feed(2);
-  if (invoice.totalReturn > 0) {
-    bytes += generator.row([
-      PosColumn(
-        text: 'Barang yang direturn:',
-        width: 8,
-        styles: const PosStyles(bold: true, align: PosAlign.right),
-      ),
-      PosColumn(
-        text: '',
-        width: 4,
-      ),
-    ]);
+
+  if (invoice.isReturn) {
+    bytes += generator.feed(2);
+    bytes += generator.text(
+      '-- Barang yang direturn --',
+      styles: const PosStyles(bold: true),
+    );
+
     bytes += generator.hr();
     List<CartItem> returned = printerController.filterReturn(invoice);
+    if (invoice.returnList.value != null) {
+      returned.addAll(invoice.returnList.value!.items);
+    }
     for (var i = 0; i < returned.length; i++) {
       var item = returned[i];
       if (item.quantityReturn.value > 0) {
@@ -250,15 +270,66 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
     }
 
     // Add totals
+    // bytes += generator.hr();
+    // bytes += generator.row([
+    //   PosColumn(
+    //     text: 'Total return:',
+    //     width: 8,
+    //   ),
+    //   PosColumn(
+    //     text: invoice.isReturn
+    //         ? '-${currency.format(invoice.subtotalReturn)}'
+    //         : '0',
+    //     width: 4,
+    //     styles: const PosStyles(align: PosAlign.right),
+    //   ),
+    // ]);
+    // bytes += generator.row([
+    //   PosColumn(
+    //     text: 'Biaya return:',
+    //     width: 8,
+    //   ),
+    //   PosColumn(
+    //     text: currency.format(invoice.returnFee.value),
+    //     width: 4,
+    //     styles: const PosStyles(align: PosAlign.right),
+    //   ),
+    // ]);
+    // bytes += generator.row([
+    //   PosColumn(
+    //     text: 'Total:',
+    //     width: 8,
+    //     styles: const PosStyles(bold: true),
+    //   ),
+    //   PosColumn(
+    //     text: '-${currency.format(invoice.totalReturn)}',
+    //     width: 4,
+    //     styles: const PosStyles(bold: true, align: PosAlign.right),
+    //   ),
+    // ]);
+    // bytes += generator.feed(1);
+    // bytes += generator.row([
+    //   PosColumn(
+    //     text: 'Total setelah return:',
+    //     width: 8,
+    //     styles: const PosStyles(bold: true),
+    //   ),
+    //   PosColumn(
+    //     text: currency.format(invoice.total - invoice.totalReturn),
+    //     width: 4,
+    //     styles: const PosStyles(bold: true, align: PosAlign.right),
+    //   ),
+    // ]);
     bytes += generator.hr();
     bytes += generator.row([
       PosColumn(
-        text: 'Total return:',
+        text: 'Subtotal return:',
         width: 8,
+        // styles: const PosStyles(bold: true),
       ),
       PosColumn(
-        text: invoice.totalReturn > 0
-            ? '-${currency.format(invoice.subtotalReturn)}'
+        text: invoice.isReturn
+            ? '-${currency.format((invoice.totalReturn + invoice.returnFee.value))}'
             : '0',
         width: 4,
         styles: const PosStyles(align: PosAlign.right),
@@ -268,6 +339,7 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
       PosColumn(
         text: 'Biaya return:',
         width: 8,
+        // styles: const PosStyles(bold: true),
       ),
       PosColumn(
         text: currency.format(invoice.returnFee.value),
@@ -277,7 +349,18 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
     ]);
     bytes += generator.row([
       PosColumn(
-        text: 'Total:',
+        text: '',
+        width: 8,
+      ),
+      PosColumn(
+        text: '----------',
+        width: 4,
+        styles: const PosStyles(bold: true, align: PosAlign.right),
+      ),
+    ]);
+    bytes += generator.row([
+      PosColumn(
+        text: 'Total return:',
         width: 8,
         styles: const PosStyles(bold: true),
       ),
@@ -287,7 +370,32 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
         styles: const PosStyles(bold: true, align: PosAlign.right),
       ),
     ]);
-    bytes += generator.feed(1);
+    bytes += generator.row([
+      PosColumn(
+        text: 'Total tagihan:',
+        width: 8,
+        styles: const PosStyles(bold: true),
+      ),
+      PosColumn(
+        text: currency.format(invoice.totalPurchase),
+        width: 4,
+        styles: const PosStyles(bold: true, align: PosAlign.right),
+      ),
+    ]);
+    // if (invoice.totalPaid > 0) {
+    //   bytes += generator.row([
+    //     PosColumn(
+    //       text: 'Total pembayaran masuk:',
+    //       width: 8,
+    //     ),
+    //     PosColumn(
+    //       text: '-${currency.format(invoice.totalPaid)}',
+    //       width: 4,
+    //       styles: const PosStyles(align: PosAlign.right),
+    //     ),
+    //   ]);
+    // }
+    bytes += generator.hr();
     bytes += generator.row([
       PosColumn(
         text: 'Total setelah return:',
@@ -295,14 +403,14 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
         styles: const PosStyles(bold: true),
       ),
       PosColumn(
-        text: currency.format(invoice.total - invoice.totalReturn),
+        text: currency.format(invoice.totalFinal),
         width: 4,
         styles: const PosStyles(bold: true, align: PosAlign.right),
       ),
     ]);
   }
 
-  if (invoice.totalReturn <= 0) {
+  if (!invoice.isReturn) {
     bytes += generator.row([
       PosColumn(
         text: 'Bayar:',
@@ -345,9 +453,10 @@ Future<List<int>> generateReceiptBytes(Invoice invoice) async {
   );
   bytes += generator.feed(1);
   bytes += generator.text(
-    account.value.stores.value != null
-        ? account.value.stores.value!.promo.value ?? ''
-        : '',
+    // account.value.stores.value != null
+    //     ? account.value.stores.value!.promo.value ?? ''
+    //     :
+    '',
     styles: const PosStyles(
       align: PosAlign.center,
     ),

@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../main.dart';
 import '../../../data/models/sales_invoice_model.dart';
 
 // import '../data/models/invoice_model.dart';
@@ -17,12 +16,14 @@ class SalesPaymentController extends GetxController {
 
   // late final customers = customerServices.customers;
 
-  final currency = NumberFormat('#,##0', 'id_ID');
   final paymentMethod = ['cash', 'transfer'].obs;
   final selectedPaymentMethod = ''.obs;
   final moneyChange = 0.0.obs;
 
   final paymentTextC = TextEditingController();
+
+  final scrollC = ScrollController();
+  final textFocusNode = FocusNode();
 
   // final status = ''.obs;
   Future addPayment(SalesInvoice invoice) async {
@@ -30,15 +31,24 @@ class SalesPaymentController extends GetxController {
       invoice.addPayment(
         double.parse(paymentTextC.text.replaceAll('.', '')),
         method: selectedPaymentMethod.value,
-        date: Timestamp.now(),
+        date: DateTime.now(),
       );
     }
   }
   // Rx<Customer?> selectedCustomer = Rx<Customer?>(null);
 
-  void setPaymentMethod(String method) {
+  void setPaymentMethod(String method) async {
     selectedPaymentMethod.value = method;
-    // debugPrint(selectedPaymentMethod.value);
+    textFocusNode.requestFocus();
+    await Future.delayed(const Duration(milliseconds: 50), () async {
+      if (scrollC.hasClients) {
+        await scrollC.animateTo(
+          scrollC.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   void clear() {

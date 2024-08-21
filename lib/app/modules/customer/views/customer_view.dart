@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/models/customer_model.dart';
@@ -13,7 +13,7 @@ class CustomerView extends GetView<CustomerController> {
   const CustomerView({super.key});
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,##0', 'id_ID');
+    // final formatter = NumberFormat('#,##0', 'id_ID');
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 100,
@@ -38,8 +38,9 @@ class CustomerView extends GetView<CustomerController> {
                       Expanded(
                         flex: 13,
                         child: CustomerListCard(
-                            controller: controller,
-                            formatter: formatter), //! 1 customerListCard
+                          controller: controller,
+                          // formatter: formatter
+                        ), //! 1 customerListCard
                       ),
                       // const SizedBox(height: 12),
                       Padding(
@@ -80,11 +81,11 @@ class CustomerListCard extends StatelessWidget {
   const CustomerListCard({
     super.key,
     required this.controller,
-    required this.formatter,
+    // required this.formatter,
   });
 
   final CustomerController controller;
-  final NumberFormat formatter;
+  // final NumberFormat formatter;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +128,7 @@ class CustomerListCard extends StatelessWidget {
                     final foundCustomer = controller.foundCustomers[index];
                     return TableContent(
                         foundCustomer: foundCustomer,
-                        formatter: formatter,
+                        // formatter: formatter,
                         controller: controller); //* TableContent
                   },
                 ),
@@ -189,7 +190,7 @@ class TableHeader extends StatelessWidget {
           ),
         ],
       ),
-      trailing: controller.isAdmin.value
+      trailing: controller.isAdmin
           ? Text(
               'Hapus',
               style: context.textTheme.headlineSmall,
@@ -204,12 +205,12 @@ class TableContent extends StatelessWidget {
   const TableContent({
     super.key,
     required this.foundCustomer,
-    required this.formatter,
+    // required this.formatter,
     required this.controller,
   });
 
   final Customer foundCustomer;
-  final NumberFormat formatter;
+  // final NumberFormat formatter;
   final CustomerController controller;
 
   @override
@@ -254,7 +255,7 @@ class TableContent extends StatelessWidget {
           ),
         ],
       ),
-      trailing: controller.isAdmin.value
+      trailing: controller.isAdmin
           ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: IconButton(

@@ -27,89 +27,99 @@ class SetupView extends GetView<SetupController> {
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Form(
-                      key: controller.formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Form(
+                          key: controller.formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(8),
+                                  ),
+                                ),
+                                height: 50,
+                                child: TextFormField(
+                                  controller: controller.storeNameController,
+                                  decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      labelText: 'Nama Toko'),
+                                  validator: (value) =>
+                                      controller.validateStoreName(value),
+                                ),
                               ),
-                            ),
-                            height: 50,
-                            child: TextFormField(
-                              controller: controller.storeNameController,
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: 'Nama Toko'),
-                              validator: (value) =>
-                                  controller.validateStoreName(value),
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(8),
+                              const SizedBox(height: 16.0),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(8),
+                                  ),
+                                ),
+                                // height: 50,
+                                child: TextFormField(
+                                  controller: controller.storeAddressController,
+                                  minLines: 3,
+                                  maxLines: null,
+                                  decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      labelText: 'Alamat Toko'),
+                                  validator: (value) =>
+                                      controller.validateStoreAddress(value),
+                                ),
                               ),
-                            ),
-                            height: 50,
-                            child: TextFormField(
-                              controller: controller.storeAddressController,
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: 'Alamat Toko'),
-                              validator: (value) =>
-                                  controller.validateStoreAddress(value),
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(8),
+                              const SizedBox(height: 16.0),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(8),
+                                  ),
+                                ),
+                                height: 50,
+                                child: TextFormField(
+                                  controller: controller.storePhoneController,
+                                  decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      labelText: 'No HP Toko'),
+                                ),
                               ),
-                            ),
-                            height: 50,
-                            child: TextFormField(
-                              controller: controller.storePhoneController,
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: 'No HP Toko'),
-                            ),
-                          ),
-                          const SizedBox(height: 16.0),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(8),
+                              const SizedBox(height: 16.0),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(8),
+                                  ),
+                                ),
+                                height: 50,
+                                child: TextFormField(
+                                  controller: controller.storeTelpController,
+                                  decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      labelText: 'No Telp Toko'),
+                                ),
                               ),
-                            ),
-                            height: 50,
-                            child: TextFormField(
-                              controller: controller.storeTelpController,
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: 'No Telp Toko'),
-                            ),
+                            ],
                           ),
-                          const SizedBox(height: 16.0),
-                          ElevatedButton(
-                            onPressed: () => controller.submitData(),
-                            child: const Text('Simpan Data Toko'),
-                          ),
-                        ],
-                      ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => controller.submitData(),
+                          child: const Text('Simpan Data Toko'),
+                        ),
+                      ],
                     ),
                   ),
                 ),

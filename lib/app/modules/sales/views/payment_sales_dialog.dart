@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/sales_invoice_model.dart';
-import '../../../data/providers/sales_invoice_services.dart';
+// import '../../../data/providers/sales_invoice_services.dart';
 
 import 'payment_sales_card.dart';
 import 'payment_sales_controller.dart';
 
 void paymentSalesDialogWidget(
     BuildContext context, SalesInvoice invoice, VoidCallback onSuccess) {
-  late SalesInvoiceService invoiceServices = Get.find();
+  // late SalesInvoiceService invoiceServices = Get.find();
   final PaymentSalesController paymentController =
       Get.put(PaymentSalesController());
 
@@ -28,7 +28,8 @@ void paymentSalesDialogWidget(
       barrierDismissible: false,
     );
     try {
-      await invoiceServices.updateInvoice(invoice);
+      // await invoiceServices.updateInvoice(invoice);
+      invoice.update();
       Get.back();
       return Get.defaultDialog(
         title: 'Berhasil',

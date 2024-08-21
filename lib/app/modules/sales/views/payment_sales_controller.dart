@@ -1,8 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 
+import '../../../../main.dart';
 import '../../../data/models/sales_invoice_model.dart';
 
 // import '../data/models/customer_model.dart';
@@ -15,7 +16,7 @@ class PaymentSalesController extends GetxController {
 
   // late final customers = customerServices.customers;
 
-  final currency = NumberFormat('#,##0', 'id_ID');
+  // final currency = NumberFormat('#,##0', 'id_ID');
   final paymentMethod = ['cash', 'transfer'].obs;
   final selectedPaymentMethod = ''.obs;
   final moneyChange = 0.0.obs;
@@ -28,7 +29,7 @@ class PaymentSalesController extends GetxController {
       invoice.addPayment(
         double.parse(paymentTextC.text.replaceAll('.', '')),
         method: selectedPaymentMethod.value,
-        date: Timestamp.now(),
+        date: DateTime.now(),
       );
     }
   }

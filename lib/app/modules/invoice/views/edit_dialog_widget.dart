@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 // import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -9,8 +10,8 @@ import '../../../../main.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/invoice_model.dart';
 import '../../../data/models/product_model.dart';
-import '../../../data/providers/invoice_services.dart';
-import '../../../data/providers/product_services.dart';
+// import '../../../data/providers/invoice_services.dart';
+// import '../../../data/providers/product_services.dart';
 import '../../../widget/customer_input_field_controller.dart';
 import '../../../widget/customer_input_field_widget.dart';
 import '../../../widget/date_picker_controller.dart';
@@ -19,8 +20,9 @@ import '../../../widget/payment_card.dart';
 import '../../../widget/payment_controller.dart';
 import '../../../widget/properties_row_widget.dart';
 import '../controllers/invoice_controller.dart';
-import 'add_product_dialog.dart';
+// import 'add_product_dialog.dart';
 // import 'cart_card.dart';
+import 'add_product_dialog.dart';
 import 'list_cart_widget.dart';
 
 void editDialog(
@@ -31,11 +33,11 @@ void editDialog(
   // controller.asignEditData(invoice);
   Get.lazyPut(() => DatePickerController());
   late DatePickerController datePickerC = Get.find();
-  late InvoiceService invoiceServices = Get.find();
+  // late InvoiceService invoiceServices = Get.find();
   late PaymentController paymentController = Get.put(PaymentController());
   late CustomerInputFieldController customerInputFieldC =
       Get.put(CustomerInputFieldController());
-  late ProductService productService = Get.find();
+  // late ProductService productService = Get.find();
   if (invoice.customer.value != null) {
     customerInputFieldC.asignCustomer(invoice.customer.value!);
   }
@@ -46,6 +48,7 @@ void editDialog(
   controller.asignEditData(editInvoice);
   controller.initCartItems.clear();
   paymentController.clear();
+  controller.editReturnManual.value = true;
   Get.defaultDialog(
     title: 'Edit Invoice ${editInvoice.invoiceId}',
     content: Obx(
@@ -53,11 +56,21 @@ void editDialog(
         return Container(
           margin: const EdgeInsets.all(8),
           height: MediaQuery.of(context).size.height * (5 / 7),
-          width: MediaQuery.of(context).size.width * (4 / 9),
+          width: MediaQuery.of(context).size.width * (2 / 3),
           child: ListView(
             shrinkWrap: true,
             controller: controller.scrollController,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child:
+                        Text('Edit Harga', style: context.textTheme.titleLarge),
+                  ),
+                ],
+              ),
               Card(
                 child: Container(
                   height: 30,
@@ -140,8 +153,235 @@ void editDialog(
                   ),
                 ),
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Edit Pelanggan',
+                        style: context.textTheme.titleLarge),
+                  ),
+                ],
+              ),
               const CustomerInputFieldCard(),
               // CartCard(controller: controller, invoice: editInvoice),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Edit Barang',
+                        style: context.textTheme.titleLarge),
+                  ),
+                ],
+              ),
+              Card(
+                child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Obx(
+                      () {
+                        final returnFeeTextC = TextEditingController();
+                        returnFeeTextC.text = editInvoice.returnFee.value == 0
+                            ? '-'
+                            : currency.format(editInvoice.returnFee.value);
+                        returnFeeTextC.selection = TextSelection.fromPosition(
+                          TextPosition(offset: returnFeeTextC.text.length),
+                        );
+                        return Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (editInvoice.purchaseList.value
+                                        .getTotalReturn(
+                                            editInvoice.priceType.value) !=
+                                    -1)
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        Text('Return',
+                                            style: Theme.of(Get.context!)
+                                                .textTheme
+                                                .titleLarge,
+                                            textAlign: TextAlign.end),
+                                        const SizedBox(height: 12),
+                                        ListCartWidget(
+                                          invoice: editInvoice,
+                                          isEdit:
+                                              controller.editReturnManual.value,
+                                          controller: controller,
+                                          isReturn: true,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              SizedBox(
+                                                width: 150,
+                                                child: TextField(
+                                                  controller: returnFeeTextC,
+                                                  textAlign: TextAlign.center,
+                                                  maxLength: 15,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Biaya Return',
+                                                    labelStyle: context
+                                                        .textTheme.bodySmall!
+                                                        .copyWith(
+                                                            fontStyle: FontStyle
+                                                                .italic),
+                                                    prefixText: 'Rp',
+                                                    counterText: '',
+                                                    filled: true,
+                                                    fillColor: Theme.of(context)
+                                                        .colorScheme
+                                                        .secondary
+                                                        .withOpacity(0.2),
+                                                    contentPadding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    border:
+                                                        const OutlineInputBorder(
+                                                            borderSide:
+                                                                BorderSide
+                                                                    .none),
+                                                    isDense: true,
+                                                  ),
+                                                  keyboardType:
+                                                      const TextInputType
+                                                          .numberWithOptions(
+                                                          decimal: true),
+                                                  inputFormatters: [
+                                                    FilteringTextInputFormatter
+                                                        .allow(RegExp(r'[0-9]'))
+                                                  ],
+                                                  onChanged: (value) {
+                                                    editInvoice
+                                                            .returnFee.value =
+                                                        value == ''
+                                                            ? 0
+                                                            : double.parse(value
+                                                                .replaceAll(
+                                                                    '.', ''));
+                                                    // debugPrint(editInvoice.returnFee.value
+                                                    //     .toString());
+                                                    editInvoice.updateReturn();
+                                                    // debugPrint(value);
+                                                  },
+                                                ),
+                                              ),
+                                              ListTile(
+                                                title: Row(
+                                                  children: [
+                                                    const Expanded(
+                                                        flex: 5,
+                                                        child: Text('')),
+                                                    Expanded(
+                                                      flex: 5,
+                                                      child: Text(
+                                                        'TOTAL RETURN',
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        style: Theme.of(
+                                                                Get.context!)
+                                                            .textTheme
+                                                            .bodyLarge!
+                                                            .copyWith(
+                                                                color: Theme.of(
+                                                                        Get.context!)
+                                                                    .colorScheme
+                                                                    .primary),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      flex: 4,
+                                                      child: Obx(
+                                                        () => Text(
+                                                          'Rp${currency.format(editInvoice.totalReturn)}',
+                                                          textAlign:
+                                                              TextAlign.end,
+                                                          style: Theme.of(
+                                                                  Get.context!)
+                                                              .textTheme
+                                                              .bodyLarge!
+                                                              .copyWith(
+                                                                  color: Theme.of(
+                                                                          Get.context!)
+                                                                      .colorScheme
+                                                                      .primary),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: SizedBox(
+                                    child: Column(
+                                      children: [
+                                        Text('Pembelian',
+                                            style: Theme.of(Get.context!)
+                                                .textTheme
+                                                .titleLarge,
+                                            textAlign: TextAlign.end),
+                                        const SizedBox(height: 12),
+                                        ListCartWidget(
+                                          invoice: editInvoice,
+                                          isEdit:
+                                              controller.editReturnManual.value,
+                                          controller: controller,
+                                          isReturn: false,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Get.defaultDialog(
+                                  content: Container(
+                                    margin: const EdgeInsets.all(8),
+                                    height: MediaQuery.of(context).size.height *
+                                        (3 / 4),
+                                    width: MediaQuery.of(context).size.width *
+                                        (4 / 9),
+                                    child: AddProductDialog(
+                                      invoice: editInvoice,
+                                      controller: controller,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Tambah Barang',
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    )),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Edit Pembayaran',
+                        style: context.textTheme.titleLarge),
+                  ),
+                ],
+              ),
               Card(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -183,7 +423,7 @@ void editDialog(
               controller.selectedTime.value.minute,
             );
 
-            Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
+            // Timestamp timestampDateTime = Timestamp.fromDate(dateTime);
 
             customerInputFieldC.addCustomer(editInvoice);
 
@@ -197,7 +437,7 @@ void editDialog(
 
               invoice.id = editInvoice.id;
               invoice.invoiceId = editInvoice.invoiceId;
-              invoice.createdAt.value = timestampDateTime;
+              invoice.createdAt.value = dateTime;
               invoice.customer.value =
                   customerInputFieldC.selectedCustomer.value;
               invoice.purchaseList.value = editInvoice.purchaseList.value;
@@ -243,8 +483,9 @@ void editDialog(
               //   debugPrint(i.stock.value.toString());
               // }
 // debugPrint(updatedProductList.toString());
-              await invoiceServices.updateInvoice(invoice);
-              await productService.updateMultipleProducts(updatedProductList);
+              await invoice.update();
+              // await invoiceServices.updateInvoice(invoice);
+              // await productService.updateMultipleProducts(updatedProductList);
               controller.initCartItems.clear();
               Get.back();
               return Get.defaultDialog(
@@ -441,7 +682,7 @@ class CalculatePrice extends StatelessWidget {
                         Expanded(
                             flex: 5,
                             child: Text(
-                                'Pembayaran ${!editInvoice.isDebtPaid.value ? index + 1 : ''} (${DateFormat('dd MMMM y', 'id').format(editInvoice.createdAt.value!.toDate())}) (${editInvoice.payments[index].method})',
+                                'Pembayaran ${!editInvoice.isDebtPaid.value ? index + 1 : ''} (${DateFormat('dd MMMM y', 'id').format(editInvoice.createdAt.value!)}) (${editInvoice.payments[index].method})',
                                 style: Theme.of(Get.context!)
                                     .textTheme
                                     .titleSmall!
@@ -450,7 +691,7 @@ class CalculatePrice extends StatelessWidget {
                         Expanded(
                             flex: 3,
                             child: Text(
-                                'Rp${currency.format(editInvoice.payments[index].amountPaid)}',
+                                'Rp${currency.format(editInvoice.payments[index].finalAmountPaid)}',
                                 style: Theme.of(Get.context!)
                                     .textTheme
                                     .titleSmall!
@@ -458,17 +699,19 @@ class CalculatePrice extends StatelessWidget {
                                 textAlign: TextAlign.end)),
                       ],
                     ),
-                    leading: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: IconButton(
-                        onPressed: () => editInvoice
-                            .removePayment(editInvoice.payments[index]),
-                        icon: const Icon(
-                          Symbols.close,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
+                    leading: (controller.isAdmin)
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: IconButton(
+                              onPressed: () => editInvoice
+                                  .removePayment(editInvoice.payments[index]),
+                              icon: const Icon(
+                                Symbols.close,
+                                color: Colors.red,
+                              ),
+                            ),
+                          )
+                        : null,
                   );
                 },
               ),
@@ -508,7 +751,7 @@ class CalculatePrice extends StatelessWidget {
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (!editInvoice.isDebtPaid.value)
+                    if (!editInvoice.isDebtPaid.value && controller.isAdmin)
                       ElevatedButton(
                         onPressed: () {
                           controller.showPaymentCard.value = true;

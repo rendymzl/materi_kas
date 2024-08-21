@@ -4,12 +4,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-// import '../../../data/models/cart_model.dart';
-// import '../../../data/models/customer_model.dart';
-// import '../../../data/models/invoice_model.dart';
-// import '../../../widget/customer_input_field_widget.dart';
-// import '../../../widget/return_widget.dart';
 import '../../../../main.dart';
+import '../../../data/models/invoice_model.dart';
 import '../../../widget/side_menu_widget.dart';
 import '../controllers/invoice_controller.dart';
 import 'detail_dialog_widget.dart';
@@ -18,7 +14,6 @@ class InvoiceView extends GetView<InvoiceController> {
   const InvoiceView({super.key});
   @override
   Widget build(BuildContext context) {
-    // final formatter = NumberFormat('#,##0', 'id_ID');
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 100,
@@ -38,9 +33,8 @@ class InvoiceView extends GetView<InvoiceController> {
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: InvoiceGridCard(
+                    child: InvoiceListCard(
                       controller: controller,
-                      // formatter: formatter,
                     ),
                   ),
                 ),
@@ -53,19 +47,16 @@ class InvoiceView extends GetView<InvoiceController> {
   }
 }
 
-class InvoiceGridCard extends StatelessWidget {
-  const InvoiceGridCard({
+class InvoiceListCard extends StatelessWidget {
+  const InvoiceListCard({
     super.key,
     required this.controller,
-    // required this.formatter,
   });
 
   final InvoiceController controller;
-  // final NumberFormat formatter;
 
   @override
   Widget build(BuildContext context) {
-    // final formatter = NumberFormat('#,##0', 'id_ID');
     return SizedBox(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -77,6 +68,7 @@ class InvoiceGridCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: const BorderRadius.all(
@@ -86,8 +78,7 @@ class InvoiceGridCard extends StatelessWidget {
                       child: TextField(
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          labelText:
-                              "    Cari Invoice (Contoh: INV001/G052824)",
+                          labelText: "Cari Invoice",
                           labelStyle: TextStyle(color: Colors.grey),
                           suffixIcon: Icon(Symbols.search),
                         ),
@@ -134,41 +125,89 @@ class InvoiceGridCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.green[100],
+                      child: Text(
+                        'INVOICE LUNAS',
+                        textAlign: TextAlign.center,
+                        style: context.textTheme.titleLarge!.copyWith(
+                          color: Colors.green[800],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )),
+                ),
+                VerticalDivider(thickness: 1, color: Colors.grey[200]),
+                Expanded(
+                  child: Container(
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.red[100],
+                      child: Text(
+                        'INVOICE BELUM LUNAS',
+                        textAlign: TextAlign.center,
+                        style: context.textTheme.titleLarge!.copyWith(
+                          color: Colors.red[800],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                const Expanded(
+                  child: HeaderWidget(),
+                ),
+                VerticalDivider(thickness: 1, color: Colors.grey[200]),
+                const Expanded(
+                  child: HeaderWidget(),
+                ),
+              ],
+            ),
             Expanded(
               flex: 10,
-              child: LayoutBuilder(builder: (context, constraints) {
-                if (constraints.maxWidth < 800) {
-                  return BuildGridView(
-                      controller: controller,
-                      // formatter: formatter,
-                      crossAxisCount: 1);
-                }
-                if (constraints.maxWidth < 1200) {
-                  return BuildGridView(
-                      controller: controller,
-                      // formatter: formatter,
-                      crossAxisCount: 2);
-                } else {
-                  return BuildGridView(
-                      controller: controller,
-                      // formatter: formatter,
-                      crossAxisCount: 3);
-                }
-              }),
-            ), //! Build GridView
-            // ),
-            // Expanded(
-            //   flex: 1,
-            //   child: SizedBox(
-            //     child: Column(
-            //       mainAxisAlignment: MainAxisAlignment.center,
-            //       children: [
-            //         Obx(() => Text(
-            //             'Total invoice: ${controller.invoiceList.length.toString()}'))
-            //       ],
-            //     ),
-            //   ),
-            // ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                      child:
+                          BuildListTile(controller: controller, isDebt: false)),
+                  VerticalDivider(thickness: 1, color: Colors.grey[200]),
+                  Expanded(
+                      child:
+                          BuildListTile(controller: controller, isDebt: true)),
+                ],
+              ),
+            ), //! Build ListTile
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HeaderWidget extends StatelessWidget {
+  const HeaderWidget({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.grey[200],
+      child: const ListTile(
+        title: Row(
+          children: [
+            Expanded(child: Text('No')),
+            Expanded(flex: 3, child: Text('Invoice')),
+            Expanded(
+                flex: 4, child: Text('Pelanggan', textAlign: TextAlign.end)),
+            Expanded(flex: 4, child: Text('Tagihan', textAlign: TextAlign.end)),
+            Expanded(
+                flex: 5, child: Text('Sisa bayar', textAlign: TextAlign.end)),
           ],
         ),
       ),
@@ -177,236 +216,185 @@ class InvoiceGridCard extends StatelessWidget {
 }
 
 //! Build GridView
-class BuildGridView extends StatelessWidget {
-  const BuildGridView({
+class BuildListTile extends StatelessWidget {
+  const BuildListTile({
     super.key,
     required this.controller,
-    // required this.formatter,
-    required this.crossAxisCount,
+    required this.isDebt,
   });
 
   final InvoiceController controller;
-  // final NumberFormat formatter;
-  final int crossAxisCount;
+  final bool isDebt;
 
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          childAspectRatio: 7 / 4,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-        ),
-        itemCount: controller.foundInvoices.length,
-        itemBuilder: (BuildContext context, int index) {
-          final invoice = controller.foundInvoices[index];
-          return Card(
-            color:
-                !invoice.isDebtPaid.value ? Colors.red[100] : Colors.green[100],
-            child: InkWell(
-              splashColor: !invoice.isDebtPaid.value
-                  ? Colors.red[200]!.withOpacity(0.2)
-                  : Colors.green[200]!.withOpacity(0.3),
-              highlightColor: !invoice.isDebtPaid.value
-                  ? Colors.red[200]!.withOpacity(0.2)
-                  : Colors.green[200]!.withOpacity(0.3),
-              onTap: () {
-                detailDialog(context, controller, invoice);
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
+      () {
+        List<Invoice> inv = controller.foundInvoices
+            .where((i) => isDebt
+                ? i.totalPaid < i.totalFinal
+                : i.totalPaid >= i.totalFinal)
+            .map((purchased) => purchased)
+            .toList();
+        return ListView.builder(
+          // separatorBuilder: (context, index) =>
+          //     Divider(color: Colors.grey[200]),
+          shrinkWrap: true,
+          itemCount: inv.length,
+          itemBuilder: (BuildContext context, int index) {
+            final invoice = inv[index];
+            return SizedBox(
+              // height: 70,
+              child: ListTile(
+                dense: true,
+                tileColor: index % 2 == 0 ? Colors.white : Colors.grey[100],
+                title: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(invoice.invoiceId!,
-                            style: context.theme.textTheme.bodySmall),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Text(
-                              DateFormat('dd MMMM y HH:mm', 'id')
-                                  .format(invoice.createdAt.value!.toDate()),
-                              style: context.theme.textTheme.bodySmall),
-                        ),
-                        !invoice.isDebtPaid.value
-                            ? const Icon(
-                                Symbols.info,
-                                color: Colors.red,
-                              )
-                            : const Icon(
-                                Symbols.check_circle,
-                                color: Colors.green,
-                              ),
-                      ],
-                    ),
-                    const Divider(color: Colors.white54),
+                    Expanded(child: Text('${index + 1}.')),
                     Expanded(
-                      child: SizedBox(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: invoice.purchaseList.value.items.length,
-                          itemBuilder: (context, index) {
-                            final purchaseCart =
-                                invoice.purchaseList.value.items[index];
-                            final totalPurchase =
-                                purchaseCart.getTotal(invoice.priceType.value);
-                            var discount = '';
-                            if (purchaseCart.individualDiscount.value > 0) {
-                              discount =
-                                  'Diskon (-Rp${currency.format(purchaseCart.individualDiscount.value)})';
-                            }
-                            // var quantity = purchaseCart.quantity.value % 1 == 0
-                            //     ? purchaseCart.quantity.value.toInt().toString()
-                            //     : purchaseCart.quantity.value
-                            //         .toString()
-                            //         .replaceAll('.', ',');
-                            if (index < crossAxisCount) {
-                              return purchaseCart.quantity.value > 0
-                                  ? Column(
-                                      children: [
-                                        ListTile(
-                                          dense: true,
-                                          title: Row(
-                                            children: [
-                                              SizedBox(
-                                                width: 30,
-                                                child: Text('${index + 1}. ',
-                                                    style: context.theme
-                                                        .textTheme.bodySmall),
-                                              ),
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  purchaseCart
-                                                      .product.productName,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: context.theme.textTheme
-                                                      .titleMedium,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 90,
-                                                child: Text(
-                                                  'Rp${currency.format(purchaseCart.product.getPrice(invoice.priceType.value))}',
-                                                  style: context.theme.textTheme
-                                                      .bodySmall,
-                                                  textAlign: TextAlign.right,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 75,
-                                                child: Text(
-                                                    ' x ${purchaseCart.qtyDisplay} =',
-                                                    style: context.theme
-                                                        .textTheme.bodySmall),
-                                              ),
-                                              SizedBox(
-                                                width: 100,
-                                                child: Text(
-                                                  'Rp${currency.format(totalPurchase)}',
-                                                  style: context.theme.textTheme
-                                                      .bodySmall,
-                                                  textAlign: TextAlign.right,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          subtitle: Align(
-                                            alignment: Alignment.centerRight,
-                                            child: Text(
-                                              discount,
-                                              style: context
-                                                  .theme.textTheme.bodySmall!
-                                                  .copyWith(
-                                                      fontStyle:
-                                                          FontStyle.italic,
-                                                      fontSize: 11),
-                                              textAlign: TextAlign.right,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : const SizedBox();
-                            } else {
-                              int remainingItemCount =
-                                  (invoice.purchaseList.value.items.length -
-                                      crossAxisCount);
-
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: index == crossAxisCount
-                                    ? Text(
-                                        '+ $remainingItemCount barang lainnya...',
-                                        style:
-                                            context.theme.textTheme.bodySmall,
-                                      )
-                                    : const SizedBox.shrink(),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      title: Row(
+                        flex: 4,
+                        child: Text(
+                          invoice.invoiceId!,
+                          style: context.textTheme.titleLarge!
+                              .copyWith(fontSize: 15),
+                        )),
+                    Expanded(
+                      flex: 3,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          SizedBox(
-                            width: 190,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (invoice.purchaseList.value
-                                        .getTotalQuantityReturn() >
-                                    0)
-                                  Text(
-                                      '${invoice.purchaseList.value.getTotalQuantityReturn()} Barang direturn',
-                                      style: context.theme.textTheme.bodySmall),
-                                Text(
-                                    'Pembeli: ${invoice.customer.value?.name!.toUpperCase() ?? '-'}',
-                                    style: context.theme.textTheme.bodySmall),
-                                Text(
-                                  !invoice.isDebtPaid.value
-                                      ? 'Belum Lunas Rp${currency.format(invoice.remainingDebt)}'
-                                      : 'Lunas',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.theme.textTheme.bodySmall!
-                                      .copyWith(
-                                          color: !invoice.isDebtPaid.value
-                                              ? Colors.red
-                                              : Colors.green),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 1,
-                            child: Text(''),
-                          ),
-                          SizedBox(
-                            width: 150,
-                            child: Text(
-                              'Rp${currency.format(invoice.total)}',
-                              style: context.theme.textTheme.titleMedium,
-                              textAlign: TextAlign.right,
-                            ),
+                          Text(
+                            invoice.customer.value!.name ?? '',
+                            style: context.textTheme.titleLarge!
+                                .copyWith(fontSize: 18),
+                            textAlign: TextAlign.end,
                           ),
                         ],
                       ),
                     ),
+                    Expanded(
+                        flex: 4,
+                        child: Text(
+                          'Rp${decimal.format(invoice.totalFinal)}',
+                          style: context.textTheme.titleLarge!
+                              .copyWith(fontSize: 15),
+                          textAlign: TextAlign.end,
+                        )),
+                    Expanded(
+                        flex: 5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          margin: const EdgeInsets.only(left: 50),
+                          decoration: BoxDecoration(
+                            color: isDebt
+                                ? Colors.red
+                                : invoice.totalReturn > 0
+                                    ? Colors.amber
+                                    : Colors.green,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            isDebt
+                                ? 'Rp${decimal.format(invoice.change)}'
+                                : invoice.totalReturn > 0
+                                    ? 'Rp${decimal.format(invoice.change)}'
+                                    : 'Lunas',
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 15),
+                          ),
+                        )),
                   ],
                 ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(left: 32),
+                  child: Text(
+                    DateFormat('dd/MM HH:mm', 'id')
+                        .format(invoice.createdAt.value!),
+                    style: const TextStyle(fontSize: 15),
+                    // textAlign: TextAlign.end,
+                  ),
+                ),
+                // Row(
+                //   // mainAxisAlignment: MainAxisAlignment.start,
+                //   crossAxisAlignment: CrossAxisAlignment.start,
+                //   children: [
+                // Expanded(
+                //   flex: 5,
+                //   child: ListView.builder(
+                //     padding: const EdgeInsets.only(left: 20),
+                //     shrinkWrap: true,
+                //     itemCount: invoice.purchaseList.value.items.length,
+                //     itemBuilder: (context, index) {
+                //       final item = invoice.purchaseList.value.items[index];
+                //       return ListTile(
+                //         // leading: Text('${index + 1}.'),
+                //         subtitle: Container(
+                //           padding: const EdgeInsets.all(8),
+                //           color:
+                //               // isDebt
+                //               //     ?
+                //               Colors.grey[200],
+                //           // : Colors.green.withOpacity(0.1),
+                //           child: Row(
+                //             children: [
+                //               Expanded(
+                //                 flex: 7,
+                //                 child: Text(
+                //                     '${index + 1}. ${item.product.productName}'),
+                //               ),
+                //               // Expanded(
+                //               //     flex: 3,
+                //               //     child: Text(
+                //               //       'Rp${currency.format(item.getPrice(invoice.priceType.value))}',
+                //               //       textAlign: TextAlign.end,
+                //               //     )),
+                //               // // const Expanded(child: Text('')),
+                //               Expanded(
+                //                   flex: 2,
+                //                   child: Text(
+                //                       '${decimal.format(item.quantity.value)} ${item.product.unit}')),
+                //               // Expanded(
+                //               //     flex: 3,
+                //               //     child: Text(
+                //               //       'Rp${currency.format(item.getSubtotal(invoice.priceType.value))}',
+                //               //       textAlign: TextAlign.end,
+                //               //     )),
+                //             ],
+                //           ),
+                //         ),
+                //         mouseCursor: SystemMouseCursors.click,
+                //       );
+                //     },
+                //   ),
+                // ),
+                // Expanded(
+                //   flex: 3,
+                //   child: Row(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     mainAxisAlignment: MainAxisAlignment.end,
+                //     children: [
+                //       Text(
+                //         invoice.customer.value!.name ?? '',
+                //         style: context.textTheme.bodyLarge,
+                //         textAlign: TextAlign.end,
+                //       ),
+                //     ],
+                //   ),
+                // ),
+                // ],
+                // ),
+                onTap: () {
+                  detailDialog(context, controller, invoice);
+                },
+                hoverColor: isDebt ? Colors.red[100] : Colors.green[100],
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }

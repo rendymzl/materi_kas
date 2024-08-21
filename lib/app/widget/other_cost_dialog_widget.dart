@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 
+import '../../main.dart';
 import '../data/models/invoice_model.dart';
-import '../data/providers/invoice_services.dart';
-import 'payment_card.dart';
-import 'payment_controller.dart';
+// import '../data/providers/invoice_services.dart';
+// import 'payment_card.dart';
+// import 'payment_controller.dart';
 
 void otherCostDialogWidget(BuildContext context, Invoice invoice) {
-  late InvoiceService invoiceServices = Get.find();
+  // late InvoiceService invoiceServices = Get.find();
 
-  final NumberFormat currency = NumberFormat("#,##0", "id_ID");
+  // final NumberFormat currency = NumberFormat("#,##0", "id_ID");
   final otherCostNameTextC = TextEditingController();
   final otherCostAmountTextC = TextEditingController();
 
@@ -24,7 +25,8 @@ void otherCostDialogWidget(BuildContext context, Invoice invoice) {
     try {
       invoice.addOtherCost(otherCostNameTextC.text,
           double.parse(otherCostAmountTextC.text.replaceAll('.', '')));
-      await invoiceServices.updateInvoice(invoice);
+      invoice.update();
+      // await invoiceServices.updateInvoice(invoice);
       Get.back();
       return Get.defaultDialog(
         title: 'Berhasil',
